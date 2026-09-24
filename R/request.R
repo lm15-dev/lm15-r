@@ -342,9 +342,36 @@ build_request <- function(lm, request, ..., stream = FALSE) {
   wire
 }
 
+# MAP-10 for message parts: the cells where a dialect has no slot at all, as
+# lm15-python's check_message_media (lm15-contract
+# changes/2026-09-24-message-media.md); `feature` is the part's path.
+.no_message_slot <- list(
+  anthropic = function(role, kind) kind %in% c("audio", "video", "binary"),
+  responses = function(role, kind) role == "assistant",
+  chat = function(role, kind) role == "assistant"
+)
+.check_message_media <- function(req, dialect, provider) {
+  gap <- .no_message_slot[[dialect]]
+  if (is.null(gap)) return(invisible(NULL))
+  label <- switch(dialect, responses = "openai", chat = "openai_chat", dialect)
+  for (i in seq_along(req$messages)) {
+    m <- req$messages[[i]]
+    for (j in seq_along(m$parts)) {
+      k <- m$parts[[j]]$type
+      if (k %in% .media_kinds && gap(m$role, k)) {
+        path <- sprintf("messages[%d].parts[%d]", i - 1L, j - 1L)
+        .abort(sprintf("%s: %s: the program depends on this %s %s part; no native %s content slot carries it (MAP-10)", provider, path, m$role, k, label),
+          "unsupported_feature", provider, feature = path)
+      }
+    }
+  }
+  invisible(NULL)
+}
+
 .build_payload <- function(lm, req, streaming = FALSE) {
   dialect <- switch(lm$definition$dialect, "openai-chat" = "chat", "openai-responses" = "responses", lm$definition$dialect)
   provider <- lm$definition$id; c <- req$config; compat <- .compat(lm, req)
+  .check_message_media(req, dialect, provider)
   if (dialect == "anthropic" && !is.null(compat$model_prefixes) && !any(vapply(compat$model_prefixes, function(p) startsWith(req$model, p), logical(1)))) .abort("This model would be silently substituted by this endpoint.", "unsupported_model", provider)
   if (provider == "xai") { req <- .xai_prepare(req, provider); c <- req$config }
   if (dialect == "chat" && compat$forced_tool_choice == "reject" && !is.null(c$tool_choice) && (c$tool_choice$mode != "auto" || length(c$tool_choice$allowed))) {
@@ -362,7 +389,9 @@ build_request <- function(lm, request, ..., stream = FALSE) {
   }
   cache <- c$cache; cache_on <- !is.null(cache) && cache$mode != "off"
   resource <- if (cache_on) cache$resource else NULL
-  if (!is.null(resource) && dialect != "gemini") .unsupported(provider, "stored cache resource")
+  # MAP-6 rule 7: a stored-cache resource where there is no such tier RAISES;
+  # dropping it would send the request without the prefix it holds.
+  if (!is.null(resource) && dialect != "gemini") .abort(paste0(provider, ": cache.resource is not supported \u2014 this provider has no stored-cache tier; sending without it would drop the prompt prefix the resource holds"), "unsupported_feature", provider, feature = "config.cache.resource")
   cache_wire <- compat$cache_control %||% "none"
   if (dialect == "anthropic" && !is.null(cache)) {
     if (!is.null(cache$key)) .adapt("config.cache.key", "dropped", "the Messages API has no cache affinity key (OpenAI's prompt_cache_key); marks on blocks are its mechanism", asked = cache$key)

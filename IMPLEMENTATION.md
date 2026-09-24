@@ -6,8 +6,8 @@ working trees have not been modified.
 
 ## Contract status — 2026-09-24
 
-`CONTRACT_PIN` now names lm15-contract `186ff6b` (2026-09-24), the version
-Python, TypeScript and Rust pass in full. R passes 1,397 of its cases and fails
+`CONTRACT_PIN` now names lm15-contract `b0ff3c0` (2026-09-24), the version
+Python, TypeScript and Rust pass in full. R passes 1,406 of its 1,449 cases and fails
 43; the CI contract job is red until these are ported. They are unported
 features, listed so the red job reads as a to-do list:
 
