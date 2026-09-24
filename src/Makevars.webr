@@ -1,0 +1,3 @@
+# Browser networking is provided by JavaScript, not native libcurl.
+PKG_CPPFLAGS =
+PKG_LIBS =

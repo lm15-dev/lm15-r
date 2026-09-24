@@ -1,0 +1,134 @@
+name: Check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: lm15-r
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: lm15-r
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: lm15-r
+          extra-packages: any::rcmdcheck
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: R unit tests
+        run: Rscript -e 'testthat::test_local()'
+      - name: Browser bridge tests
+        run: node --test tests/browser/*.test.mjs
+      - name: Package checks
+        run: Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual"), error_on = "warning")'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: package-check-${{ matrix.os }}
+          path: lm15-r/*.Rcheck
+  native_transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: lm15-r
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: lm15-r
+      - uses: cachix/install-nix-action@v31
+      - name: Verified TLS and WebSocket framing
+        run: nix develop -c bash -c 'npm ci --ignore-scripts; node tools/test-native-websocket.mjs'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-websocket-results
+          path: lm15-r/test-results/native-websocket.json
+  webr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: lm15-r
+    env:
+      CONTAINER_ENGINE: docker
+      CHROMIUM_BIN: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: lm15-r
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: lm15-r
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: lm15-r/package-lock.json
+      - name: Build the WebAssembly package and pinned runtime
+        run: bash tools/build-webr.sh
+      - name: Test the package in real Chromium
+        run: |
+          npm ci --ignore-scripts
+          npm run test:webr
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webr-package-and-results
+          path: |
+            lm15-r/dist/webr/repo
+            lm15-r/test-results/webr.json
+  contract:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lm15-r
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: lm15-r
+      - id: versions
+        run: |
+          echo "contract=$(tr -d '\n' < CONTRACT_PIN)" >> "$GITHUB_OUTPUT"
+          echo "python=$(tr -d '\n' < PYTHON_REFERENCE)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: lm15-dev/lm15-contract
+          ref: ${{ steps.versions.outputs.contract }}
+          path: lm15-contract
+      - uses: actions/checkout@v4
+        with:
+          repository: lm15-dev/lm15-python
+          ref: ${{ steps.versions.outputs.python }}
+          path: lm15-python
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: lm15-r
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unmodified shared comparator and extra Python comparisons
+        run: python3 tools/check-contract.py --compare-python
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-results
+          path: lm15-r/test-results/contract

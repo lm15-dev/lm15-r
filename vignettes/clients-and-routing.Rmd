@@ -1,0 +1,241 @@
+---
+title: "Separate identity, preparation and execution — API design preview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Separate identity, preparation and execution — API design preview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> **Proposed API.** This guide follows `docs/api-vision.md`. The implementation
+> has not been changed to match it. All code is non-executable; no credentials
+> were read, callbacks invoked, or provider operations performed.
+
+Choosing a client should not secretly sign you in. Inspecting a route should
+not test it by making a paid request. Building an already resolved request
+should not call a credential function again.
+
+The proposed API separates those actions so their names can be trusted.
+
+```r
+library(lm15)
+```
+
+## A client constructor creates a recipe
+
+```r
+client <- new_lm(
+  "openai",
+  credential = credential_env("OPENAI_API_KEY")
+)
+```
+
+`credential_env()` describes where an API key will come from. Neither it nor
+`new_lm()` reads the variable. The client can exist before the source is
+available. Supplied option names, value types and endpoint combinations are
+checked before any identity source is acquired.
+
+For a provider's standard resolution chain, use the default recipe:
+
+```r
+client <- new_lm("xai", credential = credential_auto())
+```
+
+This retains lm15's declared subscription-before-billing rules. It is not a
+new R-specific chain. If a selected renewable subscription fails, a later paid
+key is not silently substituted.
+
+The preferred argument is `credential`, because it can represent more than an
+API key:
+
+```r
+client <- new_lm(
+  "azure",
+  credential = credential_env("APP_ACCESS_TOKEN", kind = "bearer_token"),
+  settings = host_settings(resource = "my-resource")
+)
+```
+
+The old `api_key` spelling remains a compatibility alias. Supplying both names
+is an error, not a choice decided by map order or comparing secret values.
+There is no inference of credential kind from the characters in a token.
+
+## Let one settings value describe the host
+
+```r
+client <- new_lm(
+  "bedrock-chat",
+  credential = credential_auto(),
+  settings = host_settings(region = "eu-west-1")
+)
+```
+
+`host_settings()` checks the shared vocabulary of named host fields. A provider
+then checks which of those fields it supports. Settings are not smuggled into
+a model string, and missing required data is not replaced by a guessed region.
+Declared provider defaults stay visible in the resolution report.
+
+`compat` and `base_url` remain separate choices. A compatibility preset selects
+a server's declared format details and, where declared, its default address:
+
+```r
+local_client <- new_lm(
+  "openai-chat",
+  credential = api_key("local"),
+  compat = "lmstudio"
+)
+```
+
+This is still a recipe. It does not connect to the local server. A preset with
+no declared address cannot silently fall back to a paid cloud endpoint.
+
+## Inspect the same recipe you will use
+
+```r
+report <- explain_auth(client)
+report
+```
+
+Inspection may read local source presence and credential-file metadata. It
+does not call a custom credential function, run a CLI, renew credentials or
+contact a provider. Deferred work is reported as deferred/unprobed, not as a
+successful authentication check.
+
+“Configured”, “credential available”, “permitted to use this model”, and
+“request succeeded” remain different claims. Automatic printing reveals
+source kinds and safe structural information, not values or signed material.
+
+For deterministic application configuration, `env = character()` means no
+ambient environment variables. A supplied named vector is an explicit input;
+`env = NULL` means consult the process environment later when resolving a source.
+
+## Route model names without opening a connection
+
+```r
+router <- new_router(
+  credentials = list(openai = credential_env("OPENAI_API_KEY"))
+)
+
+resolve(router, "openai:gpt-4.1-mini")
+resolve(router, "gpt-4.1-mini")
+explain_auth(router, model = "openai:gpt-4.1-mini")
+```
+
+Resolution uses an explicit prefix, supplied catalog, or declared rule. It
+never tries several providers until one works. The `credentials` map retains
+the shared-key rule and exact-entry precedence. Its old `api_keys` spelling
+is an exclusive compatibility alias, not a second source of truth.
+
+`router_lm(router, model)` returns a reusable client recipe. A configuration or
+identity change cannot reuse another identity's token. Reusing a client is not
+caching model responses or caching the result of a user credential function.
+
+## Keep metadata value-like and advisory
+
+```r
+catalog <- new_model_registry(list(
+  model_info("acme-model", "openai", "openai_responses", aliases = list("short-name"))
+))
+
+larger_catalog <- registry_add(
+  catalog,
+  model_info("second-model", "gemini", "gemini_generate_content")
+)
+
+router <- new_router(catalog = larger_catalog)
+registry_get(catalog, "openai", "short-name")
+resolve(router, "short-name")
+```
+
+`registry_add()` returns a new registry; it does not mutate `catalog` or an
+existing router. Replacing an entry removes its old aliases. A router captures
+the catalog value supplied to it, so a metadata change is deliberate.
+
+Discovery is a separate operation:
+
+```r
+catalog <- discover_model_registry()
+```
+
+It can read packaged JSON catalogs or invoke explicitly supplied loader
+functions. It processes a whole catalog before adding it and keeps the first
+duplicate provider/model entry. Metadata helps identify a model; it never
+changes the provider's request encoding rules.
+
+## Resolve effects once, then encode without effects
+
+Most applications should call `complete()` or `stream()`. For inspection and
+transport integration, the HTTP preparation boundary is explicit:
+
+```r
+credential_reads <- 0L
+credential <- function() {
+  credential_reads <<- credential_reads + 1L
+  bearer_token("example-only-token")
+}
+
+client <- new_lm("openai", credential = credential, env = character())
+req <- request("gpt-4.1-mini", message_user("hello"))
+
+prepared <- prepare_request(client, req)
+wire <- build_request(prepared)
+```
+
+This illustrative credential function is part of the example, not an actual
+login. The design promises no call during construction, one call during
+preparation, and no further call during encoding.
+
+Preparation may read media, acquire credentials, renew a stored login and
+write a replacement under its lock. It checks all locally knowable request
+and configuration errors first. It does not send the model inference request.
+The prepared result binds the resolved identity, sources, signing time and
+HTTP mode. It is short-lived, secret-bearing and not a cache or archive format.
+
+`build_request(prepared)` performs no I/O. The existing two-argument
+`build_request(client, req)` is retained as an effectful compatibility facade,
+not relabelled pure. Realtime setup remains its own advanced connection/frame
+surface rather than pretending to be one HTTP request.
+
+If you inspect a preparation and then call `complete(client, req)`, completion
+prepares a fresh operation. It does not send the earlier inspected object.
+Printing either prepared or wire objects must hide addresses, headers and
+bodies that may contain credentials.
+
+## Fail before doing unintended work
+
+A proposed diagnostic for a misspelled argument is:
+
+```r
+new_lm("openai", credentail = obtain_credential())
+```
+
+```text
+Error in new_lm():
+  Unused argument: `credentail`.
+  Did you mean `credential`?
+  The unused argument was not evaluated.
+```
+
+That is an illustrative design expectation, not captured output.
+`obtain_credential()` is deliberately an unevaluated example expression: the
+rejection must not run it or print its contents. Input errors should identify
+safe argument names and R field paths, while provider errors keep the shared
+LM15 classes and codes.
+
+A valid canonical setting can still be unsupported by a provider. That remains
+a refusal, not a field the client silently removes. Credentials, endpoint
+selection and model behavior must never become global convenience options.
+
+## Preserve the migration door's meaning
+
+```r
+resolve(router, "gpt-4.1-mini")
+resolve_openai_chat(router, "gpt-4.1-mini")
+openai_chat_model_string("groq/openai/gpt-oss-20b")
+```
+
+A bare OpenAI model imported from Chat Completions keeps that endpoint. An
+explicit `openai:model` prefix still means Responses. Native lm15 code builds
+canonical requests; `complete_from_openai_chat(router, body)` is the deliberate
+foreign-format boundary. It does not accept client keys, retry policy or
+timeouts hidden inside the request body.

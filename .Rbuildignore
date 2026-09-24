@@ -1,0 +1,12 @@
+^tools$
+^docs$
+^IMPLEMENTATION\.md$
+^\.git$
+^\.gitignore$
+^\.github$
+^flake\.(nix|lock)$
+^test-results$
+^node_modules$
+^dist$
+^package(-lock)?\.json$
+^tests/browser$

@@ -1,0 +1,17 @@
+.Rhistory
+.RData
+.Ruserdata
+inst/doc/
+vignettes/*.html
+vignettes/*.R
+*.Rcheck/
+*.tar.gz
+*.tgz
+*.zip
+src/Makevars
+src/*.o
+src/*.so
+src/*.dll
+node_modules/
+dist/
+test-results/

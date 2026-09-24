@@ -1,0 +1,7 @@
+{
+  "jsonlite": {
+    "version": "2.0.0",
+    "url": "https://cran.r-project.org/src/contrib/jsonlite_2.0.0.tar.gz",
+    "sha256": "75eb910c82b350ec33f094779da0f87bff154c232e4ae39c9896a9b89f3ac82d"
+  }
+}

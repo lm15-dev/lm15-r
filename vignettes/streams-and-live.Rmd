@@ -1,0 +1,240 @@
+---
+title: "One stream contract, one turn meaning — API design preview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{One stream contract, one turn meaning — API design preview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> **Design preview.** These examples describe the proposed API in
+> `docs/api-vision.md`. They are non-executable and have not been run.
+> Real-client examples would require credentials and may incur charges.
+
+Streaming lets you use an answer before it is complete. It must not make a
+partial answer indistinguishable from a completed one.
+
+The proposed R API keeps one ordinary stream contract and gives a live “turn”
+one meaning: a view over events that have not yet been collected. Sending
+input stays a separate action.
+
+```r
+library(lm15)
+```
+
+## Display events; keep the response
+
+```r
+client <- fake_lm("Hello there.")
+req <- request("demo-model", message_user("Say hello."))
+
+answer <- stream(client, req, on_event = function(event) {
+  if (event$type == "delta" && event$delta$type == "text") {
+    cat(event$delta$text)
+  }
+})
+
+response_text(answer)
+answer$finish_reason
+```
+
+The fake client supplies a scripted response. Its event sequence teaches the
+interface, not the way a provider would divide the text into chunks.
+
+A **delta** is a change to a content part. The callback receives canonical
+start, delta, end and error events. It runs on the R thread. The return value
+is the assembled response, including content and metadata that the callback
+might not have displayed.
+
+Do not construct your own “response” by concatenating displayed text alone.
+That would lose tool calls, media, usage or continuation state. Keep callbacks
+small; a slow callback also slows consumption of the stream.
+
+## State the budget at the operation boundary
+
+```r
+client <- new_lm("openai", credential = credential_env("OPENAI_API_KEY"))
+req <- request("gpt-4.1-mini", message_user("Explain the idea briefly."))
+
+answer <- stream(
+  client,
+  req,
+  on_event = function(event) {
+    if (event$type == "delta" && event$delta$type == "text") cat(event$delta$text)
+  },
+  control = request_control(timeout = 30, max_response_bytes = 8 * 1024^2)
+)
+```
+
+This is an ordinary completion stream, with an elapsed operation budget.
+Preparation and callbacks count toward it. Built-in transport steps receive
+the remaining time, rather than starting a fresh full timeout after each step.
+Custom callbacks must cooperate; arbitrary R code cannot be safely interrupted
+at every instant.
+
+A timeout or local cancellation does not prove that the provider stopped
+work or billing. lm15 does not reconnect and replay an ambiguous request to
+make the stream look uninterrupted.
+
+## Partial content stays partial
+
+When handling a truncated stream, choose an explicit policy:
+
+```r
+attempt <- tryCatch(
+  stream(client, req, on_event = function(event) invisible(NULL)),
+  StreamAssemblyError = identity
+)
+
+if (inherits(attempt, "StreamAssemblyError")) {
+  partial <- attempt$partial
+  # Inspect or display partial progress; do not store it as completed work.
+} else {
+  answer <- attempt
+}
+```
+
+This block describes handling an error, not a claimed example of provider
+failure. The existing error class/code remain part of the shared family.
+The partial value is useful evidence; it is not a successful short response.
+
+For a consumer test with known data, `response_to_events(response)` and
+`materialize_response(events, request)` remain explicit conversions. They
+refuse content that cannot be preserved by the delta vocabulary.
+
+## A live connection has a different lifetime
+
+A live session stays open across several exchanges. Its controls describe
+connection setup, each idle read, and incoming limits—not a deadline on the
+whole conversation.
+
+```r
+client <- new_lm("openai", credential = credential_env("OPENAI_API_KEY"))
+
+answer <- with_live(
+  client,
+  live_config("gpt-realtime"),
+  function(session) {
+    session$send(live_client_text_event("Hello"))
+    view <- turn(session, control = turn_control(timeout = 60))
+    result(view)
+  },
+  control = live_control(read_timeout = 30)
+)
+```
+
+`with_live()` opens the session, calls the supplied R function, returns its
+value, and always attempts local cleanup. It does not send a greeting for you.
+Cleanup failure produces a redacted warning rather than replacing a primary
+error or retrying the operation.
+
+The explicit alternative uses the same ownership rules:
+
+```r
+session <- live(client, live_config("gpt-realtime"))
+tryCatch({
+  session$send(live_client_text_event("Hello"))
+  answer <- result(turn(session))
+}, finally = close(session))
+```
+
+The preview uses ordinary callbacks and `close()` methods, not a new
+non-standard-evaluation language for connection scopes.
+
+## A turn is a view, not a send-and-collect shortcut
+
+There is only one recommended turn meaning:
+
+```r
+read_turn <- function(session) {
+  session$send(live_client_text_event("What happens next?"))
+  view <- turn(session)
+
+  first_event <- next_event(view)
+  partial <- snapshot(view)
+  result(view)
+}
+
+answer <- with_live(client, live_config("gpt-realtime"), read_turn)
+```
+
+The helper supplies an open session for the callback's lifetime. `turn(session)` sends
+nothing. Reading a view adds events to its local collection; `snapshot(view)`
+returns a value without reading another event.
+
+`result(view)` includes already-read events and collects the remainder until
+an ending or a tool call. If the last event you read was a tool call, it does
+not read past that call while your application still owes an answer.
+
+A turn result contains text, decoded audio, tool calls, usage, errors, original
+events, and `ended_by`. Only `"turn_end"` is successful. `"tool_call"`,
+`"interrupted"`, `"error"` and `"incomplete"` remain different outcomes.
+A view closed before a boundary can expose its snapshot, but cannot fabricate
+a successful result.
+
+The old send-and-collect meaning of `session$turn(content)` is deliberately not
+part of this proposed primary API. Keeping both under “turn” would force the
+reader to remember two incompatible effects and return shapes.
+
+## Bound collection separately from the connection
+
+```r
+read_bounded_turn <- function(session) {
+  session$send(live_client_text_event("Explain the next step."))
+  view <- turn(
+    session,
+    control = turn_control(
+      timeout = 60,
+      max_events = 500L,
+      max_bytes = 32 * 1024^2
+    )
+  )
+  result(view)
+}
+
+answer <- with_live(client, live_config("gpt-realtime"), read_bounded_turn)
+```
+
+The collection clock starts on the first read and includes time between reads.
+A per-read timeout can shorten a wait, but cannot extend the view's remaining
+budget. The connection can outlive this view.
+
+`close(view)` closes only the view. `close(session)` closes the local connection.
+Neither name means “cancel every provider action and reverse its charges”.
+For immediate audio playback or long-running conversations, use
+`next_event(session)` directly instead of collecting the whole turn.
+
+Usage combines all usage-bearing events field by field. An unreported counter
+remains unknown, not zero. Independent audio chunks can be decoded and joined;
+incompatible media types are refused rather than silently mixed.
+
+## The browser keeps its own asynchronous shape
+
+The proposed browser constructor uses the same credential terminology, but
+credentials must be explicit browser values or functions—not a desktop chain:
+
+```js
+const client = new Lm15WebR(webR, {
+  provider: "gemini",
+  credential: async () => getShortLivedCredential(),
+});
+
+const session = await client.live({ model: "gemini-live-preview" });
+try {
+  await session.send({ type: "text", text: "Hello" });
+  for await (const event of session.events()) {
+    // Read or render the event deliberately.
+    if (event.type === "turn_end") break;
+  }
+} finally {
+  await session.close();
+}
+```
+
+This JavaScript is also a proposal, not an implemented example. It assumes an
+initialized webR worker and does not define an application login policy.
+
+Browser restrictions stay visible: required custom WebSocket headers need an
+explicit connector or server-side client. No desktop credential files or
+metadata services appear magically in the browser. JSON-text methods remain
+the exact-number path when JavaScript objects cannot preserve numeric tokens.

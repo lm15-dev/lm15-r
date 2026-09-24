@@ -1,0 +1,13 @@
+{
+  "name": "lm15-r-browser-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/browser/*.test.mjs",
+    "test:webr": "node tools/test-webr.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0",
+    "ws": "8.21.3"
+  }
+}

@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+pkg_config=${PKG_CONFIG:-pkg-config}
+if ! command -v "$pkg_config" >/dev/null 2>&1; then
+  echo 'lm15 requires pkg-config and libcurl development files (>= 7.86.0).' >&2
+  exit 1
+fi
+if ! "$pkg_config" --atleast-version=7.86.0 libcurl; then
+  echo 'lm15 requires libcurl >= 7.86.0, built with WebSocket support.' >&2
+  exit 1
+fi
+case "${1-}" in
+  --static) mode=--static ;;
+  '') mode= ;;
+  *) echo 'Unsupported configure option.' >&2; exit 1 ;;
+esac
+cflags=$("$pkg_config" --cflags libcurl)
+libs=$("$pkg_config" $mode --libs libcurl)
+printf 'PKG_CPPFLAGS = %s\nPKG_LIBS = %s\n' "$cflags" "$libs" > src/Makevars

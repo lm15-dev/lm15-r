@@ -1,0 +1,243 @@
+---
+title: "Read snapshots, request work — API design preview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Read snapshots, request work — API design preview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> **Proposed API.** This guide follows `docs/api-vision.md`, not the current
+> implementation. All code is static and has not been run. Provider examples
+> would need credentials and may create, change, retrieve or delete remote work.
+> Any displayed status below is an illustration, not a captured result.
+
+A file description is a value. A batch job is remote work. A live session is
+an open connection. They should not look interchangeable merely because all
+three are represented by R objects.
+
+The proposed API makes one question easy to answer at each step:
+**am I reading a local snapshot, or asking for an operation?**
+
+```r
+library(lm15)
+```
+
+## Describe the upload, then upload it
+
+```r
+client <- new_lm(
+  "anthropic",
+  credential = credential_env("ANTHROPIC_API_KEY")
+)
+
+upload <- file_upload_request(
+  "notes.txt",
+  bytes_data = charToRaw("These are the meeting notes."),
+  media_type = "text/plain"
+)
+```
+
+The client is a recipe, and `upload` is a value. No credential has been read
+and no file has been sent.
+
+```r
+file <- file_upload(client, upload)
+file$id
+```
+
+`file_upload()` performs the operation. The returned file information is a
+snapshot of what the provider reported; reading `file$id` does not refresh it.
+An ID is not the same thing as local bytes or guaranteed download permission.
+
+The existing explicit resource names remain:
+
+```r
+current_file <- file_get(client, file$id)
+page <- file_list(client)
+file_delete(client, file$id)
+```
+
+Each line asks the provider to do work. The last deletes the remote file.
+There is no automatic deletion because an R variable went out of scope, and
+no hidden download when a field is printed.
+
+## A batch contains complete requests
+
+```r
+submission <- batch_request(list(
+  request("claude-sonnet-4-6", message_user("Say hello.")),
+  request("claude-sonnet-4-6", message_user("Say goodbye."))
+))
+
+job <- batch(client, submission)
+job
+```
+
+A possible proposed structural display is:
+
+```text
+<lm15 batch job [shared resource]>
+  cached status: running
+  snapshot() is local; refresh() fetches status
+```
+
+The example does not predict how quickly a provider will start or finish a
+job. A submission can require provider-specific preparation, but `batch()`
+must not poll until completion as an undocumented side effect.
+
+A provider-specific client takes that provider's model IDs. The router's
+`provider:model` prefix belongs to routing, not to these already-bound requests.
+
+## Keep snapshots separate from shared handles
+
+```r
+before <- snapshot(job)
+also_job <- job
+
+refresh(job)
+after <- snapshot(job)
+```
+
+`before` and `after` are independent values. The handle is a shared resource:
+`also_job` and `job` observe the same updated cached status. The proposed
+`refresh()` performs one provider status fetch, updates that shared handle,
+and returns it invisibly. Credential resolution may do additional preparatory
+work, but the operation does not repeatedly poll.
+
+`snapshot()` never contacts the provider. Existing `job_info(job)` remains a
+compatibility spelling for this local job operation, not a second recommended
+snapshot API. Callers should not need to inspect or edit a public `$state`
+environment.
+
+## Only `wait()` polls a job
+
+```r
+job <- wait(
+  job,
+  timeout = 60,
+  poll_every = 5,
+  control = request_control(connect_timeout = 10)
+)
+info <- snapshot(job)
+info$status
+```
+
+The wait's overall budget includes its sleeps and status fetches. Each fetch
+gets the smaller of the remaining wait budget and its request control.
+A cached terminal job returns immediately. Timeout zero means no waiting;
+NULL explicitly disables the wait's overall deadline.
+
+A terminal status is not necessarily success: the job may have failed or been
+cancelled. Inspect the snapshot instead of treating a return from `wait()` as
+proof that every entry succeeded.
+
+Built-in transports should honor remaining I/O budgets. A custom credential
+function or transport must cooperate; the library cannot safely preempt
+arbitrary user code. A local deadline does not cancel remote work or reverse
+charges.
+
+## State whether output retrieval should refresh status
+
+For the usual “tell me what is available now” operation:
+
+```r
+entries <- results(job)
+```
+
+The default is `status = "refresh"`: fetch status once, update the handle's
+snapshot, then retrieve output if the job is terminal. This can make several
+HTTP requests, but it never polls.
+
+When your application deliberately trusts an already terminal snapshot:
+
+```r
+entries <- results(job, status = "snapshot")
+```
+
+That mode makes no new status request. It requires a terminal cached snapshot
+before any result fetch and never silently falls back to refreshing. Fetching
+can still fail if a remote file expired, disappeared or became inaccessible.
+The explicit choice trades a fresher status check for fewer status requests;
+it is not a guarantee that cached metadata remains valid forever.
+
+Both forms return typed batch entries in submission order. Keep unsuccessful
+entries instead of dropping them and losing alignment with your inputs:
+
+```r
+outcomes <- vapply(entries, function(entry) entry$outcome, character(1))
+```
+
+A successful entry has a response; an errored entry has an error. Canonical
+batch indexes stay zero-based: the first R element `entries[[1]]` has canonical
+`index == 0`. An analysis table may add a one-based position, but must not
+silently renumber that canonical field.
+
+## Cancellation is not cleanup
+
+```r
+cancel(job)
+```
+
+This requests remote batch cancellation. It is not what `close()` means, and
+is not an automatic consequence of stopping a wait or losing a handle.
+There is deliberately no `close(job)` method that secretly cancels remote work.
+
+Reattaching with `batch_job(client, id)` or `video_job(client, id)` explicitly
+fetches a status snapshot. It is not merely reconstructing a local value from
+an ID. Listing helpers similarly describe their provider requests; public
+names are retained even where historical word order is uneven.
+
+## Keep one result distinct from several
+
+| Object | Local observation | Explicit output operation |
+|---|---|---|
+| Batch job | `snapshot(job)` | `results(job, status = ...)` returns entries |
+| Video job | `snapshot(job)` | `result(job, status = ...)` returns a video part |
+| Live turn view | `snapshot(view)` | `result(view)` reads to a turn boundary |
+
+These are S3 methods: R chooses the behavior from the kind of object supplied.
+They use the shared family words rather than unrelated manual branches.
+Type-specific options are checked by the appropriate method;
+a `status` option passed to a live turn view is an error, not an ignored field.
+
+Remote video generation stays explicit:
+
+```r
+video_client <- new_lm("openai", credential = credential_env("OPENAI_API_KEY"))
+video <- video_generate(
+  video_client,
+  video_generation_request("sora-2", "A sunrise over a quiet lake.")
+)
+wait(video, timeout = 60)
+clip <- result(video, status = "snapshot")
+```
+
+The caller decides whether waiting succeeded and what to do with an error or
+non-successful status. There is no implicit provider swap, duration change,
+input-image omission, or cancellation endpoint invented to make every provider
+look identical.
+
+## Cache resources are not response caches
+
+A cached prefix is a stable beginning of a request. A remote cache resource
+and a local prefix value are separate things:
+
+```r
+prefix <- request(
+  "demo-model",
+  message_user("Reference material used by later questions.")
+)
+local_prefix <- cached_prefix(prefix)
+next_request <- cached_request(local_prefix, "What is the main point?")
+```
+
+These lines build local values. They do not promise a cache hit or a billing
+discount. `cache(client, prefix)` may create a remote cache resource where the
+selected provider supports one; the name does not make it a pure constructor.
+The explicit `cache_create()`, `cache_get()` and related resource operations
+keep their existing meanings.
+
+Your application owns cache lifetime and reuse. lm15 preserves the request's
+cache intent or refuses it where it cannot be represented; it does not keep a
+hidden cache of model answers.

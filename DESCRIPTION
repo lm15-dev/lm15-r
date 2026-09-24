@@ -1,0 +1,17 @@
+Package: lm15
+Title: Provider-Neutral Foundation Model Conversations
+Version: 0.0.1.9000
+Authors@R: person("Maxime", "Rivest", role = c("aut", "cre"), email = "mrive052@gmail.com")
+Description: Typed requests, responses, content parts and stream events for
+    foundation model conversations. Provider wire formats are translated at
+    an explicit boundary, with unsupported requests refused before sending.
+    Implements the shared lm15 contract incrementally.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: jsonlite, utils, stats
+Suggests: curl, openssl, filelock, later, httpuv, processx, xml2, callr,
+    pkgload, testthat (>= 3.0.0), knitr, rmarkdown, tibble, purrr
+VignetteBuilder: knitr
+SystemRequirements: libcurl (>= 7.86.0) with WebSocket support, pkg-config
+Config/testthat/edition: 3

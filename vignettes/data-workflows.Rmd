@@ -1,0 +1,180 @@
+---
+title: "Keep whole responses in your table — API design preview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Keep whole responses in your table — API design preview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> **Proposed API, not runnable package documentation.** These examples follow
+> `docs/api-vision.md` and have not been executed. All replies are scripted.
+> The table helpers described here are part of the proposal.
+
+A table is useful when each row keeps its identity and each column has a clear
+meaning. Model work should follow the same rule: keep the input, the request,
+the response, and any failed attempt distinct.
+
+lm15 should make common analysis columns easy to obtain **without throwing
+away the original objects**.
+
+## Build a list column of requests
+
+```r
+library(lm15)
+
+reviews <- tibble::tibble(
+  id = c("a", "b", "c"),
+  review = c("Easy to set up.", "Do not process this item.", "The screen is clear.")
+)
+
+requests <- purrr::map(reviews$review, function(review) {
+  request(
+    "demo-model",
+    message_user(paste("Summarise this review:", review)),
+    config = config(max_tokens = 80L)
+  )
+})
+```
+
+`tibble()` makes a data frame. `map()` applies a function to each input and
+returns a list. Here each list element is one complete request value; nothing
+has been sent.
+
+Request and response values should have short structural summaries in list
+columns, not enormous printed lists or snippets of sensitive content. Use
+fields or serialization when you deliberately want to inspect the contents.
+
+Tibble and purrr are optional companions. Core request construction and
+execution do not require them.
+
+## Capture one attempt per input
+
+Set up three possible outcomes: an ordinary answer, a refusal, and a failed
+request.
+
+```r
+client <- fake_lm(list(
+  response("demo-model", message_assistant("Setup was easy."), "stop",
+           usage = usage(input_tokens = 12L, output_tokens = 4L)),
+  response("demo-model", message_assistant(refusal("I cannot process this item.")),
+           "content_filter"),
+  lm15_error("Try again later.", code = "rate_limit", retry_after = 2)
+))
+
+attempt <- purrr::safely(function(req) complete(client, req), quiet = TRUE)
+attempts <- purrr::map(requests, attempt)
+```
+
+The application chose to capture failures and continue. `safely()` does not
+retry; it returns separate `result` and `error` elements. This is ordinary
+iteration in row order, not a provider batch job or an automatic retry engine.
+On a real client, each attempt could incur a charge.
+
+## Make an analysis view, not a new kind of response
+
+```r
+responses <- purrr::map(attempts, "result")
+errors <- purrr::map(attempts, "error")
+
+outcomes <- response_table(responses, errors = errors)
+outcomes$id <- reviews$id
+outcomes$request <- requests
+
+outcomes[c("id", "has_response", "has_error", "text", "finish_reason", "error_code")]
+```
+
+The proposed `response_table()` is a pure, optional tibble adapter. It performs
+no requests and makes no decisions about retries. It keeps one row per supplied
+position, including missing results. The `.row` column is that one-based
+position; your application supplies its own IDs.
+
+The important columns have distinct meanings:
+
+- `text` is a display/analysis view, with `NA` when the scalar text view is unavailable.
+- `finish_reason` describes a received response; it is not an error code.
+- `error_code` describes an LM15 failure, when there is one.
+- `error_class` also preserves the identity of ordinary R failures without LM15 codes.
+- `response`, `usage`, and `error` retain the complete objects in list columns.
+
+Row `b` has a response but no ordinary text view because its content is a
+refusal. Row `c` has an error and no response. A missing text value does not make
+those rows equivalent.
+
+```r
+outcomes$response[[2]]$message$parts[[1]]$text
+outcomes$error_class
+retryable(outcomes$error[[3]])
+```
+
+`retryable()` classifies a failure. It neither retries nor promises a retry will
+succeed. Inspect failures before choosing a recovery policy. A row with both
+response and error is rejected by the table adapter rather than arbitrarily
+choosing one. A row with neither is marked as having no supplied result, not
+as a success.
+
+## Request the column type you actually need
+
+For just a text vector, you should not need to build a table:
+
+```r
+texts <- response_texts(responses)
+```
+
+This returns one character value per input, including `NA_character_` for
+NULL entries and responses without an ordinary text view. The scalar
+`response_text()` keeps its string-or-NULL contract; the plural helper is the
+explicit analysis boundary. It does not rewrite refusal parts or tool calls.
+
+For usage, choose between ordinary numeric analysis and exact decimal text:
+
+```r
+outcomes$input_tokens <- usage_dbl(responses, "input_tokens")
+outcomes$input_tokens_exact <- usage_chr(responses, "input_tokens")
+```
+
+`usage_dbl()` always returns a double vector, using `NA_real_` for unreported
+counts. It refuses values outside the exact double-integer range rather than
+rounding them to make a column fit. `usage_chr()` always returns character and
+preserves the exact decimal digits, including very large counts.
+
+The default table leaves usage as a list column so it never silently makes
+that choice for you. Counter field names are the exact canonical names, such
+as `"input_tokens"`; partial spellings are not accepted.
+
+```r
+sum(outcomes$input_tokens)
+```
+
+If some counts are unknown, the total remains unknown. Dropping missing values
+would produce only the sum of reported counts, not a complete bill. Keep that
+qualification in the name or label of any partial total you publish.
+
+## Save the representation you intend to keep
+
+```r
+outcomes$request_json <- purrr::map_chr(requests, as_json)
+response_archive <- responses_json(responses, include_provider_data = FALSE)
+```
+
+`responses_json()` returns one JSON array string, preserving NULL positions.
+Its provider-data policy is applied separately to each response. It does not
+recursively clean the data inside those responses.
+
+Choose `include_provider_data = TRUE` only when your application deliberately
+needs the provider-owned payload too. That payload can be large or sensitive;
+this is not a harmless pretty-printing option.
+
+A saved request records what you asked for, not a promise that a model will
+give the same answer tomorrow. Retain the actual response and appropriate run
+metadata when you need to explain an analysis later.
+
+## A small boundary, not a second analysis framework
+
+The proposed helpers remove repeated extraction wrappers. They do not add
+hidden row execution, flatten content parts into whatever columns happen to
+exist, coerce every value to text, or fill absent usage with zero.
+
+Use your usual R tools for grouping, filtering and joining. Use lm15 values to
+retain the conversation and its meaning. For remote batches, see
+[Files and jobs](jobs-and-resources.html).

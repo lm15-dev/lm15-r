@@ -1,0 +1,12 @@
+# Check dispatch from the user's environment, not the package test namespace.
+library(lm15)
+a <- integer_value("9007199254740993")
+stopifnot(as_json(a + 2L) == "9007199254740995")
+stopifnot(a > integer_value("9007199254740992"))
+stopifnot(as.character(a) == "9007199254740993")
+stopifnot(inherits(tryCatch(as.double(a), error = identity), "error"))
+stopifnot(as.double(integer_value("3000000000")) == 3000000000)
+x <- config(top_k = 5)
+stopifnot(inherits(tryCatch({ x$top_k <- -1 }, error = identity), "error"))
+stopifnot(x$top_k == 5L)
+stopifnot(!grepl("private-token", paste(capture.output(str(bearer_token("private-token"))), collapse = "")))

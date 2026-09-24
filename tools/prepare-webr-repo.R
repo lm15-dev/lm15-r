@@ -1,0 +1,20 @@
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 1L) stop("Supply the webR output directory.")
+root <- normalizePath(args[[1L]], mustWork = TRUE)
+packages <- list.files(root, pattern = "\\.tgz$", full.names = TRUE)
+if (!length(packages)) stop("No WebAssembly packages found.")
+for (package in packages) {
+  temporary <- tempfile(); dir.create(temporary)
+  description <- grep("/DESCRIPTION$", utils::untar(package, list = TRUE), value = TRUE)
+  if (length(description) != 1L) stop("Package has no unique DESCRIPTION.")
+  utils::untar(package, files = description, exdir = temporary)
+  metadata <- read.dcf(file.path(temporary, description))
+  built <- metadata[1L, "Built"]
+  if (!grepl("wasm32-unknown-emscripten", built, fixed = TRUE)) stop("Refusing to publish a native archive as WebAssembly.")
+  version <- sub("^R ([0-9]+\\.[0-9]+).*", "\\1", built)
+  destination <- file.path(root, "repo", "bin", "emscripten", "contrib", version)
+  dir.create(destination, recursive = TRUE, showWarnings = FALSE)
+  file.copy(package, destination, overwrite = TRUE)
+  unlink(temporary, recursive = TRUE)
+}
+for (directory in list.dirs(file.path(root, "repo", "bin", "emscripten", "contrib"), recursive = FALSE)) tools::write_PACKAGES(directory, type = "mac.binary")

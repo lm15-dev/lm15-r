@@ -1,0 +1,220 @@
+---
+title: "Make data boundaries explicit — API design preview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Make data boundaries explicit — API design preview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> **Proposed API.** New conversion and authoring helpers follow
+> `docs/api-vision.md`; they are not implemented here. Code blocks are static
+> design examples, not executed or validated results.
+
+An easier R interface must not make JSON less precise. An empty object, an
+empty array, a missing field and an explicit `null` are different data. A
+large integer must not change because it crossed into an ordinary R vector.
+
+The proposed interface makes those boundaries easier to express, not easier
+to ignore.
+
+```r
+library(lm15)
+```
+
+## Construct a shape or convert existing data explicitly
+
+Use constructors when writing a small object directly:
+
+```r
+payload <- json_object(
+  label = "example",
+  values = json_array(1L, 2L),
+  note = NULL
+)
+```
+
+Use conversion helpers when you already have R data:
+
+```r
+object <- as_json_object(list(label = "example", note = NULL))
+array <- as_json_array(c("Montreal", "Oslo"))
+
+as_json(object)
+as_json(array)
+```
+
+`as_json_object()` requires an explicitly named list with unique string keys.
+`as_json_array()` accepts an unnamed list or a plain unnamed vector and makes
+its array meaning explicit. Named input must first be deliberately stripped
+of names by the caller; names are never silently discarded.
+
+Empty conversions still have distinct meanings:
+
+```r
+as_json(as_json_object(list()))  # {}
+as_json(as_json_array(list()))   # []
+as_json(json_object(note = NULL))  # {"note":null}
+```
+
+The comments show the intended JSON shapes, not captured output.
+
+JSON keys are not R variable names. The proposal allows an explicitly supplied
+empty-string key and does not repair punctuation or spaces:
+
+```r
+keys <- setNames(list(1L, "kept"), c("", "not an R name"))
+as_json(as_json_object(keys))
+```
+
+Duplicate keys and missing names are errors. There is no `make.names()` step,
+no automatic factor/date conversion, and no guessing of shape during
+serialization.
+
+## Omit optional fields, not the contents of a payload
+
+A typed value omits its own empty optional fields. Opaque payloads—data owned
+by the application or provider—keep their contents exactly.
+
+```r
+as_json(config())
+as_json(config(store = FALSE))
+as_json(text(""))
+
+call <- tool_call_part(
+  "call_1", "lookup",
+  input = json_object(query = "", filters = json_object(), ids = json_array(), note = NULL)
+)
+as_json(call)
+```
+
+`FALSE` is a real setting. An empty text part is still text. Empty values inside
+`call$input` are not clutter for an outer serializer to remove.
+
+```r
+saved <- as_json(call)
+restored <- from_json(saved, kind = "part")
+```
+
+The `kind` selects an lm15 type family, not a provider. Reading then writing
+this value should preserve its canonical meaning. A JSON Schema embedded in a
+tool declaration is likewise a payload, not an invitation to rewrite schema
+keywords to please one server.
+
+## Keep three input boundaries distinct
+
+**Constructors** are the preferred way to author new requests. Unknown argument
+names and invalid values raise useful R input errors.
+
+**Canonical readers** retain the shared contract's forward compatibility:
+ordinary unknown fields may be ignored, while unknown content discriminators
+are refused. A separate authoring check can catch field-name mistakes before
+using that reader:
+
+```r
+json <- '{"max_tokens":20,"temperature":0.2}'
+settings <- json |>
+  check_canonical_fields(kind = "config") |>
+  from_json(kind = "config")
+```
+
+`check_canonical_fields()` returns the original input invisibly on success.
+It checks field names at typed nodes, not arbitrary keys inside a tool input
+or schema. Value and type checks still belong to construction/deserialization.
+It does not silently change the default reader into a stricter one.
+
+**Foreign-format import**, such as `request_from_openai_chat()`, has a different
+job: every provider-format key needs a mapping, explicit passthrough, or
+refusal. Its behavior must not be weakened to match canonical-reader leniency.
+
+## Let the field decide its number type
+
+```r
+as_json(config(max_tokens = 20, temperature = 1L))
+```
+
+`max_tokens` is an integer field; `temperature` is a floating-point field.
+Supplying an integral value of the other R number type is fine. Supplying a
+fractional token limit is not. `TRUE` does not become `1`.
+
+For an integer too large for ordinary R numbers, supply its digits as text
+before R can round them:
+
+```r
+large <- integer_value("9007199254740993")
+as_json(usage(input_tokens = large, output_tokens = 2L))
+as_json(large + 2L)
+```
+
+This remains an exact scalar value, not a promise that every base R vector or
+summary operation supports arbitrary-size integers. The proposal provides
+clear display and explicit conversions rather than an incomplete numeric
+vector type.
+
+## Choose how to interpret a parsed numeric token
+
+Opaque JSON numbers retain their original tokens. Use a named conversion when
+an application needs a number for computation:
+
+```r
+call <- from_json(
+  '{"type":"tool_call","id":"c","name":"count","input":{"n":9007199254740993,"weight":0.25}}',
+  kind = "part"
+)
+
+n <- json_number_integer(call$input$n)
+weight <- json_number_double(call$input$weight)
+```
+
+The integer conversion refuses fractional values instead of rounding.
+The double conversion explicitly chooses ordinary finite floating-point
+arithmetic, but refuses an integral token beyond the safe integer range.
+Neither conversion changes `call$input`.
+
+For tables, `usage_dbl()` is the checked numeric view and `usage_chr()` is the
+exact decimal-text view. Unknown counts remain missing in both.
+
+## Choose the scope of provider-data serialization
+
+```r
+answer <- response(
+  "demo-model", message_assistant("hello"), "stop",
+  provider_data = json_object(example_metadata = "provider-owned")
+)
+
+as_json(answer)
+as_json(answer, include_provider_data = TRUE)
+responses_json(list(answer, NULL), include_provider_data = TRUE)
+```
+
+The last call returns one JSON array string and keeps the NULL position.
+The inclusion policy is applied to each response separately. It does not
+become a recursive cleanup rule for arbitrary nested data.
+
+An inclusion option supplied on an incompatible root should be rejected, not
+silently ignored. Use the collection writer when you mean a collection of
+responses. Existing type-specific rules for nested canonical values remain
+part of the contract.
+
+Provider data can contain sensitive or large content. Automatic printing
+never dumps it; explicit serialization is an application decision.
+
+## Describe media before resolving its source
+
+```r
+image <- image_part(url = "https://example.org/photo.png", media_type = "image/png")
+document <- document_part(path = "report.pdf", media_type = "application/pdf")
+
+bytes <- charToRaw("small local payload")
+binary <- binary_part(data = bytes, media_type = "application/octet-stream")
+media_bytes(binary)
+```
+
+Each part has one source. Constructing URL/path values does not fetch or read
+them. `media_bytes()` is an explicit request for local bytes: it decodes inline
+data or reads a local path, but does not quietly fetch URL/file-ID content.
+Request preparation may resolve local paths when an operation needs them.
+
+A valid part is not a promise that every provider accepts it. Unsupported media
+or settings still cause a refusal. Preserve returned parts and continuation
+state when replaying a conversation rather than reconstructing them from text.

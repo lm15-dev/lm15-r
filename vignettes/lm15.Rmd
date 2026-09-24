@@ -1,0 +1,190 @@
+---
+title: "Start with a request — API design preview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Start with a request — API design preview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> **Proposed API, not current package instructions.** These examples describe
+> the interface we want to build. Some functions and behavior do not exist yet.
+> All code blocks are non-executable; no examples were run. Display examples
+> are illustrations, not captured output.
+
+lm15 should let you answer three questions without guessing:
+
+1. What request am I making?
+2. Which client will perform it?
+3. What did I receive, and did the operation finish?
+
+The package supplies a shared vocabulary across providers. It does not decide
+which tool to execute, when to retry, or how to manage your conversation.
+
+## Build a value
+
+```r
+library(lm15)
+
+req <- request(
+  "demo-model",
+  message_user("Explain a list column in one sentence."),
+  config = config(max_tokens = 100L)
+)
+req
+```
+
+The proposed summary reveals structure without printing the prompt:
+
+```text
+<lm15 request [value]>
+  messages: 1 user; parts: 1 text
+  config: max_tokens
+  content: hidden
+```
+
+A **request** describes work. A **message** says who is speaking and holds one
+or more content parts. `message_user()` turns a string into a text part; you do
+not need to wrap a single message in a list. Use a flat list for several messages.
+
+Constructing these values checks their arguments. It does not read files,
+look for credentials, or send anything. If you supply a misspelled argument,
+the package should name it without evaluating its value.
+
+## Choose a client separately
+
+Use a scripted client while learning:
+
+```r
+client <- fake_lm("A list column holds a list element in each row.")
+answer <- complete(client, req)
+
+response_text(answer)
+answer$finish_reason
+```
+
+The reply comes from the queue supplied to `fake_lm()`. It is not generated
+from the prompt and says nothing about a real model's quality. A fake client
+is deliberately stateful: each call consumes its next scripted reply.
+
+`complete()` returns a complete **response object**, not merely a string.
+The text accessor gives you a view of its content. The response still retains
+its parts, usage, ending and provider information.
+
+A response containing tool calls should make that clear when printed:
+
+```text
+<lm15 response [value]>
+  finish: tool_call; parts: 2 tool calls
+  usage: not reported
+  content and provider data: hidden
+```
+
+There is no text preview hidden inside this display. Content may be sensitive;
+reading or printing it should be your choice.
+
+## Compose around the operation
+
+Keep the client first when performing work, and use the pipe for value
+transformations and views:
+
+```r
+client <- fake_lm("Keep the response; extract text when needed.")
+complete(client, req) |>
+  response_text()
+```
+
+There is no second `ask()` or `chat()` function with a different return type.
+Once you know the completion loop, you know the loop for a real client too.
+
+## Make the next request visible
+
+A conversation grows by appending messages to a request value:
+
+```r
+follow_up <- req |>
+  append_messages(answer$message) |>
+  append_messages(message_user("Show a small R example."))
+```
+
+`append_messages()` returns a new request. It does not modify `req`, send the
+new request, or invent conversation history. It accepts one typed message or
+a flat list, and preserves their order and contents.
+
+Append `answer$message`, not a message rebuilt from `response_text(answer)`.
+The original message may contain other parts or provider-owned continuation
+data needed for replay. Those values travel with the message even though they
+are not part of its displayed text.
+
+Changing a setting remains an ordinary, checked value edit:
+
+```r
+short_req <- req
+short_req$config$max_tokens <- 40L
+```
+
+`req` keeps its original setting. Bad configuration should identify the field
+and requirement, without exposing arbitrary supplied contents:
+
+```r
+config(max_tokens = -1L)
+```
+
+```text
+Error in config():
+  `max_tokens` must be a positive whole number.
+```
+
+This is the proposed diagnostic shape, not a recorded error from the package.
+
+## Move to a real provider deliberately
+
+The following proposed code would perform a paid operation if run with working
+credentials. It remains non-executable in this preview.
+
+```r
+client <- new_lm(
+  "openai",
+  credential = credential_env("OPENAI_API_KEY")
+)
+
+req <- request(
+  "gpt-4.1-mini",
+  message_user("Explain a list column in one sentence."),
+  config = config(max_tokens = 100L)
+)
+
+answer <- complete(
+  client,
+  req,
+  control = request_control(timeout = 30)
+)
+```
+
+`new_lm()` creates a client recipe. It validates what you supplied, but does
+not read the environment variable. The completion operation resolves that
+source when it prepares the request.
+
+`config()` describes model behavior. `request_control()` describes local
+execution: time and memory limits. It is not sent as model configuration and
+is not included in the request's canonical JSON.
+
+The timeout covers the operation's elapsed budget, including preparation.
+Built-in I/O respects the remaining budget. Arbitrary user callbacks must
+cooperate; lm15 cannot safely interrupt any R expression at any instant.
+Timing out locally does not undo work or charges at the provider.
+
+## The small contract to remember
+
+- Values describe requests and responses; constructing them does no I/O.
+- A client recipe selects identity and connection behavior without acquiring them.
+- `complete()` and `stream()` perform explicit operations.
+- Unsupported settings are refused, not silently omitted.
+- The application owns retries, tool execution, budgets and history policy.
+
+Next: [Conversations and tools](conversations-and-tools.html),
+[work with a table](data-workflows.html), or
+[choose clients and credentials](clients-and-routing.html).
+
+The complete proposed signatures and compatibility decisions are in
+`docs/api-vision.md` in the source repository.

@@ -1,0 +1,199 @@
+---
+title: "Keep control of tools — API design preview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Keep control of tools — API design preview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> **Proposed API.** This guide follows `docs/api-vision.md`, not the current
+> implementation. Code is deliberately non-executable and was not run.
+> Scripted replies below are teaching data, not provider results.
+
+A tool call asks your application to do something. It does not give a model
+permission to choose arbitrary R functions or run arbitrary code.
+
+The proposed interface keeps four separate steps visible: describe a tool,
+receive calls, run allowed work, and append results to the next request.
+
+## Keep the function and its declaration separate
+
+Here is a small local function. It looks up fixed readings, not live weather:
+
+```r
+library(lm15)
+
+weather <- function(city) {
+  if (!is.character(city) || length(city) != 1L || is.na(city)) {
+    stop("city must be one string.", call. = FALSE)
+  }
+  readings <- c(Montreal = "18 degrees C, clear", Oslo = "12 degrees C, rain")
+  if (!city %in% names(readings)) {
+    stop("No reading is available for that city.", call. = FALSE)
+  }
+  unname(readings[[city]])
+}
+```
+
+Declare its input using an explicit JSON Schema:
+
+```r
+weather_tool <- function_tool(
+  "weather",
+  description = "Look up a reading for Montreal or Oslo.",
+  parameters = json_object(
+    type = "object",
+    properties = json_object(
+      city = json_object(
+        type = "string",
+        enum = as_json_array(c("Montreal", "Oslo"))
+      )
+    ),
+    required = as_json_array("city"),
+    additionalProperties = FALSE
+  )
+)
+```
+
+A JSON Schema describes allowed fields and values. It does not make model
+output trustworthy: the function still checks its inputs.
+
+`as_json_array()` makes conversion of an R vector explicit. The package does
+not guess array shape when serializing a value. Nor does it infer a complete
+input schema from R argument defaults. The declaration stays visible, and the
+application keeps the function to execute.
+
+## Receive calls as data
+
+```r
+req <- request(
+  "demo-model",
+  message_user("What is the weather in Montreal and Oslo?"),
+  tools = list(weather_tool)
+)
+
+first_reply <- response(
+  "demo-model",
+  message_assistant(list(
+    tool_call_part("call_montreal", "weather", input = json_object(city = "Montreal")),
+    tool_call_part("call_oslo", "weather", input = json_object(city = "Oslo"))
+  )),
+  "tool_call"
+)
+
+client <- fake_lm(list(
+  first_reply,
+  response("demo-model", message_assistant("Montreal is clear; Oslo has rain."), "stop")
+))
+
+answer <- complete(client, req)
+calls <- tool_calls(answer)
+```
+
+The response contains two calls, each with an ID, name and input. Printing it
+should show the count and ending without dumping those inputs. Read them
+explicitly when deciding what to execute:
+
+```r
+vapply(calls, function(call) call$name, character(1))
+response_text(answer)
+```
+
+The scalar text view is `NULL`: this response asks for tools. It is not an
+empty answer, and it must not become an empty string merely to fit a column.
+
+## Execute an explicit allowlist
+
+```r
+run_call <- function(call) {
+  if (!identical(call$name, "weather")) {
+    stop("The requested tool is not available.", call. = FALSE)
+  }
+  if (!identical(names(call$input), "city")) {
+    stop("weather requires exactly one input named city.", call. = FALSE)
+  }
+  weather(call$input$city)
+}
+
+replies <- lapply(calls, function(call) {
+  output <- run_call(call)
+  message_tool(call$id, output, name = call$name)
+})
+```
+
+`message_tool()` creates a tool message from the result. It does not execute
+anything itself. The IDs preserve the connection between each requested call
+and the result you chose to return.
+
+Do not replace the allowlist with unrestricted `get(call$name)`,
+`eval(parse())`, or shell execution. A more powerful application may need
+approval rules and permissions; those belong to the application, not a hidden
+lm15 dispatcher.
+
+## Append the exchange without rebuilding its contents
+
+```r
+next_req <- req |>
+  append_messages(answer$message) |>
+  append_messages(replies)
+
+final <- complete(client, next_req)
+response_text(final)
+```
+
+Both append operations are local value transformations. The first preserves
+the complete assistant message, including continuation data. The second
+appends a flat list of tool messages. Neither sends a request or changes `req`.
+Only the next `complete()` asks the client to perform more work.
+
+This example answers both calls before making the next model call. A real
+application should do the same unless it has an explicit alternative protocol.
+It should not silently omit a failed call or replace the assistant message
+with its display text.
+
+When you need exact control over the parts in a single tool message, the
+lower-level constructors remain available:
+
+```r
+parts <- list(
+  tool_result_part("call_montreal", list(text("18 degrees C, clear")), name = "weather"),
+  tool_result_part("call_oslo", list(text("12 degrees C, rain")), name = "weather")
+)
+one_message <- lm15::message("tool", parts)
+```
+
+That is an explicit alternative representation, not a new tool-loop API.
+The common path uses role helpers; the exact-type path exposes parts directly.
+Qualifying `lm15::message()` also distinguishes it from R's diagnostic
+`base::message()`.
+
+## Choose error output, rather than leaking an exception
+
+```r
+unavailable <- message_tool(
+  "call_missing",
+  "No reading is available for that city.",
+  name = "weather",
+  is_error = TRUE
+)
+```
+
+This returns a deliberate error message to the model. It is different from an
+R failure that your application should stop and handle. Do not convert every
+caught exception into tool output: exception details can contain secrets or
+information the model does not need.
+
+An empty output is also deliberate: `message_tool(id, "")` contains an empty
+text part. It is not a message with no content parts.
+
+## The application still owns the loop
+
+The improved syntax removes list-editing repetition, not policy decisions.
+Before another completion, your application still decides whether the calls
+are allowed, their arguments are valid, every call has a result, and another
+request is within its budget.
+
+There is no automatic retry, execution loop, history truncation, or summary of
+older messages. The complete request remains available to inspect and save.
+For tabular work, [keep those objects in list columns](data-workflows.html).
