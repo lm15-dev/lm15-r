@@ -306,7 +306,7 @@
     req$tools <- kept; tc$allowed <- list(); req$config$tool_choice <- tc
   }
   if (!is.null(tc) && tc$mode == "required" && !is.null(req$config$response_format))
-    stop(lm15_error("xai: a forced tool (mode='required') cannot be combined with response_format — api.x.ai returns JSON text and drops the call (verified live 2026-09-02)", code = "unsupported_feature", provider = provider, feature = "config.tool_choice.mode"))
+    stop(lm15_error("xai: a forced tool (mode='required') cannot be combined with response_format \u2014 api.x.ai returns JSON text and drops the call (verified live 2026-09-02)", code = "unsupported_feature", provider = provider, feature = "config.tool_choice.mode"))
   req
 }
 
@@ -540,7 +540,7 @@ build_request <- function(lm, request, ..., stream = FALSE) {
       if (compat$structured_output == "reject")
         .adapt("config.response_format", "dropped", "this server accepts output_config.format and does not apply it; describe the shape in the prompt", asked = f)
       else {
-        if (!schema) stop(lm15_error("anthropic: response_format json_object is not supported — the Messages API has no any-JSON mode; give a json_schema (objects need additionalProperties: false)", code = "unsupported_feature", provider = provider, feature = "config.response_format"))
+        if (!schema) stop(lm15_error("anthropic: response_format json_object is not supported \u2014 the Messages API has no any-JSON mode; give a json_schema (objects need additionalProperties: false)", code = "unsupported_feature", provider = provider, feature = "config.response_format"))
         payload$output_config <- payload$output_config %||% json_object()
         payload$output_config$format <- json_object(type = "json_schema", schema = f$schema)
       }
