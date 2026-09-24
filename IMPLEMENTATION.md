@@ -7,19 +7,18 @@ working trees have not been modified.
 ## Contract status — 2026-09-24
 
 `CONTRACT_PIN` now names lm15-contract `fc0c460` (2026-09-24), the version
-Python, TypeScript and Rust pass in full. R passes 1,300 of its cases and fails
+Python, TypeScript and Rust pass in full. R passes 1,397 of its cases and fails
 43; the CI contract job is red until these are ported. They are unported
 features, listed so the red job reads as a to-do list:
 
 | Cases | What R does not have yet |
 |---|---|
-| 34 | Judgments (MAP-14): `DataPart`, `config$probabilities`, the TypeSafe provider (`jev-*`), judgment schemas answered as data |
+| 36 | Judgments (MAP-14): `DataPart`, `config$probabilities`, the TypeSafe provider (`jev-*`, 19 of the 36), judgment schemas answered as data |
 | 1 | R3: an expired-unrenewable or signed-out xAI login blocks `XAI_API_KEY` (`xai-unusable-login-blocks-env`) |
 | 1 | `CachedPrefix$provider` (2026-09-20) |
 | 2 | `logprobs_complete` on responses and deltas |
 | 2 | `ErrorDetail$http_response` diagnostics (2026-09-19) |
 | 1 | the live-collection limit error's serde form |
-| 2 | TypeSafe error and model-listing cases (part of the provider above) |
 
 At the previous pin (`cfed007`, 2026-09-11) R failed 5 cases, all because it
 already implements MAP-15 (a provider's "no such model" is
