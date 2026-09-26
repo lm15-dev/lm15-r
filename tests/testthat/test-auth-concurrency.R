@@ -29,12 +29,13 @@ test_that("cross-process contention is retryable, not a bad-login error", {
   write_credentials(auth_body(), path = f$path, env = f$env)
   lock_path <- lm15:::.lock_path(f$path, f$env)
   ready <- file.path(f$home, "ready")
-  child <- callr::r_bg(function(path, ready) {
-    lock <- filelock::lock(path)
-    on.exit(filelock::unlock(lock))
-    writeLines("ready", ready)
-    Sys.sleep(10)
-  }, args = list(lock_path, ready))
+  root <- getNamespaceInfo(asNamespace("lm15"), "path")
+  child <- callr::r_bg(function(root, path, env, ready) {
+    if (file.exists(file.path(root, "src", "store.c"))) pkgload::load_all(root, quiet = TRUE)
+    else library(lm15, lib.loc = dirname(root))
+    # The lock every lm15 SDK takes on this credentials file.
+    lm15:::.with_credential_lock(path, function() { writeLines("ready", ready); Sys.sleep(10) }, env)
+  }, args = list(root, f$path, f$env, ready))
   on.exit(child$kill(), add = TRUE)
   deadline <- proc.time()[["elapsed"]] + 5
   while (!file.exists(ready) && proc.time()[["elapsed"]] < deadline) Sys.sleep(0.01)

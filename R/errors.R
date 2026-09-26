@@ -1,4 +1,4 @@
-.error_classes <- c(auth = "AuthError", billing = "BillingError", rate_limit = "RateLimitError", invalid_request = "InvalidRequestError", context_length = "ContextLengthError", timeout = "TimeoutError", server = "ServerError", unsupported_model = "UnsupportedModelError", unsupported_feature = "UnsupportedFeatureError", not_configured = "NotConfiguredError", unknown_model = "UnknownModelError", ambiguous_model = "AmbiguousModelError", transport = "TransportError", lock_timeout = "LockTimeoutError", stream_assembly = "StreamAssemblyError", collection_limit = "CollectionLimitError", provider = "ProviderError")
+.error_classes <- c(auth = "AuthError", billing = "BillingError", rate_limit = "RateLimitError", invalid_request = "InvalidRequestError", context_length = "ContextLengthError", timeout = "TimeoutError", server = "ServerError", unsupported_model = "UnsupportedModelError", unsupported_feature = "UnsupportedFeatureError", not_configured = "NotConfiguredError", unknown_model = "UnknownModelError", ambiguous_model = "AmbiguousModelError", transport = "TransportError", lock_timeout = "LockTimeoutError", stream_assembly = "StreamAssemblyError", collection_limit = "CollectionLimitError", auth_operation = "AuthOperationError", provider = "ProviderError")
 
 lm15_error <- function(message, ..., code = "provider", provider = NULL, provider_code = NULL, status = NULL, request_id = NULL, retry_after = NULL, partial = NULL, part_index = NULL, model = NULL, providers = NULL, credential_hint = NULL, path = NULL, lock_path = NULL, feature = NULL, rate_limit_headers = NULL) {
   .check_dots(...)
@@ -7,7 +7,7 @@ lm15_error <- function(message, ..., code = "provider", provider = NULL, provide
     context_length = c("InvalidRequestError", "ProviderError"),
     unsupported_model = c("InvalidRequestError", "ProviderError"),
     not_configured = "ConfigurationError", unknown_model = "ConfigurationError", ambiguous_model = "ConfigurationError",
-    unsupported_feature = "CapabilityError", transport = character(), lock_timeout = character(), stream_assembly = character(), collection_limit = character(), provider = character(), "ProviderError")
+    unsupported_feature = "CapabilityError", transport = character(), lock_timeout = character(), stream_assembly = character(), collection_limit = character(), auth_operation = character(), provider = character(), "ProviderError")
   if (!is.null(retry_after) && (!is.numeric(retry_after) || length(retry_after) != 1L || !is.finite(retry_after) || retry_after < 0)) retry_after <- NULL
   structure(list(message = message, call = NULL, code = code, provider = provider, provider_code = provider_code, status = status, request_id = request_id, retry_after = retry_after, partial = partial, part_index = part_index, model = model, providers = providers, credential_hint = credential_hint, path = path, lock_path = lock_path, feature = feature, rate_limit_headers = .freeze_rate_limits(rate_limit_headers)),
     class = c(unname(.error_classes[[code]]), ancestry, "LM15Error", "error", "condition"))
@@ -190,3 +190,22 @@ normalize_error <- function(lm, status, body, ..., headers = json_object(), now 
   if (length(snapshot)) out$rate_limit_headers <- snapshot
   if (length(out)) out else NULL
 }
+
+# Managed-auth lifecycle failures (AUTH-24): root-level, not a provider 401,
+# never automatically retryable. Programs match on `reason`.
+.auth_reasons <- c("interaction_required", "method_unavailable", "connection_exists", "login_in_progress", "login_required",
+  "connection_changed", "login_denied", "login_expired", "invalid_login_state", "attempt_unavailable", "indeterminate",
+  "storage_unavailable", "unsupported_store_version", "selection_mismatch", "credential_rejected")
+.auth_stages <- c("discovery", "reservation", "interaction", "authorization", "polling", "exchange", "persistence",
+  "resolution", "renewal", "verification", "catalog", "dispatch")
+.auth_recoveries <- c("provide_input", "choose_method", "resume_attempt", "inspect_attempt", "restart_login",
+  "select_connection", "repair_storage", "operator_action", "none")
+.auth_op_error <- function(message, reason, stage = "resolution", commit_state = "not_committed", recovery = "none", provider = NULL,
+                           connection_id = NULL, attempt_id = NULL, method_id = NULL, status = NULL, provider_code = NULL, operation = NULL) {
+  stopifnot(reason %in% .auth_reasons, stage %in% .auth_stages, commit_state %in% c("committed", "not_committed", "unknown"), recovery %in% .auth_recoveries)
+  e <- lm15_error(message, code = "auth_operation", provider = provider, status = status, provider_code = provider_code)
+  e$reason <- reason; e$stage <- stage; e$commit_state <- commit_state; e$recovery <- recovery
+  e$connection_id <- connection_id; e$attempt_id <- attempt_id; e$method_id <- method_id; e$operation <- operation
+  e
+}
+.abort_auth <- function(...) stop(.auth_op_error(...))

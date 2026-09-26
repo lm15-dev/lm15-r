@@ -7,7 +7,12 @@ test_that("callback paths, state and duplicate parameters are checked", {
   expect_identical(response$result$code, "private+code")
   expect_false(grepl("private", response$body, fixed = TRUE))
   expect_false(grepl("private", paste(capture.output(str(response$result)), collapse = ""), fixed = TRUE))
-  expect_true(parse("/callback?error=denied&error_description=private", "/callback", "state")$failed)
+  # AUTH-18: an error return is accepted only with this attempt's state, and
+  # a return with both a code and an error is invalid.
+  expect_true(parse("/callback?state=state&error=denied&error_description=private", "/callback", "state")$failed)
+  expect_false(parse("/callback?error=denied", "/callback", "state")$failed)
+  expect_identical(parse("/callback?error=denied", "/callback", "state")$status, 400L)
+  expect_identical(parse("/callback?state=state&code=a&error=denied", "/callback", "state")$status, 400L)
   expect_error(oauth_callback_listener(host = "0.0.0.0"), "127.0.0.1", fixed = TRUE)
 })
 

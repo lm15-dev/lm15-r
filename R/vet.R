@@ -38,7 +38,7 @@
   if (!is.null(response$provider_data$`_lm15_unmapped`)) out$unmapped <- response$provider_data$`_lm15_unmapped`
   out
 }
-.vet_ops <- c("capabilities", "build_request", "parse_response", "replay_stream", "normalize_error", "serde_roundtrip", "validate", "surface_dump", "explain_auth", "resolve_model", "build_models_request", "parse_models_response", "file_op_build", "file_op_parse", "cache_op_build", "cache_op_parse", "batch_op_build", "batch_op_parse", "video_op_build", "video_op_parse", "generation_build", "generation_parse", "ingest_openai_chat", "sigv4_sign", "replay_live", "token_exchange_build", "token_exchange_parse")
+.vet_ops <- c("capabilities", "build_request", "parse_response", "replay_stream", "normalize_error", "serde_roundtrip", "validate", "surface_dump", "explain_auth", "resolve_model", "build_models_request", "parse_models_response", "file_op_build", "file_op_parse", "cache_op_build", "cache_op_parse", "batch_op_build", "batch_op_parse", "video_op_build", "video_op_parse", "generation_build", "generation_parse", "ingest_openai_chat", "sigv4_sign", "replay_live", "token_exchange_build", "token_exchange_parse", "managed_run")
 
 vet_handle <- function(line, ...) {
   .check_dots(...); id <- NULL; trace <- list()
@@ -59,6 +59,7 @@ vet_handle <- function(line, ...) {
         catalog <- lapply(msg$catalog %||% list(), from_dict, kind = "model_info")
         .json_object(resolve(new_router(catalog = catalog, env = character()), msg$model))
       },
+      managed_run = .vet_managed_run(msg),
       explain_auth = {
         env <- unlist(msg$env %||% list()); if (!length(env)) env <- character()
         keys <- setNames(lapply(msg$api_keys_providers %||% list(), function(p) api_key(msg$sentinel)), unlist(msg$api_keys_providers %||% list()))

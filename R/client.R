@@ -10,8 +10,28 @@ providers <- function() vapply(.provider_tables()$providers, function(p) p$id, "
 .definition <- function(provider) {
   provider <- canonical_provider(provider)
   for (d in .provider_tables()$providers) if (d$id == provider) return(d)
+  for (d in .declared_providers()) if (d$id == provider) return(d)
   .abort(paste("Unknown provider:", provider), "not_configured", provider)
 }
+# Routes that exist only for a managed connection (lm15-contract
+# auth/managed/profiles.json): no contract wire receipt, so they are not
+# registry rows (a row is a support claim, AUTH-26). A router routes them
+# only when it carries an Auth, the only way to hold their credential.
+.declared_providers <- local({
+  value <- NULL
+  function() {
+    if (!is.null(value)) return(value)
+    access <- function(id, base_url, supports, headers = list()) .json_object(list(provider = id, supports = .json_object(supports), auth_modes = list("bearer"), env_keys = list(),
+      base_url = base_url, credential_policy = "key", auth_scheme = list("bearer"), headers = headers, backend = "api", backend_options = json_object()))
+    value <<- list(
+      list(id = "kimi-code", dialect = "anthropic", compat = NULL, access = access("kimi-code", "https://api.kimi.com/coding", list(complete = TRUE, stream = TRUE)), placeholder_key = NULL, console_url = NULL, declared = TRUE),
+      list(id = "github-copilot", dialect = "openai-chat", compat = json_object(instruction_role = "system", max_tokens_field = "max_completion_tokens", stream_usage = "include", thinking_format = "reasoning_effort"),
+        access = access("github-copilot", "https://api.individual.githubcopilot.com", list(complete = TRUE, stream = TRUE, models = TRUE),
+          headers = lapply(names(.copilot_headers), function(k) list(k, .copilot_headers[[k]]))), placeholder_key = NULL, console_url = NULL, declared = TRUE))
+    value
+  }
+})
+.router_providers <- function(router) c(providers(), if (!is.null(router$auth)) vapply(.declared_providers(), function(d) d$id, ""))
 
 # Credentials live in closures so print/str of client configuration cannot
 # traverse into a token value. Supplying a function supports rotation.
@@ -30,7 +50,7 @@ print.lm15_credential <- function(x, ...) { cat("<lm15 credential: redacted>\n")
   validate(out)
 }
 
-new_lm <- function(provider, ..., api_key = NULL, base_url = NULL, compat = NULL, settings = list(), transport = NULL, env = NULL, account_id = NULL, clock = Sys.time, credentials_path = NULL, live_connect = NULL, adaptations = "note") {
+new_lm <- function(provider, ..., api_key = NULL, credential = NULL, base_url = NULL, compat = NULL, settings = list(), transport = NULL, env = NULL, account_id = NULL, clock = Sys.time, credentials_path = NULL, live_connect = NULL, adaptations = "note") {
   .check_dots(...)
   .check_policy(adaptations)
   d <- .definition(provider)
@@ -39,8 +59,10 @@ new_lm <- function(provider, ..., api_key = NULL, base_url = NULL, compat = NULL
   if (!is.null(live_connect) && !is.function(live_connect)) stop("live_connect must be a function.", call. = FALSE)
   if (!is.null(env) && (!is.character(env) || (length(env) && is.null(names(env))))) stop("env must be a named character vector; character() disables environment lookup.", call. = FALSE)
   lookup <- function(name) if (is.null(env)) Sys.getenv(name, unset = "") else unname(env[name]) %||% ""
+  named <- .check_named(d$id, credential)
+  if (!is.null(named) && !is.null(api_key)) .abort("A named identity and an explicit api_key both answer 'who am I'; give one.", "not_configured", d$id)
   if (is.null(api_key)) {
-    if (d$access$credential_policy %in% c("oauth", "oauth-unless-explicit")) {
+    if (is.null(named) && d$access$credential_policy %in% c("oauth", "oauth-unless-explicit")) {
       stored <- .stored_info(d$id, credentials_path, env, clock())
       if (d$access$credential_policy == "oauth" || (!is.null(stored) && (!stored$expired || stored$refreshable))) {
         initial <- load_local_credential(d$id, path = credentials_path, env = env, now = clock(), transport = transport)
@@ -58,7 +80,7 @@ new_lm <- function(provider, ..., api_key = NULL, base_url = NULL, compat = NULL
       api_key <- local({
         cached_provider <- NULL
         structure(function() {
-          if (is.null(cached_provider)) cached_provider <<- cloud_credential_provider(d$id, env = env, settings = settings, transport = transport, clock = clock)
+          if (is.null(cached_provider)) cached_provider <<- cloud_credential_provider(d$id, env = env, settings = settings, transport = transport, clock = clock, named = named)
           cached_provider()
         }, class = c("lm15_credential", "function"))
       })
@@ -128,8 +150,9 @@ new_lm <- function(provider, ..., api_key = NULL, base_url = NULL, compat = NULL
 }
 print.lm15_lm <- function(x, ...) { cat("<lm15 client: ", x$definition$id, ">\n", sep = ""); invisible(x) }
 
-new_router <- function(..., api_keys = list(), base_urls = list(), settings = list(), catalog = list(), rules = NULL, env = NULL, transport = NULL, live_connect = NULL, adaptations = "note") {
+new_router <- function(..., api_keys = list(), base_urls = list(), settings = list(), catalog = list(), rules = NULL, env = NULL, transport = NULL, live_connect = NULL, adaptations = "note", auth = NULL, credentials = list()) {
   .check_dots(...)
+  if (!is.null(auth) && !inherits(auth, "lm15_auth")) stop("auth must come from local_auth(), memory_auth() or new_auth().", call. = FALSE)
   .check_policy(adaptations)
   if (!is.null(live_connect) && !is.function(live_connect)) stop("live_connect must be a function.", call. = FALSE)
   for (entries in list(api_keys, base_urls, settings)) {
@@ -137,7 +160,7 @@ new_router <- function(..., api_keys = list(), base_urls = list(), settings = li
     if (anyDuplicated(gsub("_", "-", names(entries), fixed = TRUE))) .abort("Duplicate spellings of a provider are not allowed.", "not_configured")
   }
   for (name in names(api_keys)) if (is.character(api_keys[[name]])) api_keys[[name]] <- api_key(api_keys[[name]])
-  structure(list(api_keys = api_keys, base_urls = base_urls, settings = settings, catalog = catalog, client_cache = new.env(parent = emptyenv()),
+  structure(list(api_keys = api_keys, base_urls = base_urls, settings = settings, catalog = catalog, client_cache = new.env(parent = emptyenv()), auth = auth, credentials = .check_named_credentials(credentials, api_keys),
     rules = rules %||% list(c("claude-", "anthropic"), c("gpt-", "openai"), c("o1", "openai"), c("o3", "openai"), c("o4", "openai"), c("gemini-", "gemini"), c("gemma-", "gemini"), c("nano-banana", "gemini"), c("grok-", "xai"), c("sora-", "openai"), c("veo-", "gemini"), c("chat-latest", "openai"), c("jev-", "typesafe")), env = env, transport = transport, live_connect = live_connect, adaptations = adaptations), class = "lm15_router")
 }
 print.lm15_router <- function(x, ...) { cat("<lm15 router; credentials redacted>\n"); invisible(x) }
@@ -147,7 +170,7 @@ str.lm15_credential <- function(object, ...) { print.lm15_credential(object); in
 resolve <- function(router, model, ...) {
   .check_dots(...); .string(model, "model", empty = TRUE)
   head <- sub(":.*$", "", model); rest <- substring(model, nchar(head) + 2L)
-  if (grepl(":", model, fixed = TRUE) && canonical_provider(head) %in% providers() && nzchar(rest)) return(list(provider = canonical_provider(head), model = rest, source = "prefix"))
+  if (grepl(":", model, fixed = TRUE) && canonical_provider(head) %in% .router_providers(router) && nzchar(rest)) return(list(provider = canonical_provider(head), model = rest, source = "prefix"))
   catalog <- if (inherits(router$catalog, "lm15_model_registry")) router$catalog$list() else router$catalog
   matches <- Filter(function(info) info$id == model || model %in% unlist(info$aliases), catalog)
   if (length(matches)) {
@@ -173,6 +196,7 @@ resolve <- function(router, model, ...) {
     if (length(key)) entries[[key]] else NULL
   }
   definition <- .definition(p)
+  if (!is.null(router$auth)) return(.managed_router_lm(router, p, definition, exact))
   # The doctor and runtime use the same explicit/shared-key selection.
   source <- if (definition$access$credential_policy == "oauth") NULL else .explicit_source(p, router$api_keys)
   credential <- if (is.null(source)) NULL else router$api_keys[[source]]
@@ -211,4 +235,40 @@ router_lm <- function(router, model, ...) {
   bytes <- as.integer(charToRaw(enc2utf8(x)))
   safe <- c(45L, 46L, 95L, 126L, 48:57, 65:90, 97:122, if (resource) 47L)
   paste(vapply(bytes, function(b) if (b %in% safe) rawToChar(as.raw(b)) else sprintf("%%%02X", b), ""), collapse = "")
+}
+
+# AUTH-15 mode B: an explicit api_keys entry; an explicit named cloud
+# identity; the scope's saved connection (renewed per request); a keyless
+# local server's placeholder. Never an environment key, a foreign CLI file
+# or the machine's cloud chain.
+.managed_router_lm <- function(router, p, definition, exact) {
+  auth <- router$auth
+  source <- .explicit_source(p, router$api_keys)
+  credential <- if (is.null(source)) NULL else router$api_keys[[source]]
+  named <- router$credentials[[p]] %||% router$credentials[[gsub("-", "_", p, fixed = TRUE)]]
+  base_url <- exact(router$base_urls); account_id <- NULL; headers <- list()
+  if (is.null(credential) && is.null(named)) {
+    saved <- tryCatch(auth$request_auth(p), AuthOperationError = function(e) e)
+    if (inherits(saved, "AuthOperationError")) {
+      if (identical(saved$reason, "login_required") && !is.null(definition$placeholder_key) && !isTRUE(auth$status(p)$logged_out)) credential <- definition$placeholder_key
+      else if (identical(saved$reason, "login_required") && !is.null(definition$access$host))
+        .abort_auth(paste0(p, ": no saved connection in this scope; the machine's cloud identity is not used under a managed Auth -- save a named identity (configure(auth, provider, 'cloud', answers = list(named = ...))) or pass credentials = explicitly."),
+          reason = "login_required", stage = "resolution", recovery = "select_connection", provider = p)
+      else stop(saved)
+    } else if (!is.null(saved$named)) named <- saved$named
+    else {
+      credential <- auth$credential_provider(p)
+      account_id <- saved$account_id; headers <- saved$headers
+      base_url <- base_url %||% saved$base_url
+    }
+  }
+  environment <- router$env %||% Sys.getenv()
+  lm <- new_lm(p, api_key = credential, credential = named, base_url = base_url, settings = exact(router$settings) %||% list(), env = environment,
+    transport = router$transport, live_connect = router$live_connect, adaptations = router$adaptations %||% "note", account_id = account_id)
+  if (length(headers)) {
+    have <- tolower(vapply(lm$definition$access$headers, function(h) h[[1L]], ""))
+    extra <- Filter(function(k) !tolower(k) %in% have, names(headers))
+    lm$definition$access$headers <- c(lm$definition$access$headers, lapply(extra, function(k) list(k, headers[[k]])))
+  }
+  lm
 }

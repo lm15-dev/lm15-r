@@ -101,7 +101,7 @@
   detail = c("low", "high", "auto"), encoding = c("pcm16", "opus", "mp3", "aac"),
   readiness = c("pending", "ready", "failed"), batch_status = c("queued", "running", "cancelling", "completed", "failed", "cancelled", "expired"),
   batch_outcome = c("succeeded", "errored", "cancelled", "expired"), video_status = c("queued", "running", "completed", "failed", "cancelled"),
-  code = c("auth", "billing", "rate_limit", "invalid_request", "context_length", "timeout", "server", "unsupported_model", "unsupported_feature", "not_configured", "unknown_model", "ambiguous_model", "transport", "lock_timeout", "stream_assembly", "collection_limit", "provider"),
+  code = c("auth", "billing", "rate_limit", "invalid_request", "context_length", "timeout", "server", "unsupported_model", "unsupported_feature", "not_configured", "unknown_model", "ambiguous_model", "transport", "lock_timeout", "stream_assembly", "collection_limit", "auth_operation", "provider"),
   probability_policy = c("off", "if_available", "required"),
   judgment_method = c("provider_classification", "candidate_sequence_likelihood")
 )

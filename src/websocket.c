@@ -2,16 +2,28 @@
 #include <Rinternals.h>
 #include <string.h>
 
-#ifdef __EMSCRIPTEN__
-SEXP lm15_ws_open(SEXP url, SEXP headers, SEXP timeout, SEXP ca_bundle) { Rf_error("Use the browser WebSocket bridge in webR."); return R_NilValue; }
-SEXP lm15_ws_send(SEXP pointer, SEXP bytes, SEXP offset) { Rf_error("Use the browser WebSocket bridge in webR."); return R_NilValue; }
-SEXP lm15_ws_recv(SEXP pointer, SEXP limit) { Rf_error("Use the browser WebSocket bridge in webR."); return R_NilValue; }
-SEXP lm15_ws_close(SEXP pointer) { return R_NilValue; }
-#else
+#if !defined(__EMSCRIPTEN__) && !defined(LM15_NO_WEBSOCKET)
 #include <curl/curl.h>
 #if LIBCURL_VERSION_NUM < 0x075600
-#error libcurl 7.86.0 or newer is required for verified WebSocket connections
+#define LM15_NO_WEBSOCKET 1
 #endif
+#endif
+
+#if defined(__EMSCRIPTEN__) || defined(LM15_NO_WEBSOCKET)
+/* No native WebSocket transport in this build: webR uses the browser's
+   WebSocket bridge, and a native build without libcurl >= 7.86 (found by
+   configure) states why when a live session is opened. Everything else in
+   the package works without it. */
+#ifdef __EMSCRIPTEN__
+#define LM15_NO_WS_MESSAGE "Use the browser WebSocket bridge in webR."
+#else
+#define LM15_NO_WS_MESSAGE "This lm15 build has no native WebSocket transport: libcurl >= 7.86.0 development files were not found when the package was installed. Install them (with WebSocket support) and reinstall lm15, or pass live_connect = to supply a connector."
+#endif
+SEXP lm15_ws_open(SEXP url, SEXP headers, SEXP timeout, SEXP ca_bundle) { Rf_error(LM15_NO_WS_MESSAGE); return R_NilValue; }
+SEXP lm15_ws_send(SEXP pointer, SEXP bytes, SEXP offset) { Rf_error(LM15_NO_WS_MESSAGE); return R_NilValue; }
+SEXP lm15_ws_recv(SEXP pointer, SEXP limit) { Rf_error(LM15_NO_WS_MESSAGE); return R_NilValue; }
+SEXP lm15_ws_close(SEXP pointer) { return R_NilValue; }
+#else
 
 typedef struct { CURL *handle; struct curl_slist *headers; } connection;
 static int initialized = 0;

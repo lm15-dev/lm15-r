@@ -9,19 +9,24 @@
   query <- if (split < 0L) "" else substring(target, split + 1L)
   params <- list()
   decode <- function(value) tryCatch(suppressWarnings(utils::URLdecode(gsub("+", " ", value, fixed = TRUE))), error = function(e) NA_character_)
+  rejected <- "Sign-in return was not accepted."
   for (pair in strsplit(query, "&", fixed = TRUE)[[1L]]) {
     i <- regexpr("=", pair, fixed = TRUE)[[1L]]
     key <- decode(if (i < 0L) pair else substr(pair, 1L, i - 1L))
-    if (is.na(key)) return(page(400L, "Malformed callback parameter."))
+    if (is.na(key)) return(page(400L, rejected))
     if (!nzchar(key)) next
-    if (key %in% names(params)) return(page(400L, "Duplicate callback parameter."))
+    if (key %in% names(params)) return(page(400L, rejected))
     value <- decode(if (i < 0L) "" else substring(pair, i + 1L))
-    if (is.na(value)) return(page(400L, "Malformed callback parameter."))
+    if (is.na(value)) return(page(400L, rejected))
     params[[key]] <- value
   }
-  if (nzchar(params$error %||% "")) return(page(400L, "Authorization was not completed.", failed = TRUE))
-  if (!is.null(expected_state) && !identical(params$state, expected_state)) return(page(400L, "State mismatch."))
-  if (!nzchar(params$code %||% "")) return(page(400L, "Missing authorization code."))
+  # AUTH-18: the state is checked before a success OR an error return is
+  # accepted; a wrong one gets a generic rejection and the legitimate wait
+  # continues. A return with both a code and an error, or neither, is invalid.
+  if (!is.null(expected_state) && !identical(params$state, expected_state)) return(page(400L, rejected))
+  has_code <- nzchar(params$code %||% ""); has_error <- !is.null(params$error)
+  if (has_code == has_error) return(page(400L, rejected))
+  if (has_error) return(page(400L, "Sign-in was not completed.", failed = TRUE))
   result <- structure(list(code = params$code, state = params$state), class = "lm15_oauth_callback_result")
   page(200L, "Authentication completed. You can close this window.", result)
 }

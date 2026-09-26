@@ -107,13 +107,16 @@ str.lm15_cloud_context <- function(object, ...) { print.lm15_cloud_context(objec
 # The same ordered rungs drive offline reports and actual acquisition.
 .cloud_rungs <- function(ctx, on_rung = NULL) {
   policy <- .definition(ctx$provider)$access; out <- list()
+  allowed <- if (!is.null(ctx$named)) .named_rungs[[policy$credential_policy]][[ctx$named]]
   add <- function(name, present, value = NULL) {
+    # A named identity walks exactly its own rungs, and nothing else is tried.
+    if (!is.null(allowed) && !name %in% allowed) return(invisible(NULL))
     rung <- list(name = name, state = if (!present) "absent" else if (is.null(value)) "unprobed" else "selected", value = value)
     if (!is.null(on_rung)) on_rung(rung)
     out[[length(out) + 1L]] <<- rung
   }
   key <- if (length(policy$env_keys)) policy$env_keys[[1L]] else NULL
-  if (!is.null(key)) {
+  if (!is.null(key) && is.null(ctx$named)) {  # the door's own key is never part of a named identity
     value <- .cloud_env(ctx, key)
     add(paste0("env:", key), !is.null(value), if (!is.null(value)) if (key == "AWS_BEARER_TOKEN_BEDROCK") bearer_token(value) else api_key(value))
   }
@@ -149,7 +152,15 @@ str.lm15_cloud_context <- function(object, ...) { print.lm15_cloud_context(objec
     names <- c(az = "AzureCliCredential", pwsh = "AzurePowerShellCredential", azd = "AzureDeveloperCliCredential")
     for (command in names(names)) add(command, !narrowed(names[[command]], TRUE) && !is.null(.cloud_on_path(ctx, command)))
   } else if (policy$credential_policy == "gcp-chain") {
-    add("adc-env", !is.null(.cloud_json(ctx, .cloud_env(ctx, "GOOGLE_APPLICATION_CREDENTIALS"), strict = !is.null(on_rung))))
+    adc <- .cloud_json(ctx, .cloud_env(ctx, "GOOGLE_APPLICATION_CREDENTIALS"), strict = !is.null(on_rung))
+    if (!is.null(adc) && isTRUE(ctx$named %in% c("workload", "environment"))) {
+      # One file rung told apart by the file's type: the wrong type is
+      # refused by name, never read as the other.
+      external <- identical(adc$type, "external_account")
+      if (ctx$named == "workload" && !external) .abort("GOOGLE_APPLICATION_CREDENTIALS holds a service-account file, which is the 'environment' identity, not 'workload'.", "not_configured", ctx$provider)
+      if (ctx$named == "environment" && external) .abort("GOOGLE_APPLICATION_CREDENTIALS holds an external_account (workload identity federation) file, which is the 'workload' identity, not 'environment'.", "not_configured", ctx$provider)
+    }
+    add("adc-env", !is.null(adc))
     add("adc-file", !is.null(.cloud_json(ctx, .cloud_adc_path(ctx), strict = !is.null(on_rung))))
     add("metadata", !tolower(.cloud_env(ctx, "NO_GCE_CHECK", "")) %in% c("1", "true"))
     add("gcloud", !is.null(.cloud_on_path(ctx, "gcloud")))
@@ -172,8 +183,9 @@ str.lm15_cloud_context <- function(object, ...) { print.lm15_cloud_context(objec
   if (active) out <- c(out, token)
   out
 }
-.explain_cloud_auth <- function(provider, api_keys, env, settings, now) {
+.explain_cloud_auth <- function(provider, api_keys, env, settings, now, named = NULL) {
   ctx <- .cloud_context(provider, env, settings, clock = function() now)
+  ctx$named <- .check_named(provider, named)
   selected <- !is.null(.explicit_source(provider, api_keys))
   steps <- list(list(kind = "api_keys", state = if (selected) "selected" else "absent", detail = "values hidden"))
   for (rung in .cloud_rungs(ctx)) {
@@ -184,9 +196,10 @@ str.lm15_cloud_context <- function(object, ...) { print.lm15_cloud_context(objec
   structure(list(provider = provider, configured = selected || any(vapply(steps, function(s) s$state == "unprobed", logical(1))), steps = steps, settings = .cloud_report_settings(ctx)), class = "lm15_auth_report")
 }
 
-cloud_credential_provider <- function(provider, ..., env = NULL, settings = list(), transport = NULL, run = NULL, clock = Sys.time) {
+cloud_credential_provider <- function(provider, ..., env = NULL, settings = list(), transport = NULL, run = NULL, clock = Sys.time, named = NULL) {
   .check_dots(...); provider <- canonical_provider(provider)
   ctx <- .cloud_context(provider, env, settings, transport, run, clock)
+  ctx$named <- .check_named(provider, named)
   cached <- NULL
   structure(function() {
     if (!is.null(cached) && !credential_expired(cached, now = clock())) return(cached)
@@ -205,7 +218,43 @@ cloud_credential_provider <- function(provider, ..., env = NULL, settings = list
     withRestarts({
       .cloud_rungs(ctx, on_rung = visit)
       if (developer_failed) .auth_failure(provider, "Azure developer credentials failed. Sign in with az, PowerShell, or azd.")
+      if (!is.null(ctx$named)) .abort(paste0("The named identity '", ctx$named, "' (", .named_meaning(provider, ctx$named), ") supplied no credential; no other identity was tried."), "not_configured", provider)
       .abort("No cloud credential source supplied a usable credential.", "not_configured", provider)
     }, cloud_credential_selected = identity)
   }, class = c("lm15_credential", "function"))
+}
+
+# Named cloud identities (AUTH-1, amended 2026-09-19): one of four words on
+# every cloud selects exactly these rungs, in chain order.
+.named_rungs <- list(
+  "azure-chain" = list(platform = "managed-identity", workload = "workload-identity", environment = "environment", cli = c("az", "pwsh", "azd")),
+  "aws-chain" = list(platform = c("container", "imds"), workload = "web-identity", environment = "env:AWS_ACCESS_KEY_ID",
+    cli = c("assume-role", "sso", "shared-credentials-file", "login", "credential_process", "config-file")),
+  "gcp-chain" = list(platform = "metadata", workload = "adc-env", environment = "adc-env", cli = c("adc-file", "gcloud")))
+.named_meaning <- function(provider, named) {
+  policy <- .definition(provider)$access$credential_policy
+  switch(paste(policy, named),
+    "azure-chain platform" = "the machine's managed identity", "azure-chain workload" = "workload identity federation (AZURE_FEDERATED_TOKEN_FILE)",
+    "azure-chain environment" = "AZURE_TENANT_ID and AZURE_CLIENT_ID with a secret or certificate", "azure-chain cli" = "a signed-in az, PowerShell or azd",
+    "aws-chain platform" = "the container or instance role", "aws-chain workload" = "web identity (AWS_ROLE_ARN with a token file)",
+    "aws-chain environment" = "AWS_ACCESS_KEY_ID with AWS_SECRET_ACCESS_KEY", "aws-chain cli" = "the active AWS profile (SSO, role, credentials or process)",
+    "gcp-chain platform" = "the Google Cloud metadata server", "gcp-chain workload" = "an external_account file in GOOGLE_APPLICATION_CREDENTIALS",
+    "gcp-chain environment" = "a service-account file in GOOGLE_APPLICATION_CREDENTIALS", "gcp-chain cli" = "gcloud application-default login", named)
+}
+.check_named <- function(provider, named) {
+  if (is.null(named)) return(NULL)
+  .string(named, "credential")
+  if (!named %in% .named_credentials) .abort(paste0("Unknown named identity '", named, "'; use one of ", paste(.named_credentials, collapse = ", "), "."), "not_configured", provider)
+  if (!.definition(provider)$access$credential_policy %in% names(.named_rungs)) .abort("A named identity applies only to a cloud door (Azure, AWS or Google Cloud).", "not_configured", provider)
+  named
+}
+.check_named_credentials <- function(credentials, api_keys) {
+  if (!length(credentials)) return(list())
+  if (is.null(names(credentials)) || !all(nzchar(names(credentials)))) .abort("credentials must be named by provider.", "not_configured")
+  canonical <- gsub("_", "-", names(credentials), fixed = TRUE)
+  for (i in seq_along(credentials)) {
+    .check_named(canonical[[i]], credentials[[i]])
+    if (canonical[[i]] %in% gsub("_", "-", names(api_keys), fixed = TRUE)) .abort("A named identity and an explicit api_keys entry both answer 'who am I' for this provider; give one.", "not_configured", canonical[[i]])
+  }
+  setNames(credentials, canonical)
 }

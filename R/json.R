@@ -67,63 +67,100 @@ json_array <- function(...) structure(unname(list(...)), class = c("lm15_json_ar
   stop("Only finite JSON values are supported.", call. = FALSE)
 }
 
-# A small recursive-descent reader preserves numeric tokens, arrays and
-# objects. String escape correctness is delegated to jsonlite.
+# A recursive-descent reader that preserves numeric tokens, arrays and
+# objects. One regular-expression pass splits the text into tokens (linear
+# in its size; a provider's model catalog can be several hundred KB), and
+# every string holding an escape is decoded by jsonlite in one vectorized
+# call. Anything between tokens that is not a token is malformed JSON.
+.json_token_pattern <- paste0(
+  '"(?:[^"\\\\\\x00-\\x1f]++|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*+"',
+  "|-?(?:0|[1-9][0-9]*+)(?:\\.[0-9]++)?(?:[eE][+-]?[0-9]++)?",
+  "|true|false|null|[{}\\[\\]:,]|[ \\t\\n\\r]++")
 .json_decode <- function(text) {
   if (!is.character(text) || length(text) != 1L || is.na(text)) stop("JSON must be one string.", call. = FALSE)
-  n <- nchar(text, type = "chars"); pos <- 1L
-  fail <- function() stop(sprintf("Malformed JSON near character %d.", pos), call. = FALSE)
-  peek <- function() if (pos <= n) substr(text, pos, pos) else ""
-  skip <- function() while (pos <= n && peek() %in% c(" ", "\t", "\n", "\r")) pos <<- pos + 1L
-  string <- function() {
-    # Scan whole unescaped spans in native code. Per-character R scanning
-    # makes provider media strings and large model catalogs prohibitively slow.
-    rest <- substring(text, pos)
-    match <- regexpr('^"(?:[^"\\\\\\x00-\\x1f]++|\\\\(?:["\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*"', rest, perl = TRUE)
-    if (match[[1L]] != 1L) fail()
-    token <- regmatches(rest, match)
-    pos <<- pos + nchar(token)
-    tryCatch(jsonlite::fromJSON(token), error = function(e) fail())
+  fail <- function(at) stop(sprintf("Malformed JSON near byte %d.", at), call. = FALSE)
+  text <- enc2utf8(text)
+  if (!validUTF8(text)) stop("JSON must be valid UTF-8 text.", call. = FALSE)
+  # Offsets are bytes: R maps character offsets in non-ASCII text with a cost
+  # that grows with the square of its length.
+  Encoding(text) <- "bytes"
+  n <- nchar(text, type = "bytes")
+  if (!n) fail(1L)
+  found <- tryCatch(gregexpr(.json_token_pattern, text, perl = TRUE, useBytes = TRUE)[[1L]], error = function(e) fail(1L))
+  if (found[[1L]] < 0L) fail(1L)
+  width <- attr(found, "match.length")
+  ends <- found + width
+  # Tokens must tile the whole text: a gap is a character no token accepts.
+  gap <- which(found != c(1L, ends[-length(ends)]))
+  if (length(gap)) fail(if (gap[[1L]] == 1L) 1L else ends[[gap[[1L]] - 1L]])
+  if (ends[[length(ends)]] != n + 1L) fail(ends[[length(ends)]])
+  tokens <- regmatches(text, list(found))[[1L]]
+  Encoding(tokens) <- "UTF-8"
+  keep <- !grepl("^[ \t\n\r]", tokens)
+  tokens <- tokens[keep]; where <- found[keep]
+  if (!length(tokens)) fail(1L)
+  first <- substr(tokens, 1L, 1L)
+  strings <- which(first == '"')
+  values <- vector("list", length(tokens))
+  if (length(strings)) {
+    body <- substr(tokens[strings], 2L, nchar(tokens[strings]) - 1L)
+    escaped <- grepl("\\", body, fixed = TRUE)
+    decoded <- body
+    if (any(escaped)) {
+      decoded[escaped] <- tryCatch(as.character(jsonlite::fromJSON(paste0("[", paste(tokens[strings][escaped], collapse = ","), "]"))), error = function(e) fail(where[strings[escaped][[1L]]]))
+      if (length(decoded[escaped]) != sum(escaped)) fail(where[strings[escaped][[1L]]])
+    }
+    values[strings] <- as.list(decoded)
   }
-  value <- function(depth = 0L) {
+  count <- length(tokens); pos <- 1L
+  value <- function(depth) {
     if (depth > 256L) stop("JSON nesting exceeds 256 levels.", call. = FALSE)
-    skip(); ch <- peek()
-    if (ch == '"') return(string())
-    if (ch %in% c("{", "[")) {
+    if (pos > count) fail(n)
+    token <- tokens[[pos]]; ch <- first[[pos]]
+    if (ch == '"') { pos <<- pos + 1L; return(values[[pos - 1L]]) }
+    if (ch == "{" || ch == "[") {
       object <- ch == "{"; close <- if (object) "}" else "]"
-      pos <<- pos + 1L; skip(); out <- list(); keys <- character()
-      if (peek() == close) { pos <<- pos + 1L; return(if (object) .json_object() else .json_array()) }
+      pos <<- pos + 1L
+      if (pos <= count && tokens[[pos]] == close) { pos <<- pos + 1L; return(if (object) .json_object() else .json_array()) }
+      out <- vector("list", 8L); keys <- character(8L); size <- 0L
       repeat {
-        skip()
         if (object) {
-          if (peek() != '"') fail()
-          key <- string(); skip()
-          if (key %in% keys || peek() != ":") fail()
-          keys <- c(keys, key); pos <<- pos + 1L
+          if (pos > count || first[[pos]] != '"') fail(if (pos > count) n else where[[pos]])
+          key <- values[[pos]]; pos <<- pos + 1L
+          if (pos > count || tokens[[pos]] != ":") fail(if (pos > count) n else where[[pos]])
+          pos <<- pos + 1L
         }
         item <- value(depth + 1L)
-        out[length(out) + 1L] <- list(item)
-        skip(); ch <- peek(); pos <<- pos + 1L
-        if (ch == close) break
-        if (ch != ",") fail()
+        size <- size + 1L
+        if (size > length(out)) { length(out) <- 2L * length(out); length(keys) <- length(out) }
+        if (!is.null(item)) out[[size]] <- item
+        if (object) keys[[size]] <- key
+        if (pos > count) fail(n)
+        sep <- tokens[[pos]]; pos <<- pos + 1L
+        if (sep == close) break
+        if (sep != ",") fail(where[[pos - 1L]])
       }
-      if (object) { names(out) <- keys; .json_object(out) } else .json_array(out)
-    } else {
-      rest <- substr(text, pos, n)
-      for (literal in c("true", "false", "null")) {
-        if (startsWith(rest, literal)) {
-          pos <<- pos + nchar(literal)
-          return(switch(literal, true = TRUE, false = FALSE, null = NULL))
-        }
+      out <- out[seq_len(size)]
+      if (object) {
+        keys <- keys[seq_len(size)]
+        if (anyDuplicated(keys)) fail(where[[pos - 1L]])
+        names(out) <- keys
+        return(.json_object(out))
       }
-      match <- regexpr("^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?", rest, perl = TRUE)
-      if (match[[1]] != 1L) fail()
-      token <- regmatches(rest, match); pos <<- pos + nchar(token)
-      if (grepl("[.eE]", token) && !is.finite(suppressWarnings(as.numeric(token)))) fail()
-      .json_number(token)
+      return(.json_array(out))
     }
+    pos <<- pos + 1L
+    if (token == "true") return(TRUE)
+    if (token == "false") return(FALSE)
+    if (token == "null") return(NULL)
+    if (ch == "-" || grepl("^[0-9]", ch)) {
+      if (grepl("[.eE]", token) && !is.finite(suppressWarnings(as.numeric(token)))) fail(where[[pos - 1L]])
+      return(.json_number(token))
+    }
+    fail(where[[pos - 1L]])
   }
-  out <- value(); skip(); if (pos <= n) fail()
+  out <- value(0L)
+  if (pos <= count) fail(where[[pos]])
   out
 }
 

@@ -123,12 +123,15 @@ load_local_credential <- function(provider, ..., path = NULL, env = NULL, now = 
   key
 }
 
-explain_auth <- function(provider, ..., api_keys = list(), env = NULL, path = NULL, now = Sys.time(), settings = list()) {
+explain_auth <- function(provider, ..., api_keys = list(), env = NULL, path = NULL, now = Sys.time(), settings = list(), credential = NULL, auth = NULL) {
   .check_dots(...)
+  if (inherits(provider, "lm15_router")) stop("Pass a provider name; give the router's auth with auth = .", call. = FALSE)
   if (is.list(provider) && !is.null(provider$provider)) provider <- provider$provider
   d <- .definition(provider); provider <- d$id
   policy <- d$access$credential_policy
-  if (policy %in% c("aws-chain", "azure-chain", "gcp-chain")) return(.explain_cloud_auth(provider, api_keys, env, settings, now))
+  if (!is.null(auth)) return(.explain_managed(provider, d, .auth_arg(auth), api_keys, env, credential))
+  if (policy %in% c("aws-chain", "azure-chain", "gcp-chain")) return(.explain_cloud_auth(provider, api_keys, env, settings, now, credential))
+  if (!is.null(credential)) .check_named(provider, credential)
   steps <- list(); selected <- FALSE
   add <- function(kind, present, detail) {
     state <- if (!present) "absent" else if (selected) "shadowed" else "selected"
@@ -177,3 +180,27 @@ print.lm15_auth_report <- function(x, ...) {
 }
 
 `%|NA|%` <- function(x, y) if (length(x) != 1L || is.na(x)) y else x
+
+# AUTH-15 mode B, rung by rung: the explicit entry, the named cloud identity,
+# the scope's saved connection; environment keys are shown and marked not
+# consulted. Store reads only, no renewal (AUTH-7).
+.explain_managed <- function(provider, d, auth, api_keys, env, named) {
+  steps <- list(); selected <- FALSE
+  add <- function(kind, state, detail) steps[[length(steps) + 1L]] <<- list(kind = kind, state = state, detail = detail)
+  source <- .explicit_source(provider, api_keys)
+  if (!is.null(source)) { add("api_keys", "selected", paste("provided via", source, "(value hidden)")); selected <- TRUE }
+  else add("api_keys", "absent", "not provided")
+  if (!is.null(named)) { .check_named(provider, named); add("named_cloud", if (selected) "shadowed" else "selected", paste0("named identity '", named, "'")); selected <- TRUE }
+  s <- auth$status(provider)
+  if (!is.null(s$connection)) {
+    state <- if (selected) "shadowed" else if (s$usability %in% c("ready", "renewal_due")) "selected" else "absent"
+    add("connection", state, paste0(s$connection$label, " (", s$usability, if (!is.null(s$expires_at)) paste0(", expires ", s$expires_at), ")"))
+    selected <- selected || state == "selected"
+  } else add("connection", "absent", if (isTRUE(s$logged_out)) "signed out (marker present)" else paste("none saved in", auth$store$description))
+  for (key in unlist(d$access$env_keys)) {
+    if (nzchar(.auth_env(env, key))) add(paste0("env:", key), "shadowed", "set, not consulted under a managed Auth (pass it explicitly to use it)")
+    else add(paste0("env:", key), "absent", "not set")
+  }
+  if (!is.null(d$placeholder_key) && !isTRUE(s$logged_out)) { add("placeholder", if (selected) "shadowed" else "selected", "local-server placeholder"); selected <- TRUE }
+  structure(list(provider = provider, configured = selected, steps = steps), class = "lm15_auth_report")
+}

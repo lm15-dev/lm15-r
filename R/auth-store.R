@@ -12,18 +12,23 @@
   dir.create(directory, recursive = TRUE, showWarnings = FALSE, mode = "0700")
   canonical <- if (file.exists(path)) normalizePath(path, mustWork = TRUE) else file.path(normalizePath(dirname(path), mustWork = TRUE), basename(path))
   if (.Platform$OS.type == "windows") canonical <- tolower(canonical)
-  file.path(directory, paste0(.hex_hash(charToRaw(enc2utf8(canonical))), ".lock"))
+  # The first 32 hex digits of SHA-256, as every lm15 SDK names it: the same
+  # credentials file must map to the same lock file in every language.
+  file.path(directory, paste0(substr(.hex_hash(charToRaw(enc2utf8(canonical))), 1L, 32L), ".lock"))
 }
 .with_credential_lock <- function(path, action, env = NULL, timeout = 30) {
-  if (!requireNamespace("filelock", quietly = TRUE)) .abort("Credential writes require the filelock R package.", "not_configured")
   .number(timeout, "lock timeout")
   if (timeout < 0) stop("Lock timeout must be non-negative.", call. = FALSE)
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE, mode = "0700")
   target <- .lock_path(path, env)
-  lock <- tryCatch(filelock::lock(target, timeout = timeout * 1000), error = function(e) .abort("Cannot acquire credential file lock.", "not_configured"))
-  if (is.null(lock)) .abort("Timed out waiting for another process to finish updating credentials.", "lock_timeout", path = path, lock_path = target)
-  on.exit(filelock::unlock(lock), add = TRUE)
-  Sys.chmod(target, "0600")
+  deadline <- Sys.time() + timeout
+  repeat {
+    lock <- tryCatch(.Call(C_lm15_lock_try, target), error = function(e) .abort("The filesystem could not acquire a credential lock; use a local locking-capable filesystem or an explicit credential.", "not_configured"))
+    if (!is.null(lock)) break
+    if (Sys.time() >= deadline) .abort("Timed out waiting for another process to finish updating credentials.", "lock_timeout", path = path, lock_path = target)
+    Sys.sleep(0.05)
+  }
+  on.exit(.Call(C_lm15_lock_release, lock), add = TRUE)
   action()
 }
 .write_credentials_unlocked <- function(path, value) {

@@ -1,19 +1,47 @@
 #!/bin/sh
-set -eu
+# Find libcurl for the native WebSocket transport used by live sessions.
+# Order: pkg-config, then curl-config, then a plain -lcurl. A build that
+# cannot compile and link libcurl >= 7.86 WebSocket calls installs without
+# the native WebSocket transport instead of failing: every other feature
+# works, and opening a native live session says what to install.
+: "${R_HOME:?configure must be run by R CMD INSTALL}"
+CC=$("${R_HOME}/bin/R" CMD config CC)
+CFLAGS=$("${R_HOME}/bin/R" CMD config CFLAGS)
+CPPFLAGS=$("${R_HOME}/bin/R" CMD config CPPFLAGS)
+LDFLAGS=$("${R_HOME}/bin/R" CMD config LDFLAGS)
+static=
+if [ "${1-}" = "--static" ]; then static=--static; fi
 pkg_config=${PKG_CONFIG:-pkg-config}
-if ! command -v "$pkg_config" >/dev/null 2>&1; then
-  echo 'lm15 requires pkg-config and libcurl development files (>= 7.86.0).' >&2
-  exit 1
+curl_cflags=
+curl_libs=
+if command -v "$pkg_config" >/dev/null 2>&1 && "$pkg_config" --exists libcurl 2>/dev/null; then
+  curl_cflags=$("$pkg_config" --cflags libcurl)
+  curl_libs=$("$pkg_config" $static --libs libcurl)
+elif command -v curl-config >/dev/null 2>&1; then
+  curl_cflags=$(curl-config --cflags)
+  curl_libs=$(curl-config --libs)
+else
+  curl_libs=-lcurl
 fi
-if ! "$pkg_config" --atleast-version=7.86.0 libcurl; then
-  echo 'lm15 requires libcurl >= 7.86.0, built with WebSocket support.' >&2
-  exit 1
+probe_dir=$(mktemp -d 2>/dev/null || mktemp -d -t lm15)
+trap 'rm -rf "$probe_dir"' EXIT
+cat > "$probe_dir/probe.c" <<'PROBE'
+#include <curl/curl.h>
+#if LIBCURL_VERSION_NUM < 0x075600
+#error libcurl older than 7.86.0
+#endif
+int main(void) {
+  size_t sent = 0;
+  CURL *h = curl_easy_init();
+  (void) curl_ws_send(h, "", 0, &sent, 0, CURLWS_BINARY);
+  curl_easy_cleanup(h);
+  return 0;
+}
+PROBE
+if $CC $CPPFLAGS $curl_cflags $CFLAGS "$probe_dir/probe.c" -o "$probe_dir/probe" $LDFLAGS $curl_libs >/dev/null 2>&1; then
+  echo "lm15: native WebSocket transport enabled (libcurl found)."
+  printf 'PKG_CPPFLAGS = %s\nPKG_LIBS = %s\n' "$curl_cflags" "$curl_libs" > src/Makevars
+else
+  echo "lm15: libcurl >= 7.86.0 development files not found; installing without the native WebSocket transport (live sessions need it; everything else works)."
+  printf 'PKG_CPPFLAGS = -DLM15_NO_WEBSOCKET\nPKG_LIBS =\n' > src/Makevars
 fi
-case "${1-}" in
-  --static) mode=--static ;;
-  '') mode= ;;
-  *) echo 'Unsupported configure option.' >&2; exit 1 ;;
-esac
-cflags=$("$pkg_config" --cflags libcurl)
-libs=$("$pkg_config" $mode --libs libcurl)
-printf 'PKG_CPPFLAGS = %s\nPKG_LIBS = %s\n' "$cflags" "$libs" > src/Makevars

@@ -22,15 +22,19 @@ transport_curl <- function(..., timeout = 120, connect_timeout = 30, max_respons
         if (is.function(on_response)) on_response(status, .parse_headers(info$headers))
       }
       size <<- size + length(chunk)
-      if (size > max_response_bytes) .abort("HTTP response exceeds the configured byte limit.", "transport")
+      if (size > max_response_bytes) { e <- lm15_error("HTTP response exceeds the configured byte limit.", code = "transport"); e$limit_exceeded <- TRUE; stop(e) }
       if (is.null(on_chunk) || is.na(status) || status >= 300L) chunks[[length(chunks) + 1L]] <<- chunk else on_chunk(chunk)
       TRUE
     }
     result <- tryCatch(curl::curl_fetch_stream(wire$url, callback, handle = handle),
       error = function(e) {
         if (inherits(e, "LM15Error") || inherits(e, "lm15_stream_cut")) stop(e)
-        # libcurl errors may contain the full URL, including query credentials.
-        .abort("HTTP transfer failed or timed out; credential-bearing diagnostics are suppressed.", "transport")
+        # libcurl errors may contain the full URL, including query credentials,
+        # so only a classification leaves: a refused connection or a name that
+        # did not resolve never reached the server; anything else may have.
+        err <- lm15_error("HTTP transfer failed or timed out; credential-bearing diagnostics are suppressed.", code = "transport")
+        err$exchange_uncertain <- !grepl("resolve|could not connect|couldn't connect|failed to connect|connection refused", conditionMessage(e), ignore.case = TRUE)
+        stop(err)
       })
     headers <- .parse_headers(result$headers)
     if (is.null(status) && is.function(on_response)) on_response(as.integer(result$status_code), headers)
