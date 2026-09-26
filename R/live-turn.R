@@ -44,11 +44,11 @@ turn <- function(session, ..., max_events = 1024L, max_bytes = 128 * 1024^2, tim
     if (done) return(NULL)
     reading <<- TRUE; on.exit(reading <<- FALSE, add = TRUE)
     tryCatch({
-      if (length(events) >= max_events) .abort("Turn exceeds its collection limit; consume session events directly.", "transport")
+      if (length(events) >= max_events) .collection_limit("events", max_events, collected_bytes, events, NULL)
       event <- session$next_event(wait = timeout)
       if (is.null(event)) .abort("Live session closed before the turn reached a boundary.", "transport")
       size <- as.double(utils::object.size(event))
-      if (collected_bytes + size > max_bytes) .abort("Turn exceeds its memory limit; consume session events directly.", "transport")
+      if (collected_bytes + size > max_bytes) .collection_limit("bytes", max_bytes, collected_bytes, events, event)
       collected_bytes <<- collected_bytes + size
       events[[length(events) + 1L]] <<- event
       if (event$type %in% c("turn_end", "interrupted", "error")) done <<- TRUE
@@ -75,3 +75,14 @@ turn <- function(session, ..., max_events = 1024L, max_bytes = 128 * 1024^2, tim
 }
 print.lm15_turn_view <- function(x, ...) { cat("<lm15 live turn view>\n"); invisible(x) }
 str.lm15_turn_view <- function(object, ...) { print.lm15_turn_view(object); invisible(NULL) }
+
+# A local collector budget, not a provider failure (vocabulary code
+# collection_limit; non-retryable). The accepted events stay available as
+# partial_events; a byte-limit failure also carries the event it received
+# but did not add. No synthetic end event, no session cancellation.
+.collection_limit <- function(limit, maximum, retained_bytes, events, rejected) {
+  e <- lm15_error(paste0("Live turn collection reached its configured ", if (limit == "events") "event" else "byte", " budget (", format(maximum, scientific = FALSE), "); consume session events directly or raise the limit."), code = "collection_limit", partial = tryCatch(materialize_turn(events), error = function(err) NULL))
+  e$limit <- limit; e$maximum <- maximum; e$retained_bytes <- retained_bytes
+  e$partial_events <- events; e$retained_events <- length(events); e$rejected_event <- rejected
+  stop(e)
+}

@@ -75,14 +75,19 @@ tool_result_part <- function(id, content, ..., name = NULL, is_error = FALSE, co
   .new_value("ToolResultPart", list(id = id, content = content, name = name, is_error = is_error, continuation = continuation))
 }
 
+data_part <- function(value, ..., probabilities = NULL, method = NULL, continuation = list()) {
+  .check_dots(...)
+  .new_value("DataPart", list(value = value, probabilities = probabilities, method = method, continuation = continuation))
+}
+
 message <- function(role, parts, ..., continuation = list()) {
   .check_dots(...)
   .new_value("Message", list(role = role, parts = parts, continuation = continuation))
 }
 
-text_delta <- function(text, ..., part_index = 0L, logprobs = list()) {
+text_delta <- function(text, ..., part_index = 0L, logprobs = list(), logprobs_complete = TRUE) {
   .check_dots(...)
-  .new_value("TextDelta", list(text = text, part_index = part_index, logprobs = logprobs))
+  .new_value("TextDelta", list(text = text, part_index = part_index, logprobs = logprobs, logprobs_complete = logprobs_complete))
 }
 
 thinking_delta <- function(text, ..., part_index = 0L) {
@@ -120,6 +125,11 @@ stream_start_event <- function(..., id = NULL, model = NULL, adaptations = list(
   .new_value("StreamStartEvent", list(id = id, model = model, adaptations = adaptations))
 }
 
+adaptation <- function(field, action, reason, ..., asked = NULL, applied = NULL) {
+  .check_dots(...)
+  .new_value("Adaptation", list(field = field, action = action, reason = reason, asked = asked, applied = applied))
+}
+
 stream_delta_event <- function(delta, ...) {
   .check_dots(...)
   .new_value("StreamDeltaEvent", list(delta = delta))
@@ -135,9 +145,9 @@ stream_error_event <- function(error, ...) {
   .new_value("StreamErrorEvent", list(error = error))
 }
 
-error_detail <- function(code, ..., message = "", provider_code = NULL) {
+error_detail <- function(code, ..., message = "", provider_code = NULL, http_response = NULL) {
   .check_dots(...)
-  .new_value("ErrorDetail", list(code = code, message = message, provider_code = provider_code))
+  .new_value("ErrorDetail", list(code = code, message = message, provider_code = provider_code, http_response = http_response))
 }
 
 function_tool <- function(name, ..., description = NULL, parameters = json_object(type = "object", properties = json_object())) {
@@ -165,9 +175,9 @@ cache_config <- function(..., mode = "auto", retention = NULL, key = NULL, prefi
   .new_value("CacheConfig", list(mode = mode, retention = retention, key = key, prefix_until_index = prefix_until_index, prefix = prefix, resource = resource))
 }
 
-config <- function(..., max_tokens = NULL, temperature = NULL, top_p = NULL, top_k = NULL, seed = NULL, frequency_penalty = NULL, presence_penalty = NULL, stop = list(), response_format = NULL, tool_choice = NULL, reasoning = NULL, cache = NULL, service_tier = NULL, user_id = NULL, store = NULL, logprobs = NULL, extensions = NULL) {
+config <- function(..., max_tokens = NULL, temperature = NULL, top_p = NULL, top_k = NULL, seed = NULL, frequency_penalty = NULL, presence_penalty = NULL, stop = list(), response_format = NULL, tool_choice = NULL, reasoning = NULL, cache = NULL, service_tier = NULL, user_id = NULL, store = NULL, logprobs = NULL, probabilities = NULL, extensions = NULL) {
   .check_dots(...)
-  .new_value("Config", list(max_tokens = max_tokens, temperature = temperature, top_p = top_p, top_k = top_k, seed = seed, frequency_penalty = frequency_penalty, presence_penalty = presence_penalty, stop = stop, response_format = response_format, tool_choice = tool_choice, reasoning = reasoning, cache = cache, service_tier = service_tier, user_id = user_id, store = store, logprobs = logprobs, extensions = extensions))
+  .new_value("Config", list(max_tokens = max_tokens, temperature = temperature, top_p = top_p, top_k = top_k, seed = seed, frequency_penalty = frequency_penalty, presence_penalty = presence_penalty, stop = stop, response_format = response_format, tool_choice = tool_choice, reasoning = reasoning, cache = cache, service_tier = service_tier, user_id = user_id, store = store, logprobs = logprobs, probabilities = probabilities, extensions = extensions))
 }
 
 request <- function(model, messages, ..., system = NULL, tools = list(), config = .new_value("Config", list())) {
@@ -180,9 +190,9 @@ usage <- function(..., input_tokens = NULL, output_tokens = NULL, total_tokens =
   .new_value("Usage", list(input_tokens = input_tokens, output_tokens = output_tokens, total_tokens = total_tokens, cache_read_tokens = cache_read_tokens, cache_write_tokens = cache_write_tokens, reasoning_tokens = reasoning_tokens, input_audio_tokens = input_audio_tokens, output_audio_tokens = output_audio_tokens))
 }
 
-response <- function(model, message, finish_reason, ..., id = NULL, usage = .new_value("Usage", list()), logprobs = list(), provider_data = NULL, adaptations = list()) {
+response <- function(model, message, finish_reason, ..., id = NULL, usage = .new_value("Usage", list()), logprobs = list(), logprobs_complete = TRUE, provider_data = NULL, adaptations = list()) {
   .check_dots(...)
-  .new_value("Response", list(id = id, model = model, message = message, finish_reason = finish_reason, usage = usage, logprobs = logprobs, provider_data = provider_data, adaptations = adaptations))
+  .new_value("Response", list(id = id, model = model, message = message, finish_reason = finish_reason, usage = usage, logprobs = logprobs, logprobs_complete = logprobs_complete, provider_data = provider_data, adaptations = adaptations))
 }
 
 top_logprob <- function(token, logprob, ..., bytes = list(), token_id = NULL) {
@@ -220,9 +230,9 @@ cache_page <- function(..., items = list(), next_cursor = NULL) {
   .new_value("CachePage", list(items = items, next_cursor = next_cursor))
 }
 
-cached_prefix <- function(prefix, ..., resource = NULL) {
+cached_prefix <- function(prefix, ..., resource = NULL, provider = NULL) {
   .check_dots(...)
-  .new_value("CachedPrefix", list(prefix = prefix, resource = resource))
+  .new_value("CachedPrefix", list(prefix = prefix, resource = resource, provider = provider))
 }
 
 batch_request <- function(requests, ..., model = NULL, label = NULL, extensions = NULL) {

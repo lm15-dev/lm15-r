@@ -12,7 +12,24 @@ env.update(CLAUDE_CODE_LOGIN_HINT='Run claude and use /login.', OPENAI_CODEX_LOG
 def evaluate(node):
     if isinstance(node, ast.Constant): return node.value
     if isinstance(node, ast.Name): return env[node.id]
-    if isinstance(node, (ast.Tuple, ast.List)): return [evaluate(x) for x in node.elts]
+    if isinstance(node, (ast.Tuple, ast.List)):
+        out = []
+        for x in node.elts:
+            if isinstance(x, ast.Starred): out.extend(evaluate(x.value))
+            else: out.append(evaluate(x))
+        return out
+    if isinstance(node, (ast.GeneratorExp, ast.ListComp)) and len(node.generators) == 1:
+        gen = node.generators[0]
+        if gen.ifs or gen.is_async or not isinstance(gen.target, ast.Name): raise ValueError(ast.dump(node))
+        items, out = evaluate(gen.iter), []
+        for item in items:
+            saved = env.get(gen.target.id, env)
+            env[gen.target.id] = item
+            try: out.append(evaluate(node.elt))
+            finally:
+                if saved is env: env.pop(gen.target.id, None)
+                else: env[gen.target.id] = saved
+        return out
     if isinstance(node, ast.Dict):
         out = {}
         for k, v in zip(node.keys, node.values):
@@ -45,7 +62,8 @@ for file in ('compat.py', 'access.py', 'router.py'):
 
 own = {'openai': ('OPENAI_API', 'openai'), 'openai-chat': ('OPENAI_CHAT_API', 'openai'),
        'anthropic': ('ANTHROPIC_API', 'anthropic'), 'gemini': ('GEMINI_API', None),
-       'xai': ('XAI', 'xai'), 'claude-code': ('CLAUDE_CODE', 'anthropic'), 'openai-codex': ('OPENAI_CODEX', 'openai')}
+       'xai': ('XAI', 'xai'), 'claude-code': ('CLAUDE_CODE', 'anthropic'), 'openai-codex': ('OPENAI_CODEX', 'openai'),
+       'typesafe': ('TYPESAFE_API', None)}
 registry = []
 for node in ast.walk(ast.parse((ref / 'registry.py').read_text())):
     if not isinstance(node, ast.AnnAssign) or not isinstance(node.target, ast.Name) or node.target.id != '_DEFINITIONS': continue
@@ -54,7 +72,7 @@ for node in ast.walk(ast.parse((ref / 'registry.py').read_text())):
         kw = {k.arg: evaluate(k.value) for k in call.keywords}
         if fn == '_adapter_owned':
             id_, dialect = evaluate(call.args[0]), evaluate(call.args[1])
-            if id_ not in own: continue  # a provider with a dialect of its own that R does not implement (typesafe)
+            if id_ not in own: raise ValueError(f"unmapped adapter-owned provider {id_}")
             key, compat = own[id_]; policy = dict(env[key])
         else:
             policy = dict(env[call.args[0].attr]); id_ = policy['provider']

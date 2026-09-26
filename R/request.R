@@ -139,9 +139,43 @@
   if (!is.null(tool$config)) out[names(tool$config)] <- tool$config
   out
 }
+# MAP-16: Gemini's OpenAPI Schema object (the keys responseSchema and
+# functionDeclarations[].parameters parse). A schema goes to the JSON Schema
+# field (responseJsonSchema / parametersJsonSchema) when a node -- the root, a
+# value of `properties`, `items`, an element of `anyOf` (or `anyOf` itself when
+# it is one object) -- is a boolean, has a key outside this set, has a list
+# `type`, or has an `enum` with a non-string element. `example` and `default`
+# are values and are never walked. The schema is verbatim either way.
+.gemini_schema_fields <- c("type", "format", "title", "description", "nullable", "enum", "maxItems", "minItems",
+  "properties", "required", "minProperties", "maxProperties", "minLength", "maxLength",
+  "pattern", "example", "anyOf", "propertyOrdering", "default", "items", "minimum", "maximum")
+.gemini_openapi_schema <- function(schema) {
+  stack <- list(schema)
+  while (length(stack)) {
+    node <- stack[[length(stack)]]; stack[[length(stack)]] <- NULL
+    if (is.logical(node) && length(node) == 1L) return(FALSE)
+    if (!.is_object(node)) next
+    for (key in names(node)) {
+      value <- node[[key]]
+      if (!key %in% .gemini_schema_fields) return(FALSE)
+      if (key == "type" && .is_array(value)) return(FALSE)
+      if (key == "enum" && .is_array(value) && !all(vapply(value, function(v) is.character(v) && length(v) == 1L && !inherits(v, "lm15_json_number"), logical(1)))) return(FALSE)
+      if (key == "properties" && .is_object(value)) stack <- c(stack, unname(as.list(unclass(value))))
+      else if (key == "items") stack <- c(stack, list(value))
+      else if (key == "anyOf") stack <- c(stack, if (.is_array(value)) unname(as.list(unclass(value))) else list(value))
+    }
+  }
+  TRUE
+}
+.gemini_declaration <- function(tool) {
+  out <- json_object(name = tool$name, description = tool$description)
+  out[[if (.gemini_openapi_schema(tool$parameters)) "parameters" else "parametersJsonSchema"]] <- tool$parameters
+  out
+}
 .tool_wire <- function(tool, dialect, compat, provider) {
   if (tool$type == "builtin") return(.builtin(tool, dialect, compat, provider))
   if (dialect == "anthropic") return(json_object(name = tool$name, description = tool$description, input_schema = tool$parameters))
+  if (dialect == "gemini") return(.gemini_declaration(tool))
   out <- json_object(name = tool$name, description = tool$description, parameters = tool$parameters)
   if (dialect %in% c("chat", "responses") && compat$strict_tools == "include") out$strict <- FALSE
   if (dialect == "chat") return(json_object(type = "function", "function" = out))
@@ -251,6 +285,13 @@
     .adapt("config.reasoning", "dropped", "this server has no reasoning dial on its wire (compat thinking_format='none'); the model reasons at its own default; pass the server's own knob through extensions", asked = json_object(effort = r$effort))
     return(payload)
   }
+  if (dialect == "chat" && off && identical(compat$reasoning_off, "lowest")) {
+    # compat reasoning_off (MAP-13 section 4.2): the model cannot stop reasoning
+    # and this server accepts the off word and reasons anyway; send the lowest level.
+    lowest <- if (length(compat$reasoning_efforts)) unlist(compat$reasoning_efforts)[[1L]] else "low"
+    .adapt("config.reasoning.effort", "substituted", "this model cannot stop reasoning and the server accepts 'none' and reasons anyway (a paid no-op); the lowest level was sent", asked = "off", applied = lowest)
+    r$effort <- lowest; off <- FALSE
+  }
   word <- if (off) "none" else r$effort
   if (!off) {
     if (!is.null(r$thinking_budget))
@@ -332,6 +373,7 @@
 build_request <- function(lm, request, ..., stream = FALSE) {
   .check_dots(...)
   pair <- .route(lm, request); lm <- pair$lm; req <- pair$request
+  if (lm$definition$dialect == "typesafe") return(.typesafe_build(lm, req, stream))
   .require_surface(lm, if (stream) "stream" else "complete")
   built <- .collecting(lm$adaptations %||% "note", lm$definition$id, function() .build_payload(lm, req, stream))
   body <- built$value
@@ -371,6 +413,8 @@ build_request <- function(lm, request, ..., stream = FALSE) {
 .build_payload <- function(lm, req, streaming = FALSE) {
   dialect <- switch(lm$definition$dialect, "openai-chat" = "chat", "openai-responses" = "responses", lm$definition$dialect)
   provider <- lm$definition$id; c <- req$config; compat <- .compat(lm, req)
+  if (dialect == "chat") .chat_judgment_policy(lm, req, streaming, compat)
+  req <- .data_parts_as_text(req)
   .check_message_media(req, dialect, provider)
   if (dialect == "anthropic" && !is.null(compat$model_prefixes) && !any(vapply(compat$model_prefixes, function(p) startsWith(req$model, p), logical(1)))) .abort("This model would be silently substituted by this endpoint.", "unsupported_model", provider)
   if (provider == "xai") { req <- .xai_prepare(req, provider); c <- req$config }
@@ -570,14 +614,23 @@ build_request <- function(lm, request, ..., stream = FALSE) {
         .adapt("config.response_format", "dropped", "this server accepts output_config.format and does not apply it; describe the shape in the prompt", asked = f)
       else {
         if (!schema) stop(lm15_error("anthropic: response_format json_object is not supported \u2014 the Messages API has no any-JSON mode; give a json_schema (objects need additionalProperties: false)", code = "unsupported_feature", provider = provider, feature = "config.response_format"))
+        # MAP-14 section 2: a judgment property carrying type+anyOf has its type
+        # moved into every branch; no distribution is measured on this wire.
+        .note_unmeasurable(req, provider)
         payload$output_config <- payload$output_config %||% json_object()
-        payload$output_config$format <- json_object(type = "json_schema", schema = f$schema)
+        payload$output_config$format <- json_object(type = "json_schema", schema = .anthropic_judgment_schema(f$schema, request_judgments(req)))
       }
     } else if (dialect == "gemini") {
+      # MAP-14 section 2: judgment properties go as enum with the option
+      # descriptions folded in (the wire ignores anyOf/const).
+      .note_unmeasurable(req, provider)
       payload$generationConfig$responseMimeType <- "application/json"
-      contains <- function(v) (.is_object(v) && "additionalProperties" %in% names(v)) || (is.list(v) && any(vapply(v, contains, logical(1))))
-      if (schema) payload$generationConfig[[if (contains(f$schema)) "responseJsonSchema" else "responseSchema"]] <- f$schema
+      if (schema) {
+        rewritten <- .gemini_judgment_schema(f$schema, request_judgments(req))
+        payload$generationConfig[[if (.gemini_openapi_schema(rewritten)) "responseSchema" else "responseJsonSchema"]] <- rewritten
+      }
     } else {
+      if (dialect == "responses") .note_unmeasurable(req, provider)  # MAP-14: the schema goes verbatim
       if (dialect == "chat" && schema && compat$json_schema == "reject") {
         .adapt("config.response_format", "dropped", paste0("this server accepts response_format type '", f$type, "' and does not apply it; use {'type': 'json_object'} and describe the shape in the prompt"), asked = f)
         f <- NULL
@@ -620,4 +673,30 @@ build_request <- function(lm, request, ..., stream = FALSE) {
     payload$store <- FALSE; payload$stream <- TRUE
   }
   payload
+}
+
+# A data part on a wire that takes only text: its value as compact JSON in a
+# text slot, nothing added (lm15-contract changes/2026-09-19-jev-state.md D3).
+.data_part_text <- function(part) .json_encode(part$value)
+.data_parts_as_text <- function(req) {
+  swap <- function(parts) lapply(parts, function(p) {
+    if (identical(p$type, "data")) return(text(.data_part_text(p), continuation = p$continuation))
+    if (identical(p$type, "tool_result") && any(vapply(p$content, function(q) identical(q$type, "data"), logical(1)))) {
+      fields <- unclass(p); fields$content <- swap(p$content)
+      return(.new_value("ToolResultPart", fields))
+    }
+    p
+  })
+  touched <- FALSE
+  messages <- lapply(req$messages, function(m) {
+    if (!any(vapply(m$parts, function(p) identical(p$type, "data") || (identical(p$type, "tool_result") && any(vapply(p$content, function(q) identical(q$type, "data"), logical(1)))), logical(1)))) return(m)
+    touched <<- TRUE
+    fields <- unclass(m); fields$parts <- swap(m$parts)
+    .new_value("Message", fields)
+  })
+  system <- req$system
+  if (is.list(system) && any(vapply(system, function(p) identical(p$type, "data"), logical(1)))) { system <- swap(system); touched <- TRUE }
+  if (!touched) return(req)
+  fields <- unclass(req); fields$messages <- messages; fields["system"] <- list(system)
+  .new_value("Request", fields)
 }

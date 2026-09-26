@@ -63,6 +63,10 @@ new_lm <- function(provider, ..., api_key = NULL, base_url = NULL, compat = NULL
         }, class = c("lm15_credential", "function"))
       })
     }
+    if (is.null(api_key) && d$access$credential_policy == "oauth-unless-explicit") {
+      state <- .xai_stored_state(credentials_path, env, clock())
+      if (state %in% c("unusable", "logged_out")) .subscription_block_error(d$id, state, unlist(d$access$env_keys))
+    }
     if (is.null(api_key)) for (key in unlist(d$access$env_keys)) {
       candidate <- lookup(key)
       if (length(candidate) == 1L && !is.na(candidate) && nzchar(candidate)) { api_key <- candidate; break }
@@ -92,20 +96,22 @@ new_lm <- function(provider, ..., api_key = NULL, base_url = NULL, compat = NULL
   if (!is.null(d$access$host)) {
     # Cloud hosts must never quietly resolve to a public API URL.
     host <- d$access$host
+    if (any(!names(settings) %in% vapply(host$settings %||% list(), function(s) s$name, ""))) stop("Unknown host setting.", call. = FALSE)
+    found <- .resolve_host_settings(d, settings, .cloud_context(d$id, env, settings, transport = transport), probe = TRUE)
+    if (!is.null(found$missing)) {
+      hint <- if (found$missing == "project") "; set GOOGLE_CLOUD_PROJECT, run `gcloud config set project <id>`, or pass settings = list(project = ...)" else paste0("; pass settings = list(", found$missing, " = ...)")
+      .abort(paste0("Missing host setting: ", found$missing, hint), "not_configured", d$id)
+    }
     resolved <- list()
     for (s in host$settings %||% list()) {
-      value <- settings[[s$name]]
-      if (is.null(value) && s$name == "resource") value <- .cloud_resource_endpoint(d, env)
-      if (is.null(value)) for (key in unlist(s$env)) { candidate <- lookup(key); if (length(candidate) && !is.na(candidate) && nzchar(candidate)) { value <- candidate; break } }
-      value <- value %||% .cloud_profile_setting(.cloud_context(d$id, env, settings), s$name) %||% s$default
-      if (is.null(value)) .abort(paste("Missing host setting:", s$name), "not_configured", d$id)
+      value <- found$values[[s$name]]
       .string(value, s$name)
       resource_url <- s$name == "resource" && grepl("://", value, fixed = TRUE)
       if (resource_url) base_url <- base_url %||% .cloud_endpoint_root(d, value)
       if (s$name %in% c("region", "resource", "location") && !resource_url && !grepl("^[A-Za-z0-9-]+$", value)) .abort("Host settings must be DNS labels or an explicit Azure resource URL.", "not_configured", d$id)
       resolved[[s$name]] <- value
     }
-    if (any(!names(settings) %in% vapply(host$settings %||% list(), function(s) s$name, ""))) stop("Unknown host setting.", call. = FALSE)
+    setting_sources <- found$sources
     settings <- resolved
     if (is.null(base_url)) {
       base_url <- host$base_url
@@ -114,11 +120,11 @@ new_lm <- function(provider, ..., api_key = NULL, base_url = NULL, compat = NULL
       if (!is.null(loc)) base_url <- gsub("{location_host}", if (loc == "global") "aiplatform.googleapis.com" else if (loc %in% c("us", "eu")) paste0("aiplatform.", loc, ".rep.googleapis.com") else paste0(loc, "-aiplatform.googleapis.com"), base_url, fixed = TRUE)
     }
   }
-  base_url <- base_url %||% d$access$base_url %||% switch(d$dialect, anthropic = "https://api.anthropic.com/v1", gemini = "https://generativelanguage.googleapis.com/v1beta", "https://api.openai.com/v1")
+  base_url <- base_url %||% d$access$base_url %||% switch(d$dialect, anthropic = "https://api.anthropic.com/v1", gemini = "https://generativelanguage.googleapis.com/v1beta", typesafe = "https://api.typesafe.ai", "https://api.openai.com/v1")
   .string(base_url, "base_url")
   if (!grepl("^https?://[^/?#[:space:]@]+(?:/[^?#[:space:]]*)?$", base_url, perl = TRUE))
     stop("base_url must be an HTTP(S) root without userinfo, whitespace, query, or fragment.", call. = FALSE)
-  structure(list(definition = d, base_url = sub("/+$", "", base_url), compat = policy, credential = api_key, settings = settings, account_id = account_id, clock = clock, transport = transport %||% transport_curl(), live_connect = live_connect, adaptations = adaptations), class = "lm15_lm")
+  structure(list(definition = d, base_url = sub("/+$", "", base_url), compat = policy, credential = api_key, settings = settings, setting_sources = if (exists("setting_sources", inherits = FALSE)) setting_sources, account_id = account_id, clock = clock, transport = transport %||% transport_curl(), live_connect = live_connect, adaptations = adaptations), class = "lm15_lm")
 }
 print.lm15_lm <- function(x, ...) { cat("<lm15 client: ", x$definition$id, ">\n", sep = ""); invisible(x) }
 
@@ -132,7 +138,7 @@ new_router <- function(..., api_keys = list(), base_urls = list(), settings = li
   }
   for (name in names(api_keys)) if (is.character(api_keys[[name]])) api_keys[[name]] <- api_key(api_keys[[name]])
   structure(list(api_keys = api_keys, base_urls = base_urls, settings = settings, catalog = catalog, client_cache = new.env(parent = emptyenv()),
-    rules = rules %||% list(c("claude-", "anthropic"), c("gpt-", "openai"), c("o1", "openai"), c("o3", "openai"), c("o4", "openai"), c("gemini-", "gemini"), c("gemma-", "gemini"), c("nano-banana", "gemini"), c("grok-", "xai"), c("sora-", "openai"), c("veo-", "gemini"), c("chat-latest", "openai")), env = env, transport = transport, live_connect = live_connect, adaptations = adaptations), class = "lm15_router")
+    rules = rules %||% list(c("claude-", "anthropic"), c("gpt-", "openai"), c("o1", "openai"), c("o3", "openai"), c("o4", "openai"), c("gemini-", "gemini"), c("gemma-", "gemini"), c("nano-banana", "gemini"), c("grok-", "xai"), c("sora-", "openai"), c("veo-", "gemini"), c("chat-latest", "openai"), c("jev-", "typesafe")), env = env, transport = transport, live_connect = live_connect, adaptations = adaptations), class = "lm15_router")
 }
 print.lm15_router <- function(x, ...) { cat("<lm15 router; credentials redacted>\n"); invisible(x) }
 str.lm15_router <- function(object, ...) { print.lm15_router(object); invisible(NULL) }

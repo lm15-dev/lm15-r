@@ -25,17 +25,25 @@ build_models_request <- function(lm, ...) {
   .check_dots(...); .require_surface(lm, "models")
   params <- switch(lm$definition$dialect, anthropic = list(limit = 1000L), gemini = list(pageSize = 1000L), list())
   if (lm$definition$access$backend == "chatgpt-codex") params$client_version <- lm$definition$access$backend_options$client_version
-  .emit(lm, "GET", "/models", params = params)
+  .emit(lm, "GET", if (lm$definition$dialect == "typesafe") "/v1/models" else "/models", params = params)
 }
 parse_models_response <- function(lm, body, ...) {
   .check_dots(...)
   data <- if (is.raw(body)) .json_decode(rawToChar(body)) else if (is.character(body)) .json_decode(body) else body
   dialect <- lm$definition$dialect; codex <- lm$definition$access$backend == "chatgpt-codex"
-  family <- switch(dialect, "openai-chat" = "openai_chat", "openai-responses" = "openai_responses", anthropic = "anthropic_messages", gemini = "gemini_generate_content")
+  family <- switch(dialect, "openai-chat" = "openai_chat", "openai-responses" = "openai_responses", anthropic = "anthropic_messages", gemini = "gemini_generate_content", typesafe = "typesafe_systemone")
+  entries <- if (dialect == "openai-chat" && !codex) {
+    # Two catalog shapes are in the wild: OpenAI's {"object": "list", "data": [...]}
+    # and a bare JSON array (Together, live 2026-09-26). Anything else is a
+    # malformed reply, never an empty catalog.
+    if (.is_array(data)) data
+    else if (.is_object(data) && .is_array(data$data)) data$data
+    else stop("a model catalog is {\"data\": [...]} or a JSON array of entries", call. = FALSE)
+  } else .wire_array(data[[if (dialect %in% c("gemini", "typesafe") || codex) "models" else "data"]])
   out <- list()
-  for (entry in .wire_array(data[[if (dialect == "gemini" || codex) "models" else "data"]])) {
+  for (entry in entries) {
     if (!.is_object(entry)) next
-    id <- entry[[if (dialect == "gemini") "name" else if (codex) "slug" else "id"]]
+    id <- entry[[if (dialect %in% c("gemini", "typesafe")) "name" else if (codex) "slug" else "id"]]
     if (!is.character(id) || length(id) != 1L || !nzchar(id)) next
     if (dialect == "gemini") id <- sub("^models/", "", id)
     out[[length(out) + 1L]] <- model_info(id, lm$definition$id, family, origin = model_origin(provider_data = entry))

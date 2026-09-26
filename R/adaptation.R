@@ -70,6 +70,11 @@ plan <- function(lm, request, ..., stream = FALSE) {
     request$model <- resolution$model
   }
   pair <- .route(lm, request); lm <- pair$lm; req <- pair$request
+  if (lm$definition$dialect == "typesafe") {
+    if (isTRUE(stream)) .typesafe_refuse("stream", "systemone answers in one piece; there is no stream to wrap")
+    return(.collecting(lm$adaptations %||% "note", lm$definition$id, function() .typesafe_payload(lm, req))$records)
+  }
+  if (!isTRUE(stream) && lm$definition$dialect == "openai-chat" && .judgments_via_token_scoring(.compat(lm, req), req)) return(.judgment_adaptations(lm, req))
   .collecting(lm$adaptations %||% "note", lm$definition$id, function() .build_payload(lm, req, isTRUE(stream)))$records
 }
 
@@ -113,9 +118,12 @@ plan <- function(lm, request, ..., stream = FALSE) {
       if (cutting && count == 0L) break
       if (nchar(t) <= count) { out[[length(out) + 1L]] <- e; segments <<- segments[-1L]; count <- count - nchar(t) }
       else if (cutting) {
-        # A cut delta keeps no token scores: a score never describes a fragment.
-        d <- e$delta; d$text <- substr(t, 1L, count); d$logprobs <- list()
-        e$delta <- d; out[[length(out) + 1L]] <- e
+        # Whole retained tokens keep their original scores; a fragment is
+        # never scored, and incomplete coverage is stated (logprobs_complete).
+        kept <- .scores_before_cut(e$delta$logprobs, t, count)
+        d <- unclass(e$delta); d$text <- substr(t, 1L, count); d$logprobs <- kept$scores
+        d$logprobs_complete <- isTRUE(d$logprobs_complete) && !kept$incomplete
+        e <- stream_delta_event(.new_value("TextDelta", d)); out[[length(out) + 1L]] <- e
         break
       } else break
     }
@@ -143,3 +151,22 @@ plan <- function(lm, request, ..., stream = FALSE) {
 # Signalled from inside the transport's chunk callback to close the source at
 # the cut; transports pass it through rather than report a network failure.
 .stream_cut <- function() stop(structure(class = c("lm15_stream_cut", "error", "condition"), list(message = "client-side stop", call = NULL)))
+
+# Scores for whole tokens before a cut at character `cut_at` of `text`.
+# Byte boundaries matter: a token may hold part of a character. Token
+# spellings are used only when their UTF-8 bytes reproduce the text exactly.
+.scores_before_cut <- function(scores, text, cut_at) {
+  if (!length(scores) || cut_at == 0L) return(list(scores = list(), incomplete = FALSE))
+  if (cut_at == nchar(text)) return(list(scores = scores, incomplete = FALSE))
+  token_bytes <- lapply(scores, function(s) if (length(s$bytes)) as.raw(vapply(s$bytes, function(b) as.integer(.integer_digits(b)), integer(1))) else charToRaw(enc2utf8(s$token)))
+  original <- charToRaw(enc2utf8(text))
+  if (!identical(do.call(c, token_bytes), original)) return(list(scores = list(), incomplete = TRUE))
+  boundary <- length(charToRaw(enc2utf8(substr(text, 1L, cut_at))))
+  end <- 0L
+  for (i in seq_along(token_bytes)) {
+    if (end == boundary) return(list(scores = scores[seq_len(i - 1L)], incomplete = FALSE))
+    end <- end + length(token_bytes[[i]])
+    if (end > boundary) return(list(scores = scores[seq_len(i - 1L)], incomplete = TRUE))
+  }
+  list(scores = scores, incomplete = FALSE)
+}

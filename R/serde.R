@@ -24,6 +24,7 @@
   }
   # On media parts, canonical JSON requires media_type even though the R
   # constructor supplies the media factory's default.
+  if (type == "DataPart" && !"value" %in% names(fields)) stop("A data part requires value (null is a value).", call. = FALSE)
   if (type %in% c("ImagePart", "AudioPart", "VideoPart", "DocumentPart", "BinaryPart") && is.null(fields$media_type))
     stop("Media JSON requires media_type.", call. = FALSE)
   telemetry <- switch(type, Response = "usage", StreamEndEvent = "usage", ModelInfo = c("origin", "inference"), LiveConfig = c("input_format", "output_format"), character())
@@ -44,7 +45,7 @@ from_dict <- function(value, kind, ...) {
 
 .required_shape <- list(
   ContinuationState = c("provider", "kind", "data"),
-  TextPart = "text", ThinkingPart = "text", RefusalPart = "text",
+  TextPart = "text", ThinkingPart = "text", RefusalPart = "text", DataPart = "value",
   ToolCallPart = c("id", "name", "input"), ToolResultPart = c("id", "content"),
   Message = c("role", "parts"), FunctionTool = c("name", "parameters"),
   Request = c("model", "messages"), Response = c("model", "message", "finish_reason"),
@@ -71,6 +72,8 @@ as_dict <- function(x, ..., include_provider_data = FALSE) {
     v <- x[[name, exact = TRUE]]; desc <- sub("\\?$", "", schema[[name]])
     if (name == "is_error" && identical(v, FALSE)) next
     if (name == "supports_reasoning" && identical(v, FALSE)) next
+    if (type == "DataPart" && name == "value") { out["value"] <- list(v); next }  # always emitted, even null
+    if (name == "logprobs_complete" && isTRUE(v)) next  # omitted when true; false is emitted
     if (is.null(v)) next
     if (inherits(v, "lm15_value")) {
       include <- type == "BatchEntry" && name == "response"

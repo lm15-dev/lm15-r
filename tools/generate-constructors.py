@@ -34,7 +34,7 @@ def default(t, name, desc):
         return 'NULL'
     if name == 'part_index': return '0L'
     if name in ('is_error', 'supports_reasoning'): return 'FALSE'
-    if name == 'turn_complete': return 'TRUE'
+    if name in ('turn_complete', 'logprobs_complete'): return 'TRUE'
     if name == 'channels': return '1L'
     if name == 'readiness': return '"ready"'
     if name == 'currency': return '"USD"'

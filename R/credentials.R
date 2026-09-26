@@ -5,14 +5,21 @@ select_auth_scheme <- function(credential, schemes, provider = NULL) {
   order <- if (credential$kind == "bearer_token") accepted[accepted %in% schemes] else schemes[schemes %in% accepted]
   if (!length(order)) .abort("Credential kind is incompatible with this access policy.", "not_configured", provider)
   scheme <- order[[1L]]
-  if (credential$kind == "api_key" && scheme %in% c("x-api-key", "api-key") && "bearer" %in% schemes) {
-    segments <- strsplit(credential$value, ".", fixed = TRUE)[[1L]]
-    if (length(segments) == 3L) {
-      head <- tryCatch(.json_decode(rawToChar(.base64url_decode(segments[[1L]]))), error = function(e) NULL)
-      if (.is_object(head) && !is.null(head$alg)) .abort("This looks like a bearer token; wrap it in bearer_token() instead of sending it as an API key.", "not_configured", provider)
-    }
-  }
+  # AUTH-2 (amended 2026-09-19 and 2026-09-26): a plain string with a
+  # token's shape -- a JWS compact JWT, or a Google OAuth access token
+  # (`ya29.`) -- is a token a callable handed over as a string, never a key.
+  # Where the key scheme is a key header and the policy also lists bearer,
+  # it travels as bearer. Stated trade-off: a decision from appearance, made
+  # only where the alternative is a certain 401.
+  if (credential$kind == "api_key" && scheme %in% c("x-api-key", "api-key") && "bearer" %in% schemes && .token_shaped(credential$value)) scheme <- "bearer"
   scheme
+}
+.token_shaped <- function(value) {
+  if (startsWith(value, "ya29.")) return(TRUE)
+  segments <- strsplit(value, ".", fixed = TRUE)[[1L]]
+  if (length(segments) != 3L) return(FALSE)
+  head <- tryCatch(.json_decode(rawToChar(.base64url_decode(segments[[1L]]))), error = function(e) NULL)
+  .is_object(head) && !is.null(head$alg)
 }
 credential_expired <- function(credential, ..., now = Sys.time(), skew_seconds = 300) {
   .check_dots(...); credential <- validate(credential)

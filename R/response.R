@@ -9,7 +9,7 @@
   if (dialect %in% c("chat", "responses")) {
     inp <- .wire_object(value[[if (dialect == "chat") "prompt_tokens_details" else "input_tokens_details"]])
     out <- .wire_object(value[[if (dialect == "chat") "completion_tokens_details" else "output_tokens_details"]])
-    return(usage(input_tokens = value[[if (dialect == "chat") "prompt_tokens" else "input_tokens"]], output_tokens = value[[if (dialect == "chat") "completion_tokens" else "output_tokens"]], total_tokens = value$total_tokens, cache_read_tokens = inp$cached_tokens, cache_write_tokens = inp$cache_write_tokens, reasoning_tokens = out$reasoning_tokens, input_audio_tokens = inp$audio_tokens, output_audio_tokens = out$audio_tokens))
+    return(usage(input_tokens = value[[if (dialect == "chat") "prompt_tokens" else "input_tokens"]], output_tokens = value[[if (dialect == "chat") "completion_tokens" else "output_tokens"]], total_tokens = value$total_tokens, cache_read_tokens = if (dialect == "chat") inp$cached_tokens %||% value$cached_tokens else inp$cached_tokens, cache_write_tokens = inp$cache_write_tokens, reasoning_tokens = out$reasoning_tokens, input_audio_tokens = inp$audio_tokens, output_audio_tokens = out$audio_tokens))
   }
   if (dialect == "anthropic") return(usage(input_tokens = value$input_tokens, output_tokens = value$output_tokens, cache_read_tokens = value$cache_read_input_tokens, cache_write_tokens = value$cache_creation_input_tokens, reasoning_tokens = value$output_tokens_details$thinking_tokens))
   modality <- function(entries) {
@@ -68,6 +68,7 @@ parse_response <- function(lm, request, body, ..., status = 200L, headers = list
   if (is.raw(body)) body <- rawToChar(body)
   if (status >= 300L) stop(normalize_error(lm, status, body, headers = headers))
   data <- if (is.character(body)) .json_decode(body) else body
+  if (lm$definition$dialect == "typesafe") return(.typesafe_parse(lm, request, data, headers))
   if (!.is_object(data)) .abort("Provider reply must be a JSON object.", "provider", lm$definition$id)
   dialect <- switch(lm$definition$dialect, "openai-chat" = "chat", "openai-responses" = "responses", lm$definition$dialect)
   provider <- lm$definition$id
@@ -192,6 +193,7 @@ parse_response <- function(lm, request, body, ..., status = 200L, headers = list
   if (!length(parts)) add(text(""))
   if (any(vapply(parts, function(p) p$type == "tool_call", logical(1)))) finish <- "tool_call"
   if (length(unmapped)) data$`_lm15_unmapped` <- unmapped
+  parts <- .replace_text_with_data(parts, request_judgments(request))  # MAP-14 section 3
   response(model, message_assistant(parts), finish, id = id, usage = .usage_wire(if (dialect == "gemini") data$usageMetadata else data$usage, dialect), logprobs = logs, provider_data = data)
 }
 

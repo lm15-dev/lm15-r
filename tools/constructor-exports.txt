@@ -13,6 +13,7 @@ document_part
 binary_part
 tool_call_part
 tool_result_part
+data_part
 message
 text_delta
 thinking_delta
@@ -22,6 +23,7 @@ tool_call_delta
 citation_delta
 continuation_delta
 stream_start_event
+adaptation
 stream_delta_event
 stream_end_event
 stream_error_event

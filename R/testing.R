@@ -31,7 +31,7 @@ fake_transport <- function(responses, ...) {
   .check_dots(...)
   if (!is.list(responses)) stop("responses must be a list of HTTP replies.", call. = FALSE)
   position <- 0L; requests <- list()
-  send <- function(wire, on_chunk = NULL) {
+  send <- function(wire, on_chunk = NULL, on_response = NULL) {
     requests[[length(requests) + 1L]] <<- wire
     if (position >= length(responses)) stop("Fake transport has no remaining responses.", call. = FALSE)
     position <<- position + 1L; reply <- responses[[position]]
@@ -44,11 +44,13 @@ fake_transport <- function(responses, ...) {
       if (!is.raw(chunk)) stop("Fake body chunks must be raw bytes or text.", call. = FALSE)
       chunk
     })
+    headers <- reply$headers %||% list()
+    if (is.function(on_response)) on_response(status, headers)
     if (!is.null(on_chunk) && status < 300L) {
       for (chunk in chunks) on_chunk(chunk)
       body <- raw()
     } else body <- if (length(chunks)) do.call(c, chunks) else raw()
-    list(status = status, headers = reply$headers %||% list(), body = body)
+    list(status = status, headers = headers, body = body)
   }
   structure(send, class = c("lm15_fake_transport", "lm15_transport", "function"), requests = function() requests)
 }

@@ -42,7 +42,7 @@
   }
   if (name == "part_index" && type != "ContinuationDelta") return(0L)
   if (name == "is_error" || name == "supports_reasoning") return(FALSE)
-  if (name == "turn_complete") return(TRUE)
+  if (name %in% c("turn_complete", "logprobs_complete")) return(TRUE)
   if (name == "channels") return(1L)
   if (name == "readiness") return("ready")
   if (name == "currency") return("USD")
@@ -73,6 +73,11 @@
     if (!.is_array(x)) .field_error(field, "must be an array")
     return(unname(lapply(seq_along(x), function(i) .coerce_field(x[[i]], inner, paste0(field, "[", i - 1L, "]"), reading))))
   }
+  if (desc == "json_value") {
+    # An opaque JSON value where null is a value (DataPart$value, INV-002).
+    tryCatch(.json_encode(x), error = function(e) .field_error(field, "must be a JSON value"))
+    return(x)
+  }
   if (is.null(x)) .field_error(field, "is required")
   if (desc %in% names(.vocab)) {
     .string(x, field)
@@ -99,6 +104,14 @@
     return(x)
   }
   if (desc == "base64") return(.base64(x, field))
+  if (desc == "probabilities") return(.coerce_probabilities(x, field))
+  if (desc == "http_response") return(.coerce_http_response(x, field))
+  if (desc == "provider_name") {
+    .string(x, field)
+    x <- gsub("_", "-", x, fixed = TRUE)
+    if (grepl("[[:space:]:/]", x)) .field_error(field, "must be a provider name without whitespace, colon or slash")
+    return(x)
+  }
   if (desc == "raw") {
     if (reading && is.character(x)) x <- tryCatch(jsonlite::base64_dec(x), error = function(e) .field_error(field, "invalid base64"))
     if (!is.raw(x) || !length(x)) .field_error(field, "must be non-empty raw bytes")
@@ -152,6 +165,48 @@
   kinds <- vapply(parts, .value_type, "")
   forbidden <- switch(role, tool = setdiff(unname(.unions$Part), "ToolResultPart"), assistant = "ToolResultPart", result = c("ToolCallPart", "ToolResultPart", "ThinkingPart", "RefusalPart"), c("ToolCallPart", "ToolResultPart", "ThinkingPart", "RefusalPart", "CitationPart"))
   if (any(kinds %in% forbidden)) .field_error(field, paste("contains a part not allowed in", role, "content"))
+  if (role != "assistant" && any(vapply(parts, function(p) identical(.value_type(p), "DataPart") && !is.null(p$probabilities), logical(1))))
+    .field_error(field, paste(role, "data parts carry value only; probabilities belong to assistant messages (INV-052)"))
+}
+
+# INV-052: {field: {key: probability}}, inner maps non-empty, floats in [0, 1].
+.coerce_probabilities <- function(x, field) {
+  if (!.is_object(x) || !length(x)) .field_error(field, "must be a non-empty object of field -> {key: probability}")
+  out <- lapply(names(x), function(name) {
+    dist <- x[[name]]
+    if (!nzchar(name)) .field_error(field, "keys must be non-empty strings")
+    if (!.is_object(dist) || !length(dist)) .field_error(paste0(field, "$", name), "must be a non-empty object of key -> probability")
+    values <- lapply(names(dist), function(key) {
+      if (!nzchar(key)) .field_error(paste0(field, "$", name), "keys must be non-empty strings")
+      p <- .number(dist[[key]], paste0(field, "$", name, "$", key))
+      if (p < 0 || p > 1) .field_error(paste0(field, "$", name, "$", key), "must be in [0, 1]")
+      p
+    })
+    .json_object(setNames(values, names(dist)))
+  })
+  .json_object(setNames(out, names(x)))
+}
+
+# ErrorDetail$http_response (docs/error-diagnostics.md): handshake evidence
+# with three optional fields; unknown keys are rejected; empty is absent.
+.coerce_http_response <- function(x, field) {
+  if (!.is_object(x)) .field_error(field, "must be a JSON object")
+  if (any(!names(x) %in% c("request_id", "retry_after", "rate_limit_headers"))) .field_error(field, "has an unknown field")
+  out <- json_object()
+  if (!is.null(x$request_id)) out$request_id <- .string(x$request_id, paste0(field, "$request_id"))
+  if (!is.null(x$retry_after)) {
+    wait <- .number(x$retry_after, paste0(field, "$retry_after"))
+    if (wait < 0) .field_error(paste0(field, "$retry_after"), "must be finite nonnegative seconds")
+    out$retry_after <- wait
+  }
+  if ("rate_limit_headers" %in% names(x)) {
+    headers <- x$rate_limit_headers
+    if (!.is_object(headers) || !all(vapply(headers, function(v) .is_array(v) && all(vapply(v, function(s) is.character(s) && length(s) == 1L && !inherits(s, "lm15_json_number"), logical(1))), logical(1))))
+      .field_error(paste0(field, "$rate_limit_headers"), "must map names to string arrays")
+    snapshot <- .rate_limit_snapshot(unlist(lapply(names(headers), function(n) lapply(headers[[n]], function(v) c(n, v))), recursive = FALSE))
+    if (length(snapshot)) out$rate_limit_headers <- snapshot
+  }
+  if (length(out)) out else NULL
 }
 .check_invariants <- function(type, x) {
   fail <- function(message) .field_error(type, message)
@@ -162,6 +217,7 @@
   if (type %in% c("CitationPart", "CitationDelta") && all(vapply(x[c("url", "title", "text")], is.null, logical(1)))) fail("requires url, title, or text")
   if (type %in% c("ToolResultPart", "LiveClientToolResultEvent")) .check_parts(x$content, "result", type)
   if (type == "Message") .check_parts(x$parts, x$role, type)
+  if (type == "DataPart" && is.null(x$probabilities) != is.null(x$method)) fail("method is present iff probabilities is (INV-052)")
   if (type == "LiveClientTurnEvent") .check_parts(x$parts, "user", type)
   if (type == "Reasoning" && x$effort == "off" && (!is.null(x$thinking_budget) || !is.null(x$summary))) fail("off cannot carry a budget or summary")
   if (type == "CacheConfig") {

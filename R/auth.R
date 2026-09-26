@@ -74,6 +74,27 @@ credentials_path <- function(..., env = NULL) {
   }
   NULL
 }
+# The stored xAI subscription's state, offline (AUTH-1, R2/R3 2026-09-22):
+# "usable" (fresh, or expired with a refresh token); "unusable" (expired with
+# no refresh token); "logged_out" (the non-secret marker lm15's store keeps
+# after a sign-out); "absent" (nothing stored). Unusable and logged-out
+# subscriptions block automatic use of an ambient API key: a failed
+# subscription is never silently replaced by a metered key.
+.xai_stored_state <- function(path = NULL, env = NULL, now = Sys.time()) {
+  for (source in .stored_paths("xai", path, env)) {
+    body <- .read_auth_file(source)
+    if (is.null(body)) next
+    info <- .stored_info("xai", source, env, now)
+    if (!is.null(info)) return(if (!info$expired || info$refreshable) "usable" else "unusable")
+    slot <- body[["_lm15"]]$slots$xai
+    if (.is_object(slot) && isTRUE(slot$logged_out)) return("logged_out")
+  }
+  "absent"
+}
+.subscription_block_error <- function(provider, state, keys) {
+  what <- if (state == "logged_out") "signed out" else "expired and cannot be renewed"
+  .abort(paste0("The saved ", provider, " subscription sign-in is ", what, ". lm15 does not switch to a paid API key on its own; sign in again with login(\"", provider, "\"), or pass the key explicitly (", paste(keys, collapse = " or "), " is used only when passed explicitly)."), "not_configured", provider, credential_hint = paste0("login(\"", provider, "\")"))
+}
 print.lm15_stored_credential <- function(x, ...) { cat("<lm15 stored credential: redacted>\n"); invisible(x) }
 str.lm15_stored_credential <- function(object, ...) { print.lm15_stored_credential(object); invisible(NULL) }
 load_local_credential <- function(provider, ..., path = NULL, env = NULL, now = Sys.time(), transport = NULL, lock_timeout = 30) {
@@ -118,12 +139,19 @@ explain_auth <- function(provider, ..., api_keys = list(), env = NULL, path = NU
     key <- .explicit_source(provider, api_keys)
     add("api_keys", !is.null(key), if (is.null(key)) "not provided" else paste("provided via", key, "(value hidden)"))
   }
+  blocked <- FALSE
   if (policy %in% c("oauth", "oauth-unless-explicit")) {
     info <- .stored_info(provider, path, env, now)
-    add("oauth-file", !is.null(info) && (!info$expired || info$refreshable), if (is.null(info)) "missing or unreadable" else if (info$expired) "renewal required (value hidden)" else "fresh (value hidden)")
+    state <- if (policy == "oauth-unless-explicit") .xai_stored_state(path, env, now) else "absent"
+    if (!selected && state %in% c("unusable", "logged_out")) blocked <- TRUE
+    add("oauth-file", !is.null(info) && (!info$expired || info$refreshable), if (state == "logged_out") "signed out (marker present)" else if (is.null(info)) "missing or unreadable" else if (info$expired && !info$refreshable) "expired, no refresh token" else if (info$expired) "renewal required (value hidden)" else "fresh (value hidden)")
   }
   if (policy != "oauth") {
-    for (key in unlist(d$access$env_keys)) add(paste0("env:", key), nzchar(.auth_env(env, key)), "value hidden")
+    for (key in unlist(d$access$env_keys)) {
+      set <- nzchar(.auth_env(env, key))
+      if (blocked && set) steps[[length(steps) + 1L]] <- list(kind = paste0("env:", key), state = "shadowed", detail = "set, blocked by the failed/signed-out subscription (pass it explicitly to use it)")
+      else add(paste0("env:", key), set, "value hidden")
+    }
     if (!is.null(d$placeholder_key)) add("placeholder", TRUE, "local-server placeholder")
   }
   structure(list(provider = provider, configured = selected, steps = steps), class = "lm15_auth_report")
@@ -131,8 +159,21 @@ explain_auth <- function(provider, ..., api_keys = list(), env = NULL, path = NU
 print.lm15_auth_report <- function(x, ...) {
   cat("Authentication for ", x$provider, ":\n", sep = "")
   for (step in x$steps) cat("  ", step$state, " ", step$kind, ": ", step$detail, "\n", sep = "")
-  for (name in names(x$settings)) cat("  ", name, ": ", x$settings[[name]], "\n", sep = "")
+  sources <- attr(x$settings, "sources")
+  from_text <- c(explicit = "passed explicitly", `adc-env` = "the GOOGLE_APPLICATION_CREDENTIALS file", `gcloud-config` = "gcloud's active configuration", `adc-file` = "the application-default credentials file", metadata = "the Google Cloud metadata server", `aws-profile` = "the active AWS profile", default = "the default")
+  describe <- function(from) if (startsWith(from, "env:")) paste0("env $", substring(from, 5L)) else unname(from_text[from]) %|NA|% from
+  for (name in names(x$settings)) {
+    from <- sources[[name]]$from
+    cat("  setting ", name, ": ", x$settings[[name]], if (!is.null(from)) paste0(" (from ", describe(from), ")"), "\n", sep = "")
+  }
+  for (name in names(sources)) {
+    s <- sources[[name]]
+    if (identical(s$state, "unprobed")) cat("  setting ", name, ": not found offline; ", describe(s$from), " is asked at request time\n", sep = "")
+    else if (is.null(s$value)) cat("  setting ", name, ": missing (required, no default)\n", sep = "")
+  }
   cat("Configured: ", if (x$configured) "yes" else "no", "\n", sep = "")
   if (!is.null(x$limitation)) cat(x$limitation, "\n")
   invisible(x)
 }
+
+`%|NA|%` <- function(x, y) if (length(x) != 1L || is.na(x)) y else x

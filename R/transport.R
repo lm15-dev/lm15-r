@@ -5,25 +5,25 @@ transport_curl <- function(..., timeout = 120, connect_timeout = 30, max_respons
   .number(timeout, "timeout"); .number(connect_timeout, "connect_timeout")
   .number(max_response_bytes, "max_response_bytes", TRUE)
   if (timeout <= 0 || connect_timeout <= 0 || max_response_bytes <= 0) stop("Transport limits must be positive.", call. = FALSE)
-  send <- function(wire, on_chunk = NULL) {
+  send <- function(wire, on_chunk = NULL, on_response = NULL) {
     if (!requireNamespace("curl", quietly = TRUE)) .abort("Desktop networking requires the curl R package. In webR, use the browser bridge or supply a transport.", "not_configured")
     handle <- curl::new_handle()
     curl::handle_setopt(handle, customrequest = wire$method, followlocation = FALSE, timeout = timeout, connecttimeout = connect_timeout)
     if (length(wire$body)) curl::handle_setopt(handle, postfields = wire$body)
     curl::handle_setheaders(handle, .list = wire$headers)
     chunks <- list(); size <- 0; status <- NULL
-    curl::handle_setopt(handle, headerfunction = function(bytes) {
-      line <- rawToChar(bytes)
-      if (startsWith(line, "HTTP/")) {
-        pieces <- strsplit(trimws(line), " +")[[1L]]
-        if (length(pieces) >= 2L) status <<- suppressWarnings(as.integer(pieces[[2L]]))
-      }
-      length(bytes)
-    })
     callback <- function(chunk) {
+      if (is.null(status)) {
+        # The status line and headers are complete before the first body
+        # byte; read them from the handle (the curl package reserves the
+        # header callback for itself).
+        info <- curl::handle_data(handle)
+        status <<- as.integer(info$status_code)
+        if (is.function(on_response)) on_response(status, .parse_headers(info$headers))
+      }
       size <<- size + length(chunk)
       if (size > max_response_bytes) .abort("HTTP response exceeds the configured byte limit.", "transport")
-      if (is.null(on_chunk) || is.null(status) || is.na(status) || status >= 300L) chunks[[length(chunks) + 1L]] <<- chunk else on_chunk(chunk)
+      if (is.null(on_chunk) || is.na(status) || status >= 300L) chunks[[length(chunks) + 1L]] <<- chunk else on_chunk(chunk)
       TRUE
     }
     result <- tryCatch(curl::curl_fetch_stream(wire$url, callback, handle = handle),
@@ -32,22 +32,29 @@ transport_curl <- function(..., timeout = 120, connect_timeout = 30, max_respons
         # libcurl errors may contain the full URL, including query credentials.
         .abort("HTTP transfer failed or timed out; credential-bearing diagnostics are suppressed.", "transport")
       })
-    list(status = result$status_code, headers = .parse_headers(result$headers), body = if (length(chunks)) do.call(c, chunks) else raw())
+    headers <- .parse_headers(result$headers)
+    if (is.null(status) && is.function(on_response)) on_response(as.integer(result$status_code), headers)
+    list(status = result$status_code, headers = headers, body = if (length(chunks)) do.call(c, chunks) else raw())
   }
   structure(send, class = c("lm15_transport", "function"))
 }
+# Header names are lowercased. Lookups see the first value of a name; the
+# "pairs" attribute keeps every field in arrival order (duplicates included)
+# for bounded diagnostics. Only the final response's block is kept.
 .parse_headers <- function(raw) {
-  lines <- strsplit(rawToChar(raw), "\r?\n", perl = TRUE)[[1L]]
-  out <- list()
+  text <- if (is.raw(raw)) rawToChar(raw[raw != as.raw(0L)]) else paste(raw, collapse = "\n")
+  lines <- strsplit(text, "\r?\n", perl = TRUE)[[1L]]
+  out <- list(); pairs <- list()
   for (line in lines) {
-    if (startsWith(line, "HTTP/")) { out <- list(); next }
+    if (startsWith(line, "HTTP/")) { out <- list(); pairs <- list(); next }
     at <- regexpr(":", line, fixed = TRUE)[[1L]]
     if (at < 1L) next
-    out[[tolower(substr(line, 1L, at - 1L))]] <- trimws(substring(line, at + 1L))
+    name <- tolower(trimws(substr(line, 1L, at - 1L))); value <- trimws(substring(line, at + 1L))
+    pairs[[length(pairs) + 1L]] <- c(name, value)
+    if (is.null(out[[name]])) out[[name]] <- value
   }
-  out
+  structure(out, pairs = pairs)
 }
-
 .emit <- function(lm, method, endpoint, payload = NULL, ..., params = list(), body = NULL, headers = list(), model = NULL, stream = FALSE) {
   .check_dots(...)
   d <- lm$definition; policy <- d$access; host <- policy$host
@@ -98,12 +105,13 @@ print.lm15_wire_request <- function(x, ...) { cat("<lm15 wire request: ", x$meth
   .check_dots(...)
   pair <- .route(lm, request); lm <- pair$lm; request <- pair$request
   if (lm$definition$access$backend == "chatgpt-codex" || .uses_live_completion(lm, request)) return(stream(lm, request, on_event = function(event) invisible(NULL)))
+  if (lm$definition$dialect == "openai-chat" && .judgments_via_token_scoring(.compat(lm, request), request)) return(.judgment_complete(lm, request))
   wire <- build_request(lm, request)
   # MAP-13: a stop sequence the wire cannot take is honoured by streaming and
   # closing the connection at the cut; the usage report is then not reported.
   if (.client_side_stop(wire$adaptations)) return(stream(lm, request, on_event = function(event) invisible(NULL)))
   result <- .send_wire(lm, wire)
-  out <- tryCatch(parse_response(lm, request, result$body), LM15Error = function(e) stop(.redact_wire_condition(e, wire)))
+  out <- tryCatch(parse_response(lm, request, result$body, headers = result$headers), LM15Error = function(e) stop(.redact_wire_condition(e, wire)))
   visible <- .visible_adaptations(lm, wire$adaptations)
   if (length(visible) && !length(out$adaptations)) out["adaptations"] <- list(visible)
   out

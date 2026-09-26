@@ -48,5 +48,10 @@ test_that("closing a view does not close the session or fabricate success", {
 test_that("turn collectors refuse mixed media types and memory overflow", {
   expect_error(materialize_turn(list(live_server_audio_event("YQ==", media_type = "audio/pcm"), live_server_audio_event("Yg==", media_type = "audio/wav"))), "different audio")
   session <- turn_session(list(live_server_text_event("too large")))
-  expect_error(result(turn(session, max_bytes = 1L)), class = "TransportError")
+  err <- tryCatch(result(turn(session, max_bytes = 1L)), CollectionLimitError = identity)
+  expect_s3_class(err, "CollectionLimitError")
+  expect_identical(err$code, "collection_limit")
+  expect_false(retryable(err))
+  expect_identical(err$limit, "bytes")
+  expect_identical(err$rejected_event$type, "text")
 })

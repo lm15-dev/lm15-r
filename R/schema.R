@@ -16,8 +16,9 @@
   BinaryPart = c(media_type = "string", data = "base64?", url = "string?", file_id = "string?", path = "string?", continuation = "ContinuationState[]"),
   ToolCallPart = c(id = "string", name = "string", input = "object", continuation = "ContinuationState[]"),
   ToolResultPart = c(id = "string", content = "Part[]", name = "string?", is_error = "bool", continuation = "ContinuationState[]"),
+  DataPart = c(value = "json_value", probabilities = "probabilities?", method = "judgment_method?", continuation = "ContinuationState[]"),
   Message = c(role = "role", parts = "Part[]", continuation = "ContinuationState[]"),
-  TextDelta = c(text = "text", part_index = "nonnegative", logprobs = "TokenLogprob[]"),
+  TextDelta = c(text = "text", part_index = "nonnegative", logprobs = "TokenLogprob[]", logprobs_complete = "bool"),
   ThinkingDelta = c(text = "text", part_index = "nonnegative"),
   AudioDelta = c(data = "text?", url = "text?", file_id = "text?", part_index = "nonnegative", media_type = "string?"),
   ImageDelta = c(data = "text?", url = "text?", file_id = "text?", part_index = "nonnegative", media_type = "string?"),
@@ -29,16 +30,16 @@
   StreamDeltaEvent = c(delta = "Delta"),
   StreamEndEvent = c(finish_reason = "finish?", usage = "Usage?", provider_data = "object?"),
   StreamErrorEvent = c(error = "ErrorDetail"),
-  ErrorDetail = c(code = "code", message = "text", provider_code = "string?"),
+  ErrorDetail = c(code = "code", message = "text", provider_code = "string?", http_response = "http_response?"),
   FunctionTool = c(name = "string", description = "text?", parameters = "object"),
   BuiltinTool = c(name = "string", config = "object?"),
   ToolChoice = c(mode = "tool_mode", allowed = "string[]", parallel = "bool?"),
   Reasoning = c(effort = "effort", thinking_budget = "positive?", summary = "summary?"),
   CacheConfig = c(mode = "cache_mode", retention = "retention?", key = "string?", prefix_until_index = "nonnegative?", prefix = "prefix?", resource = "string?"),
-  Config = c(max_tokens = "positive?", temperature = "float_nonnegative?", top_p = "probability?", top_k = "positive?", seed = "int?", frequency_penalty = "penalty?", presence_penalty = "penalty?", stop = "string[]", response_format = "object?", tool_choice = "ToolChoice?", reasoning = "Reasoning?", cache = "CacheConfig?", service_tier = "string?", user_id = "string?", store = "bool?", logprobs = "nonnegative?", extensions = "object?"),
+  Config = c(max_tokens = "positive?", temperature = "float_nonnegative?", top_p = "probability?", top_k = "positive?", seed = "int?", frequency_penalty = "penalty?", presence_penalty = "penalty?", stop = "string[]", response_format = "object?", tool_choice = "ToolChoice?", reasoning = "Reasoning?", cache = "CacheConfig?", service_tier = "string?", user_id = "string?", store = "bool?", logprobs = "nonnegative?", probabilities = "probability_policy?", extensions = "object?"),
   Request = c(model = "string", messages = "Message[]", system = "system?", tools = "Tool[]", config = "Config"),
   Usage = c(input_tokens = "nonnegative?", output_tokens = "nonnegative?", total_tokens = "nonnegative?", cache_read_tokens = "nonnegative?", cache_write_tokens = "nonnegative?", reasoning_tokens = "nonnegative?", input_audio_tokens = "nonnegative?", output_audio_tokens = "nonnegative?"),
-  Response = c(id = "string?", model = "string", message = "Message", finish_reason = "finish", usage = "Usage", logprobs = "TokenLogprob[]", provider_data = "object?", adaptations = "Adaptation[]"),
+  Response = c(id = "string?", model = "string", message = "Message", finish_reason = "finish", usage = "Usage", logprobs = "TokenLogprob[]", logprobs_complete = "bool", provider_data = "object?", adaptations = "Adaptation[]"),
   TopLogprob = c(token = "text", logprob = "float", bytes = "nonnegative[]", token_id = "int?"),
   TokenLogprob = c(token = "text", logprob = "float", bytes = "nonnegative[]", token_id = "int?", top = "TopLogprob[]"),
   FileUploadRequest = c(filename = "string", bytes_data = "raw?", media_type = "string", extensions = "object?", path = "string?"),
@@ -46,7 +47,7 @@
   FilePage = c(items = "FileInfo[]", next_cursor = "string?"),
   CacheInfo = c(id = "string", model = "string", tokens = "nonnegative?", created_at = "string?", expires_at = "string?", label = "string?", provider_data = "object?"),
   CachePage = c(items = "CacheInfo[]", next_cursor = "string?"),
-  CachedPrefix = c(prefix = "Request", resource = "CacheInfo?"),
+  CachedPrefix = c(prefix = "Request", resource = "CacheInfo?", provider = "provider_name?"),
   BatchRequest = c(model = "string?", requests = "Request[]", label = "string?", extensions = "object?"),
   BatchJobInfo = c(id = "string", status = "batch_status", label = "string?", created_at = "string?", provider_data = "object?"),
   BatchEntry = c(index = "nonnegative", outcome = "batch_outcome", response = "Response?", error = "ErrorDetail?"),
@@ -82,7 +83,7 @@
 
 .unions <- list(
   Credential = c(api_key = "ApiKey", bearer_token = "BearerToken", aws = "AwsCredentials"),
-  Part = c(text = "TextPart", thinking = "ThinkingPart", refusal = "RefusalPart", citation = "CitationPart", image = "ImagePart", audio = "AudioPart", video = "VideoPart", document = "DocumentPart", binary = "BinaryPart", tool_call = "ToolCallPart", tool_result = "ToolResultPart"),
+  Part = c(text = "TextPart", thinking = "ThinkingPart", refusal = "RefusalPart", citation = "CitationPart", image = "ImagePart", audio = "AudioPart", video = "VideoPart", document = "DocumentPart", binary = "BinaryPart", tool_call = "ToolCallPart", tool_result = "ToolResultPart", data = "DataPart"),
   Delta = c(text = "TextDelta", thinking = "ThinkingDelta", image = "ImageDelta", audio = "AudioDelta", tool_call = "ToolCallDelta", citation = "CitationDelta", continuation = "ContinuationDelta"),
   StreamEvent = c(start = "StreamStartEvent", delta = "StreamDeltaEvent", end = "StreamEndEvent", error = "StreamErrorEvent"),
   Tool = c("function" = "FunctionTool", builtin = "BuiltinTool"),
@@ -100,7 +101,9 @@
   detail = c("low", "high", "auto"), encoding = c("pcm16", "opus", "mp3", "aac"),
   readiness = c("pending", "ready", "failed"), batch_status = c("queued", "running", "cancelling", "completed", "failed", "cancelled", "expired"),
   batch_outcome = c("succeeded", "errored", "cancelled", "expired"), video_status = c("queued", "running", "completed", "failed", "cancelled"),
-  code = c("auth", "billing", "rate_limit", "invalid_request", "context_length", "timeout", "server", "unsupported_model", "unsupported_feature", "not_configured", "unknown_model", "ambiguous_model", "transport", "lock_timeout", "stream_assembly", "provider")
+  code = c("auth", "billing", "rate_limit", "invalid_request", "context_length", "timeout", "server", "unsupported_model", "unsupported_feature", "not_configured", "unknown_model", "ambiguous_model", "transport", "lock_timeout", "stream_assembly", "collection_limit", "provider"),
+  probability_policy = c("off", "if_available", "required"),
+  judgment_method = c("provider_classification", "candidate_sequence_likelihood")
 )
 
 .kind_names <- c(credential = "Credential", part = "Part", message = "Message", tool = "Tool", tool_choice = "ToolChoice", reasoning = "Reasoning", config = "Config", cache_config = "CacheConfig", cache_info = "CacheInfo", cache_page = "CachePage", cached_prefix = "CachedPrefix", token_logprob = "TokenLogprob", continuation_state = "ContinuationState", error_detail = "ErrorDetail", delta = "Delta", usage = "Usage", stream_event = "StreamEvent", request = "Request", response = "Response", model_info = "ModelInfo", batch_request = "BatchRequest", batch_job = "BatchJobInfo", batch_entry = "BatchEntry", file_upload_request = "FileUploadRequest", file_info = "FileInfo", file_page = "FilePage", image_generation_request = "ImageGenerationRequest", image_generation_response = "ImageGenerationResponse", speech_generation_request = "SpeechGenerationRequest", speech_generation_response = "SpeechGenerationResponse", video_generation_request = "VideoGenerationRequest", video_job = "VideoJobInfo", audio_format = "AudioFormat", live_config = "LiveConfig", live_client_event = "LiveClientEvent", live_server_event = "LiveServerEvent")

@@ -15,11 +15,12 @@ live_setup_frames <- function(lm, config, ...) {
   if (!inherits(config, "lm15_LiveConfig")) stop("Expected live_config().", call. = FALSE)
   if (any(vapply(config$tools, function(tool) tool$type == "builtin", logical(1)))) .unsupported(lm$definition$id, "builtin tools in live sessions")
   instructions <- if (is.character(config$system)) config$system else if (!is.null(config$system)) .parts_text(config$system, lm$definition$id) else NULL
-  tools <- lapply(Filter(function(t) t$type == "function", config$tools), function(t) json_object(name = t$name, description = t$description, parameters = t$parameters))
+  functions <- Filter(function(t) t$type == "function", config$tools)
+  tools <- lapply(functions, function(t) json_object(name = t$name, description = t$description, parameters = t$parameters))
   if (dialect == "gemini") {
     setup <- json_object(model = if (startsWith(config$model, "models/")) config$model else paste0("models/", config$model))
     if (!is.null(instructions)) setup$systemInstruction <- json_object(parts = list(json_object(text = instructions)))
-    if (length(tools)) setup$tools <- list(json_object(functionDeclarations = tools))
+    if (length(functions)) setup$tools <- list(json_object(functionDeclarations = lapply(functions, .gemini_declaration)))
     generation <- json_object()
     if (!is.null(config$output_format) || .live_audio_native(config$model)) generation$responseModalities <- list("AUDIO")
     if (!is.null(config$voice)) generation$speechConfig <- json_object(voiceConfig = json_object(prebuiltVoiceConfig = json_object(voiceName = config$voice)))

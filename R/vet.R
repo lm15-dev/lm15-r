@@ -63,7 +63,10 @@ vet_handle <- function(line, ...) {
         env <- unlist(msg$env %||% list()); if (!length(env)) env <- character()
         keys <- setNames(lapply(msg$api_keys_providers %||% list(), function(p) api_key(msg$sentinel)), unlist(msg$api_keys_providers %||% list()))
         report <- explain_auth(msg$provider, api_keys = keys, env = env, path = msg$credentials_path, settings = msg$settings %||% list())
-        json_object(configured = report$configured, steps = lapply(report$steps, function(s) json_object(kind = s$kind, state = s$state)), report_text = paste(utils::capture.output(print(report)), collapse = "\n"))
+        out <- json_object(configured = report$configured, steps = lapply(report$steps, function(s) json_object(kind = s$kind, state = s$state)), report_text = paste(utils::capture.output(print(report)), collapse = "\n"))
+        sources <- attr(report$settings, "sources")
+        if (length(sources)) out$settings <- .json_object(sources)
+        out
       },
       token_exchange_build = .json_object(unclass(token_exchange_build(msg$provider, msg$rung, msg$input, now = .parse_rfc3339(msg$now), settings = msg$settings %||% list()))),
       token_exchange_parse = tryCatch(

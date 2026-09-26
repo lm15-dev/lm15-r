@@ -145,7 +145,7 @@
 }
 
 .new_accumulator <- function(req) {
-  slots <- list(); states <- list(); id <- NULL; model <- req$model; finish <- NULL; counts <- usage(); provider_data <- NULL; logs <- list(); adaptations <- list()
+  slots <- list(); states <- list(); id <- NULL; model <- req$model; finish <- NULL; counts <- usage(); provider_data <- NULL; logs <- list(); adaptations <- list(); scores_complete <- TRUE
   push <- function(event) {
     if (event$type == "start") { id <<- event$id %||% id; model <<- event$model %||% model; if (length(event$adaptations)) adaptations <<- event$adaptations; return(invisible(NULL)) }
     if (event$type == "end") { finish <<- event$finish_reason %||% finish; counts <<- event$usage %||% counts; provider_data <<- event$provider_data %||% provider_data; return(invisible(NULL)) }
@@ -156,6 +156,7 @@
     k <- d$type
     if (k %in% c("text", "thinking")) s[[k]] <- paste0(s[[k]] %||% "", d$text)
     if (k == "text" && length(d$logprobs)) logs <<- c(logs, d$logprobs)
+    if (k == "text" && identical(d$logprobs_complete, FALSE)) scores_complete <<- FALSE
     if (k == "tool_call") {
       s$tool_input <- paste0(s$tool_input %||% "", d$input)
       s$tool_id <- d$id %||% s$tool_id; s$tool_name <- d$name %||% s$tool_name
@@ -197,8 +198,9 @@
     has_tool <- any(vapply(parts, function(p) p$type == "tool_call", logical(1)))
     reason <- finish %||% if (has_tool) "tool_call" else "stop"
     if (has_tool && reason == "stop") reason <- "tool_call"
+    parts <- .replace_text_with_data(parts, request_judgments(req))  # MAP-14 section 3
     msg <- message_assistant(parts); msg$continuation <- states
-    out <- response(model, msg, reason, id = id, usage = counts, logprobs = logs, provider_data = provider_data, adaptations = adaptations)
+    out <- response(model, msg, reason, id = id, usage = counts, logprobs = logs, logprobs_complete = scores_complete, provider_data = provider_data, adaptations = adaptations)
     if (length(unnamed)) .abort("Tool call arrived without a name; no tool name was invented.", "stream_assembly", partial = out, part_index = unnamed[[1L]])
     out
   }
@@ -209,7 +211,7 @@
   c(charToRaw("RIFF"), little(36 + length(bytes), 4L), charToRaw("WAVEfmt "), little(16L, 4L), little(1L, 2L), little(1L, 2L), little(24000L, 4L), little(48000L, 4L), little(2L, 2L), little(16L, 2L), charToRaw("data"), little(length(bytes), 4L), bytes)
 }
 
-.new_stream <- function(lm, req, on_event, adaptations = list(), stop = NULL) {
+.new_stream <- function(lm, req, on_event, adaptations = list(), stop = NULL, handshake = function() NULL) {
   acc <- .new_accumulator(req); started <- FALSE; ended <- FALSE; terminal <- NULL; rank <- -1L
   cutter <- .new_stop_cutter(stop); cut <- FALSE
   emit <- function(e) {
@@ -224,7 +226,17 @@
   }
   consume <- function(e) {
     if (e$type == "start") { if (!started) start(e); return(invisible(NULL)) }
-    if (e$type == "error") { for (x in cutter$flush()) emit(x); on_event(e); .abort(e$error$message, e$error$code, lm$definition$id, provider_code = e$error$provider_code) }
+    if (e$type == "error") {
+      # The HTTP driver's handshake evidence rides the event (never status 200).
+      block <- .handshake_block(handshake())
+      if (!is.null(block) && is.null(e$error$http_response)) {
+        detail <- unclass(e$error); detail$http_response <- block
+        e <- stream_error_event(.new_value("ErrorDetail", detail))
+      }
+      for (x in cutter$flush()) emit(x); on_event(e)
+      h <- e$error$http_response
+      .abort(e$error$message, e$error$code, lm$definition$id, provider_code = e$error$provider_code, request_id = h$request_id, retry_after = h$retry_after, rate_limit_headers = h$rate_limit_headers)
+    }
     if (e$type == "end") {
       for (x in cutter$flush()) emit(x)
       ended <<- TRUE
@@ -267,9 +279,12 @@
   if (.uses_live_completion(lm, request)) return(.stream_live_completion(lm, request, on_event))
   wire <- build_request(lm, request, stream = TRUE)
   stop_at <- if (.client_side_stop(wire$adaptations)) request$config$stop else NULL
-  source <- .new_stream(lm, request, function(event) on_event(.redact_error_event(event, wire)), adaptations = .visible_adaptations(lm, wire$adaptations), stop = stop_at)
+  handshake <- NULL
+  source <- .new_stream(lm, request, function(event) on_event(.redact_error_event(event, wire)), adaptations = .visible_adaptations(lm, wire$adaptations), stop = stop_at, handshake = function() handshake)
+  args <- list(wire, on_chunk = source$feed)
+  if ("on_response" %in% names(formals(lm$transport))) args$on_response <- function(status, headers) handshake <<- headers
   tryCatch({
-    result <- tryCatch(lm$transport(wire, on_chunk = source$feed), lm15_stream_cut = function(e) NULL)
+    result <- tryCatch(do.call(lm$transport, args), lm15_stream_cut = function(e) NULL)
     if (!is.null(result) && result$status >= 300L) stop(normalize_error(lm, result$status, rawToChar(result$body), headers = result$headers))
     source$finish()
   }, LM15Error = function(e) stop(.redact_wire_condition(e, wire)))
@@ -287,7 +302,10 @@ materialize_response <- function(events, request, ...) {
   for (e in events) {
     e <- validate(e)
     if (ended) .abort("An event followed the end event.", "stream_assembly", partial = acc$response())
-    if (e$type == "error") .abort(e$error$message, e$error$code, provider_code = e$error$provider_code)
+    if (e$type == "error") {
+      h <- e$error$http_response
+      .abort(e$error$message, e$error$code, provider_code = e$error$provider_code, request_id = h$request_id, retry_after = h$retry_after, rate_limit_headers = h$rate_limit_headers)
+    }
     acc$push(e)
     if (e$type == "end") ended <- TRUE
   }
