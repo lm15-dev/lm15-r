@@ -25,3 +25,20 @@ test_that("browser resource errors redact the credential used for that request",
   expect_identical(parsed$error$code, "auth")
   expect_false(grepl(secret, as_json(parsed), fixed = TRUE))
 })
+
+test_that("browser errors carry the diagnostics every language shows, never the credential", {
+  id <- "browser-diagnostics-test"; secret <- "SECRET-SENTINEL-DO-NOT-PRINT"
+  on.exit(browser_call("dispose", id))
+  request <- as_dict(request("gpt-5-mini", list(message_user("hi"))))
+  browser_call("prepare", id, json_object(provider = "openai", api_key = secret, request = request))
+  body <- lm15:::.base64_encode(charToRaw('{"error": {"message": "offline quota", "type": "rate_limit_error"}}'))
+  parsed <- browser_call("response", id, json_object(status = 429L, body_b64 = body,
+    headers = json_object(`x-request-id` = "req-browser", `retry-after` = "2", `x-ratelimit-remaining-requests` = "0")))
+  expect_false(parsed$ok)
+  expect_identical(parsed$error$class, "RateLimitError")
+  expect_identical(parsed$error$request_id, "req-browser")
+  expect_identical(as.integer(unclass(parsed$error$status)), 429L)
+  expect_match(parsed$error$display, "request req-browser", fixed = TRUE)
+  expect_identical(parsed$error$rate_limit_headers$`x-ratelimit-remaining-requests`[[1L]], "0")
+  expect_false(grepl(secret, as_json(parsed$error), fixed = TRUE))
+})

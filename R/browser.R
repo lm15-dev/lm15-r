@@ -75,6 +75,16 @@ browser_dispatch <- function(action, id, payload = "{}", ...) {
       e <- .redact_wire_condition(e, state$wire)
     }
     fields <- json_object(code = if (inherits(e, "LM15Error")) e$code else "invalid_request", message = if (inherits(e, "LM15Error")) e$message else "Invalid browser request or malformed provider data.")
+    if (inherits(e, "LM15Error")) {
+      # The diagnostics every lm15 language shows (docs/error-diagnostics.md):
+      # non-secret by construction, the message already redacted above.
+      fields$class <- class(e)[[1L]]
+      fields$display <- conditionMessage(e)
+      for (name in c("provider", "provider_code", "request_id")) if (!is.null(e[[name]])) fields[[name]] <- e[[name]]
+      if (!is.null(e$status)) fields$status <- as.integer(e$status)
+      if (!is.null(e$retry_after)) fields$retry_after <- as.double(e$retry_after)
+      if (length(e$rate_limit_headers)) fields$rate_limit_headers <- e$rate_limit_headers
+    }
     if (inherits(e, "StreamAssemblyError") && !is.null(e$partial)) fields$partial <- as_dict(e$partial)
     if (exists(id, .browser_sessions, inherits = FALSE)) {
       state <- get(id, .browser_sessions, inherits = FALSE)

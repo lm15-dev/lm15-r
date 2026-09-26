@@ -43,6 +43,9 @@ export class LM15Error extends Error {
     super(detail.message);
     this.name = "LM15Error";
     this.code = detail.code;
+    // The same diagnostics the R condition carries; none is a credential.
+    for (const name of ["class", "display", "provider", "provider_code", "status", "request_id", "retry_after", "rate_limit_headers"])
+      if (detail[name] !== undefined) this[name === "class" ? "errorClass" : name] = detail[name];
     this.partial = detail.partial;
     this.events = detail.events ?? [];
   }
