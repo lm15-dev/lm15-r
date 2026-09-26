@@ -16,6 +16,7 @@ checkout used for comparisons outside the corpus (1.1.0, `6aea565`).
 | R unit tests (`testthat`) | 331 pass |
 | `R CMD check --as-cran` with LaTeX, HTML Tidy and checkbashisms (`nix develop .#cran`) | 1 NOTE: "New submission" |
 | `R CMD check` with only the required packages installed | OK |
+| Browser: webR in Chromium 152 (`tools/test-webr.mjs`) | 18 assertions pass; 0 external requests |
 | Live, against a real vLLM 0.25.1 server | chat, streaming, model listing, `UnsupportedModelError`, `AuthError` without the key in the message, and the judgment fallback (the server ignores `logprob_token_ids`, as recorded in the contract) |
 
 Directions: request 464, response 353, stream 52, error 104, serde 129,
@@ -85,13 +86,15 @@ paste the return (R cannot race the listener against a prompt on one thread).
 
 ## Remaining before calling every platform verified
 
-1. **Windows and macOS.** Only Linux has run. The Windows lock
+1. **Windows and macOS.** `R CMD check` passes on both in CI (2026-09-26); the concurrency and TLS integration tests have run on Linux only. The Windows lock
    (`LockFileEx`), atomic replacement and permissions, and both platforms'
    libcurl builds, run in CI (`.github/workflows/check.yml`) once pushed.
-2. **webR.** The browser bridge was verified in Chromium on 2026-09-13; it was
-   not rebuilt after these changes. `curl`, `openssl` and `askpass` are now
-   imports; all three are in the webR repository, but `tools/build-webr.sh`
-   builds only jsonlite and lm15 and needs updating before the next browser build.
+2. **webR** (verified again 2026-09-26). `tools/build-webr.sh` now compiles
+   `sys`, `askpass`, `openssl`, `curl` and `jsonlite` from SHA-256-pinned CRAN
+   sources beside lm15, offline, in the pinned webR image (which ships the
+   WebAssembly OpenSSL and libcurl libraries). In Chromium 152, webR installs
+   lm15 1.0.0 and its imports from that repository and passes all 18 browser
+   assertions with zero external requests.
 3. **Paid providers.** No paid provider has been called from R. The other
    SDKs' live smoke covered the same wire shapes; R's are pinned by the corpus.
 

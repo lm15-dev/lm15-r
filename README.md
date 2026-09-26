@@ -105,8 +105,8 @@ the mechanics are R's. Where R differs:
 * **Live:** checked against a real vLLM server (chat, streaming, model
   listing, errors, the judgment fallback). No paid provider has been called
   from R yet.
-* **Platforms:** built and tested on Linux. The Windows and macOS code paths
-  (file locking, atomic replacement) exist but have not been run yet.
+* **Platforms:** `R CMD check` passes on Linux, Windows and macOS (CI), and
+  the package runs in the browser through webR (tested in Chromium).
 
 Details and the verification record are in [IMPLEMENTATION.md](https://github.com/lm15-dev/lm15-r/blob/main/IMPLEMENTATION.md).
 
