@@ -93,3 +93,14 @@ test("unsafe numbers and cyclic data never reach R", async () => {
   await assert.rejects(client.complete(cycle), /cycles/);
   assert.ok(!r.calls.some(c => c.action === "prepare"));
 });
+
+test("build returns the wire request without sending, and frees the R state", async () => {
+  const request = { model: "test", messages: [{ role: "user", parts: [{ type: "text", text: "hi" }] }] };
+  const r = worker((action, input) => {
+    if (action === "prepare") { assert.equal(input.stream, true); assert.equal(input.json_only, true); return wire; }
+    return {};
+  });
+  const client = new Lm15WebR(r, { provider: "openai", apiKey: "test", fetch: () => assert.fail("build must not send") });
+  assert.deepEqual(await client.buildJSON(JSON.stringify(request), { stream: true }), wire);
+  assert.deepEqual(r.calls.map(call => call.action), ["prepare", "dispose"]);
+});

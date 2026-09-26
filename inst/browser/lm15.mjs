@@ -282,6 +282,19 @@ export class Lm15WebR {
     if (job.status !== "completed") throw new LM15Error({ code: "invalid_request", message: "Video is not completed; poll its status first." });
     return this.operation("video", "result_fetch", { id, status_body: job.provider_data }, options);
   }
+  /** The exact HTTP request complete() (or stream(), with `stream: true`)
+   * would send, as {method, url, headers, body_b64}. Nothing is sent. The
+   * headers carry the credential: do not log or display them unredacted.
+   */
+  async build(request, { stream = false, jsonOnly = false } = {}) {
+    const id = crypto.randomUUID();
+    try { return await this.#prepare(id, request, !!stream, jsonOnly); }
+    finally { await this.#dispatch("dispose", id).catch(() => {}); }
+  }
+  buildJSON(requestJSON, options = {}) {
+    if (typeof requestJSON !== "string") throw new TypeError("Expected canonical JSON text");
+    return this.build(requestJSON, { ...options, jsonOnly: true });
+  }
   completeJSON(requestJSON, options = {}) {
     if (typeof requestJSON !== "string") throw new TypeError("Expected canonical JSON text");
     return this.complete(requestJSON, { ...options, jsonOnly: true });
