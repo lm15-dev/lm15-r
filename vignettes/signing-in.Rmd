@@ -1,0 +1,119 @@
+---
+title: "Keys, subscriptions and cloud identities"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Keys, subscriptions and cloud identities}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r}
+library(lm15)
+```
+
+## Keys from the environment
+
+With no other configuration, a router reads a provider's usual environment
+variable when a request is sent: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+`GEMINI_API_KEY`, and so on. Nothing is read when the router is created.
+
+`explain_auth()` shows which credential a request would use, and why, without
+printing a secret or contacting anything:
+
+```{r}
+explain_auth("anthropic", env = c(ANTHROPIC_API_KEY = "sk-ant-example"))
+```
+
+Explicit credentials win over everything:
+
+```{r}
+router <- new_router(api_keys = list(anthropic = "sk-ant-from-a-vault"))
+```
+
+A credential may also be a function that returns one; it is called for every
+request, so a rotating token is never cached by lm15.
+
+## Subscriptions
+
+Some providers let you use a subscription instead of a paid key: xAI (SuperGrok
+or X Premium), Claude, ChatGPT, GitHub Copilot, Kimi Code, Meta. Sign in once:
+
+```{r, eval = FALSE}
+login("xai")            # shows a code to approve in your browser
+router <- new_router(auth = local_auth())
+```
+
+The login is saved in a private file that lm15 in Python, TypeScript, Rust and
+Go read too (`~/.config/lm15/credentials.json` unless `LM15_CREDENTIALS_PATH`
+says otherwise). It is renewed when due, under a lock the other languages
+respect, so a refresh token is never spent twice.
+
+A failed or signed-out subscription is **not** replaced by a paid key on its
+own: you would be charged without having chosen to be. Pass the key explicitly
+if that is what you want. The same rules, shown with a scope that lives only
+in this R session:
+
+```{r}
+auth <- memory_auth()
+key <- set_api_key("openai", "sk-example", auth = auth)
+status("openai", auth = auth)$usability
+logout("openai", auth = auth)$forgot
+env <- c(OPENAI_API_KEY = "sk-ambient")
+report <- explain_auth("openai", env = env, auth = auth)
+report$configured
+vapply(report$steps, function(s) paste(s$kind, s$state), "")
+```
+
+Other things you can save: a key's environment variable *name* (read at
+request time, never copied), a local server, or a named cloud identity:
+
+```{r}
+configure("gemini", "env", answers = list(name = "GEMINI_API_KEY"), auth = auth)
+configure("ollama", "local", answers = list(base_url = "http://127.0.0.1:11434/v1"), auth = auth)
+vapply(connections(auth = auth), function(c) c$label, "")
+```
+
+## connect()
+
+At a console, `connect()` asks which provider, signs in or saves a key if
+needed, lists your account's models, and returns a client bound to that
+connection and model. It never sends a prompt.
+
+```{r, eval = FALSE}
+client <- connect()
+response_text(complete(client, "Hello"))
+```
+
+`bind_model()` does the same without questions:
+
+```{r}
+auth <- memory_auth()
+set_api_key("openai", "sk-example", auth = auth)
+client <- bind_model("openai", "gpt-5-mini", auth = auth)
+client$request("Hello")$model
+```
+
+A bound client follows its connection's renewals and nothing else: if the
+connection is replaced or signed out, it stops rather than switch who pays.
+
+## Cloud identities
+
+Azure, AWS and Google Cloud providers walk the cloud's own chain (environment,
+profile, CLI login, the machine's identity) and say which one answered.
+`explain_auth()` also reports where each host setting came from:
+
+```{r}
+explain_auth("vertex", env = c(GOOGLE_CLOUD_PROJECT = "my-project", NO_GCE_CHECK = "1", HOME = tempdir()))
+```
+
+To use exactly one identity and nothing else, name it: `platform` (the
+machine's own), `workload`, `environment` or `cli`.
+
+```{r, eval = FALSE}
+router <- new_router(credentials = list(bedrock_chat = "cli"),
+                     settings = list(bedrock_chat = list(region = "eu-west-3")))
+```

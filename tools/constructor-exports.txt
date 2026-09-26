@@ -14,7 +14,7 @@ binary_part
 tool_call_part
 tool_result_part
 data_part
-message
+new_message
 text_delta
 thinking_delta
 audio_delta

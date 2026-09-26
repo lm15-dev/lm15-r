@@ -11,9 +11,16 @@
           pkgs = import nixpkgs { inherit system; };
           wsCurl = pkgs.curl.override { websocketSupport = true; };
           r = pkgs.rWrapper.override {
-            packages = with pkgs.rPackages; [ jsonlite curl openssl filelock later httpuv processx xml2 testthat knitr rmarkdown tibble purrr ];
+            packages = with pkgs.rPackages; [ jsonlite curl openssl askpass later httpuv processx xml2 callr pkgload testthat knitr rmarkdown ];
           };
-        in {
+          # Everything `R CMD check --as-cran` runs on CRAN's side: the PDF
+          # manual (LaTeX with inconsolata), HTML validation and the
+          # configure-script portability check.
+          tex = pkgs.texliveSmall.withPackages (ps: with ps; [ inconsolata fancyvrb ec cm-super ]);
+        in rec {
+          cran = default.overrideAttrs (old: {
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ tex pkgs.html-tidy pkgs.checkbashisms pkgs.qpdf pkgs.ghostscript ];
+          });
           default = pkgs.mkShell {
             # All R extensions in this shell must resolve the same, WebSocket-
             # enabled libcurl, even if R's HTTP module is loaded first.

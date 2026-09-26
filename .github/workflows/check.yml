@@ -34,7 +34,7 @@ jobs:
       - name: Browser bridge tests
         run: node --test tests/browser/*.test.mjs
       - name: Package checks
-        run: Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual"), error_on = "warning")'
+        run: Rscript -e 'rcmdcheck::rcmdcheck(args = c("--as-cran", "--no-manual"), error_on = "warning")'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

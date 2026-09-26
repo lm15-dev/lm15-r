@@ -328,7 +328,7 @@ citations <- function(response, ...) { .check_dots(...); Filter(function(p) p$ty
 parse_json <- function(response, ...) {
   .check_dots(...); value <- response_text(response)
   if (is.null(value)) stop("Response has non-text content.", call. = FALSE)
-  .json_decode(value)
+  .plain_json(.json_decode(value))
 }
 continuation_data <- function(x, provider, kind) {
   states <- if (inherits(x, "lm15_value")) x$continuation else x

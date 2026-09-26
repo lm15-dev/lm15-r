@@ -51,8 +51,11 @@ def default(t, name, desc):
 
 out = ['# Generated from schema.R by tools/generate-constructors.py.\n']
 exports = []
+# Constructor names that would mask a base R function get the package's
+# new_ prefix (message() would replace base::message for every user).
+renamed = {'Message': 'new_message'}
 for t, fields in shapes:
-    fn = snake(t)
+    fn = renamed.get(t, snake(t))
     exports.append(fn)
     args = []
     required = [(n, d) for n, d in fields if default(t, n, d) is None]

@@ -170,3 +170,9 @@ plan <- function(lm, request, ..., stream = FALSE) {
   }
   list(scores = scores, incomplete = FALSE)
 }
+
+# An adaptation holds no secret and no prompt text: show what changed and why.
+print.lm15_Adaptation <- function(x, ...) {
+  cat("<lm15 adaptation> ", x$field, ": ", x$action, "\n  ", x$reason, "\n", sep = "")
+  invisible(x)
+}

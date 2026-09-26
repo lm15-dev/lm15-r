@@ -84,3 +84,40 @@ as.double.lm15_integer <- function(x, ...) {
 }
 as.character.lm15_integer <- function(x, ...) unclass(x)
 print.lm15_integer <- function(x, ...) { cat(unclass(x), "\n", sep = ""); invisible(x) }
+
+# A JSON number read verbatim. Readers meant for people (parse_json(),
+# response_data()) convert these to plain R numbers when nothing is lost;
+# what remains is an integer beyond 2^53, which keeps its exact digits.
+.json_number_value <- function(x) {
+  token <- unclass(x)
+  if (grepl("^-?[0-9]+$", token)) {
+    digits <- sub("^-", "", token)
+    if (nchar(digits) < 10L || .integer_compare(digits, "2147483647") <= 0) return(as.integer(token))
+    if (.integer_compare(digits, "9007199254740991") <= 0) return(as.numeric(token))
+    return(x)
+  }
+  as.numeric(token)
+}
+.plain_json <- function(x) {
+  if (inherits(x, "lm15_json_number")) return(.json_number_value(x))
+  if (is.list(x) && !inherits(x, "lm15_value")) { x[] <- lapply(x, function(v) if (is.null(v)) NULL else .plain_json(v)); return(x) }
+  x
+}
+print.lm15_json_number <- function(x, ...) { cat(unclass(x), "\n", sep = ""); invisible(x) }
+format.lm15_json_number <- function(x, ...) unclass(x)
+as.character.lm15_json_number <- function(x, ...) unclass(x)
+as.double.lm15_json_number <- function(x, ...) {
+  value <- .json_number_value(x)
+  if (inherits(value, "lm15_json_number")) stop("This number is outside R's exact numeric range. Use as.character() to keep its digits.", call. = FALSE)
+  as.double(value)
+}
+as.integer.lm15_json_number <- function(x, ...) {
+  value <- as.double.lm15_json_number(x)
+  if (value != trunc(value) || abs(value) > .Machine$integer.max) stop("This number is not an R integer.", call. = FALSE)
+  as.integer(value)
+}
+Ops.lm15_json_number <- function(e1, e2) {
+  num <- function(v) if (inherits(v, "lm15_json_number")) as.double.lm15_json_number(v) else v
+  if (missing(e2)) return(get(.Generic)(num(e1)))
+  get(.Generic)(num(e1), num(e2))
+}

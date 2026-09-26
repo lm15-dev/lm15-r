@@ -221,10 +221,10 @@ judgments <- function(..., name = "judgments", strict = TRUE) {
 response_data <- function(response, ...) {
   .check_dots(...)
   part <- .first_data_part(response)
-  if (!is.null(part)) return(part$value)
+  if (!is.null(part)) return(.plain_json(part$value))
   words <- response_text(response)
   if (is.null(words)) return(NULL)
-  tryCatch(.json_decode(trimws(words)), error = function(e) NULL)
+  tryCatch(.plain_json(.json_decode(trimws(words))), error = function(e) NULL)
 }
 response_probabilities <- function(response, ...) { .check_dots(...); .first_data_part(response)$probabilities }
 response_method <- function(response, ...) { .check_dots(...); .first_data_part(response)$method }

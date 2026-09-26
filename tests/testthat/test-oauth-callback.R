@@ -17,6 +17,7 @@ test_that("callback paths, state and duplicate parameters are checked", {
 })
 
 test_that("a real loopback callback ignores bad redirects and accepts the correct one", {
+  skip_if_not_installed("httpuv"); skip_if_not_installed("later"); skip_if_not_installed("callr")
   listener <- oauth_callback_listener(expected_state = "expected")
   on.exit(listener$close())
   child <- callr::r_bg(function(url) {
@@ -33,6 +34,7 @@ test_that("a real loopback callback ignores bad redirects and accepts the correc
 })
 
 test_that("callback waiting times out without claiming a login failure", {
+  skip_if_not_installed("httpuv"); skip_if_not_installed("later")
   listener <- oauth_callback_listener(expected_state = "expected")
   on.exit(listener$close())
   expect_error(listener$wait(timeout = 0), class = "TimeoutError")

@@ -80,7 +80,7 @@ data_part <- function(value, ..., probabilities = NULL, method = NULL, continuat
   .new_value("DataPart", list(value = value, probabilities = probabilities, method = method, continuation = continuation))
 }
 
-message <- function(role, parts, ..., continuation = list()) {
+new_message <- function(role, parts, ..., continuation = list()) {
   .check_dots(...)
   .new_value("Message", list(role = role, parts = parts, continuation = continuation))
 }

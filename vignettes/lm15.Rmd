@@ -1,190 +1,144 @@
 ---
-title: "Start with a request — API design preview"
+title: "Getting started with lm15"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Start with a request — API design preview}
+  %\VignetteIndexEntry{Getting started with lm15}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-> **Proposed API, not current package instructions.** These examples describe
-> the interface we want to build. Some functions and behavior do not exist yet.
-> All code blocks are non-executable; no examples were run. Display examples
-> are illustrations, not captured output.
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
 
-lm15 should let you answer three questions without guessing:
+lm15 gives you one way to talk to many language model providers. You build a
+request, ask a client to send it, and keep the whole response. Nothing is sent,
+retried, shortened or remembered behind your back.
 
-1. What request am I making?
-2. Which client will perform it?
-3. What did I receive, and did the operation finish?
+## A stand-in server for this page
 
-The package supplies a shared vocabulary across providers. It does not decide
-which tool to execute, when to retry, or how to manage your conversation.
+Every example on this page really runs: requests are built for the provider's
+wire, sent, and the replies parsed. The replies come from a scripted stand-in
+for a local [Ollama](https://ollama.com) server, so this page needs no key and
+no network. `chat_reply()` writes a reply the way Ollama would.
 
-## Build a value
-
-```r
+```{r}
 library(lm15)
 
+chat_reply <- function(text, finish = "stop") list(status = 200L, body = as_json(json_object(
+  id = "chatcmpl-1", model = "llama3.2",
+  choices = json_array(json_object(index = 0L, finish_reason = finish,
+    message = json_object(role = "assistant", content = text))),
+  usage = json_object(prompt_tokens = 21L, completion_tokens = 9L))))
+
+server <- fake_transport(list(
+  chat_reply("A list column holds a whole list in each row of a data frame."),
+  chat_reply("Use tidyr::unnest() to turn each element into its own row.")))
+router <- new_router(transport = server)
+```
+
+In your own code, `new_router()` needs no `transport`: it sends over the
+network, and reads keys from the usual environment variables
+(`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, ...) when a request is sent.
+
+## One request, one response
+
+```{r}
 req <- request(
-  "demo-model",
-  message_user("Explain a list column in one sentence."),
-  config = config(max_tokens = 100L)
+  "ollama:llama3.2",
+  list(message_user("What is a list column?")),
+  system = "Answer in one sentence.",
+  config = config(max_tokens = 100L, temperature = 0.2)
 )
-req
-```
-
-The proposed summary reveals structure without printing the prompt:
-
-```text
-<lm15 request [value]>
-  messages: 1 user; parts: 1 text
-  config: max_tokens
-  content: hidden
-```
-
-A **request** describes work. A **message** says who is speaking and holds one
-or more content parts. `message_user()` turns a string into a text part; you do
-not need to wrap a single message in a list. Use a flat list for several messages.
-
-Constructing these values checks their arguments. It does not read files,
-look for credentials, or send anything. If you supply a misspelled argument,
-the package should name it without evaluating its value.
-
-## Choose a client separately
-
-Use a scripted client while learning:
-
-```r
-client <- fake_lm("A list column holds a list element in each row.")
-answer <- complete(client, req)
-
+answer <- complete(router, req)
 response_text(answer)
 answer$finish_reason
+answer$usage$input_tokens
 ```
 
-The reply comes from the queue supplied to `fake_lm()`. It is not generated
-from the prompt and says nothing about a real model's quality. A fake client
-is deliberately stateful: each call consumes its next scripted reply.
+The model string is `provider:model`. A router also routes well-known bare
+names (`gpt-5-mini` to OpenAI, `claude-haiku-4-5` to Anthropic, ...):
 
-`complete()` returns a complete **response object**, not merely a string.
-The text accessor gives you a view of its content. The response still retains
-its parts, usage, ending and provider information.
-
-A response containing tool calls should make that clear when printed:
-
-```text
-<lm15 response [value]>
-  finish: tool_call; parts: 2 tool calls
-  usage: not reported
-  content and provider data: hidden
+```{r}
+resolve(router, "claude-haiku-4-5")
 ```
 
-There is no text preview hidden inside this display. Content may be sensitive;
-reading or printing it should be your choice.
+## A conversation is a list you keep
 
-## Compose around the operation
+lm15 keeps no hidden history. To continue, append the assistant's message and
+yours, and send the new request:
 
-Keep the client first when performing work, and use the pipe for value
-transformations and views:
-
-```r
-client <- fake_lm("Keep the response; extract text when needed.")
-complete(client, req) |>
-  response_text()
+```{r}
+req$messages <- c(req$messages, list(answer$message, message_user("How do I expand one?")))
+response_text(complete(router, req))
 ```
 
-There is no second `ask()` or `chat()` function with a different return type.
-Once you know the completion loop, you know the loop for a real client too.
+Changing a field of a request returns a new request, and the change is
+checked: a tool result in a user message, for example, is refused on the spot.
 
-## Make the next request visible
+## What was actually sent
 
-A conversation grows by appending messages to a request value:
+`recorded_requests()` shows what the stand-in received; with a real provider,
+`build_request()` shows the same thing without sending it.
 
-```r
-follow_up <- req |>
-  append_messages(answer$message) |>
-  append_messages(message_user("Show a small R example."))
+```{r}
+sent <- recorded_requests(server)
+length(sent)
+cat(rawToChar(sent[[1]]$body))
 ```
 
-`append_messages()` returns a new request. It does not modify `req`, send the
-new request, or invent conversation history. It accepts one typed message or
-a flat list, and preserves their order and contents.
+## When a provider cannot do what you asked
 
-Append `answer$message`, not a message rebuilt from `response_text(answer)`.
-The original message may contain other parts or provider-owned continuation
-data needed for replay. Those values travel with the message even though they
-are not part of its displayed text.
+Providers differ. When a wire has no slot for a setting, lm15 adapts and says
+so on the response, or refuses before sending. It never drops a setting
+without a record. `plan()` shows what would happen, without sending anything:
 
-Changing a setting remains an ordinary, checked value edit:
-
-```r
-short_req <- req
-short_req$config$max_tokens <- 40L
+```{r}
+req <- request("openai:gpt-5-mini", list(message_user("Hi")),
+               config = config(top_k = 40L, stop = list("END")))
+for (a in plan(new_router(), req)) cat(a$field, "->", a$action, "\n")
 ```
 
-`req` keeps its original setting. Bad configuration should identify the field
-and requirement, without exposing arbitrary supplied contents:
+`new_router(adaptations = "refuse")` turns every such adaptation into an
+error instead.
 
-```r
-config(max_tokens = -1L)
+## Errors
+
+Errors are conditions with the same classes in every lm15 language:
+`RateLimitError`, `AuthError`, `ContextLengthError`, `UnsupportedModelError`,
+and so on, all inheriting from `LM15Error`. lm15 never retries; `retryable()`
+tells you whether retrying could help.
+
+```{r}
+busy <- fake_transport(list(list(status = 429L, headers = list("retry-after" = "2"),
+  body = '{"error": {"message": "Too many requests", "type": "rate_limit_exceeded"}}')))
+err <- tryCatch(complete(new_router(transport = busy), request("ollama:llama3.2", list(message_user("hi")))),
+                LM15Error = identity)
+class(err)[1]
+retryable(err)
+err$retry_after
 ```
 
-```text
-Error in config():
-  `max_tokens` must be a positive whole number.
+## Streaming
+
+`stream()` calls your function with each event as it arrives, and returns the
+assembled response at the end.
+
+```{r}
+sse <- paste0(
+  'data: {"choices":[{"index":0,"delta":{"content":"Rows "}}]}\n\n',
+  'data: {"choices":[{"index":0,"delta":{"content":"of lists."}}]}\n\n',
+  'data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\n',
+  'data: [DONE]\n\n')
+streaming <- new_router(transport = fake_transport(list(list(status = 200L, chunks = list(sse)))))
+final <- stream(streaming, request("ollama:llama3.2", list(message_user("Define a list column."))),
+                function(event) if (event$type == "delta") cat(event$delta$text))
+final$finish_reason
 ```
 
-This is the proposed diagnostic shape, not a recorded error from the package.
+## Where to go next
 
-## Move to a real provider deliberately
-
-The following proposed code would perform a paid operation if run with working
-credentials. It remains non-executable in this preview.
-
-```r
-client <- new_lm(
-  "openai",
-  credential = credential_env("OPENAI_API_KEY")
-)
-
-req <- request(
-  "gpt-4.1-mini",
-  message_user("Explain a list column in one sentence."),
-  config = config(max_tokens = 100L)
-)
-
-answer <- complete(
-  client,
-  req,
-  control = request_control(timeout = 30)
-)
-```
-
-`new_lm()` creates a client recipe. It validates what you supplied, but does
-not read the environment variable. The completion operation resolves that
-source when it prepares the request.
-
-`config()` describes model behavior. `request_control()` describes local
-execution: time and memory limits. It is not sent as model configuration and
-is not included in the request's canonical JSON.
-
-The timeout covers the operation's elapsed budget, including preparation.
-Built-in I/O respects the remaining budget. Arbitrary user callbacks must
-cooperate; lm15 cannot safely interrupt any R expression at any instant.
-Timing out locally does not undo work or charges at the provider.
-
-## The small contract to remember
-
-- Values describe requests and responses; constructing them does no I/O.
-- A client recipe selects identity and connection behavior without acquiring them.
-- `complete()` and `stream()` perform explicit operations.
-- Unsupported settings are refused, not silently omitted.
-- The application owns retries, tool execution, budgets and history policy.
-
-Next: [Conversations and tools](conversations-and-tools.html),
-[work with a table](data-workflows.html), or
-[choose clients and credentials](clients-and-routing.html).
-
-The complete proposed signatures and compatibility decisions are in
-`docs/api-vision.md` in the source repository.
+* `vignette("conversations-and-tools")`: tools, structured output and judgments.
+* `vignette("signing-in")`: keys, subscriptions, cloud identities, and what lm15
+  will and will not use.
+* `vignette("beyond-chat")`: files, batches, media generation and live sessions.

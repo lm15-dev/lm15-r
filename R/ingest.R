@@ -80,7 +80,7 @@ request_from_openai_chat <- function(body, ..., compat = NULL, provider = "opena
   if (!is.null(b$tools) && !.is_array(b$tools)) stop("tools must be an array.", call. = FALSE)
   messages <- list(); system <- NULL; pending <- list(); boundary <- NULL; stable <- FALSE
   flush <- function() {
-    if (length(pending)) { messages[[length(messages) + 1L]] <<- message("tool", pending); pending <<- list() }
+    if (length(pending)) { messages[[length(messages) + 1L]] <<- new_message("tool", pending); pending <<- list() }
   }
   mark <- function(is_system) {
     if (stable || !is.null(boundary)) stop("Only one cache breakpoint can be represented.", call. = FALSE)
@@ -97,7 +97,7 @@ request_from_openai_chat <- function(body, ..., compat = NULL, provider = "opena
       is_system <- i == 1L && role %in% c("system", "developer")
       if (value$marked) mark(is_system)
       if (is_system) system <- if (length(value$parts) == 1L && value$parts[[1L]]$type == "text") value$parts[[1L]]$text else value$parts
-      else messages[[length(messages) + 1L]] <- message(if (role == "user") "user" else "developer", value$parts)
+      else messages[[length(messages) + 1L]] <- new_message(if (role == "user") "user" else "developer", value$parts)
     } else if (role == "tool") {
       .ingest_keys(row, c("role", "content", "name", "tool_call_id"), "tool message", provider)
       value <- .ingest_content(row$content, "tool", provider)

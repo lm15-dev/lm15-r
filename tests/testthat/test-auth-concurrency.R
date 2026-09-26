@@ -1,3 +1,5 @@
+skip_if_not_installed("callr")
+
 test_that("two R processes rotate a stored refresh token only once", {
   f <- auth_fixture(); on.exit(unlink(f$home, recursive = TRUE))
   write_credentials(auth_body(), path = f$path, env = f$env)

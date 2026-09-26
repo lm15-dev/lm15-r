@@ -1,30 +1,35 @@
-\name{fake_lm}
+\name{testing}
+\alias{testing}
 \alias{fake_lm}
 \alias{fake_transport}
 \alias{recorded_requests}
-\alias{response_to_events}
-\title{Offline application tests and response-to-event conversion}
-\description{Test applications without provider keys or network calls, using the same public completion and streaming functions as real clients.}
+\title{Test without a network}
+\description{
+\code{fake_lm()} answers requests from a script; \code{fake_transport()} answers HTTP requests from a script, so the real request building and reply parsing run. Both record what they were sent.
+}
 \usage{
 fake_lm(responses, ...)
+
 fake_transport(responses, ...)
+
 recorded_requests(x, ...)
-response_to_events(response, ..., on_event = NULL)
+
 }
 \arguments{
-\item{responses}{For fake models, responses, text strings or error conditions consumed in order. For fake transports, a list of HTTP reply lists with \code{status}, \code{headers}, and \code{body} or \code{chunks}, or error conditions. Bodies and chunks are raw bytes or text.}
-\item{...}{Must be empty.}
-\item{x}{A fake model or fake transport.}
-\item{response}{A canonical \code{response()} value to convert.}
-\item{on_event}{Optional callback receiving each canonical event. Without it, return the event list.}
+\item{responses}{For \code{fake_lm()}: a list of strings, responses or conditions, used in order. For \code{fake_transport()}: a list of \code{list(status, body, headers, chunks)} replies or conditions.}
+\item{\dots}{Unused. Any argument given here is an error, so a misspelled option name is caught instead of ignored.}
+\item{x}{A fake from \code{fake_lm()} or \code{fake_transport()}.}
 }
-\details{Fake models work with \code{complete()} and \code{stream()}. Queued text becomes an assistant response with model \code{"fake"}. Exhausting the queue is an error. Requests are recorded before consumption. Fake transports emit successful chunks to the callback; unsuccessful response bodies remain available for ordinary error classification. Recorded wire requests contain explicit credentials and must not be logged when they use real keys.
-
-Response conversion preserves content and continuation data represented by the delta vocabulary. It refuses unsupported parts, image paths or detail fields, non-inline audio, and log probabilities without text, instead of silently discarding them. When a callback is supplied, the whole conversion is checked before the first event is delivered.}
-\value{A fake client, callable transport, recorded request list, or canonical event list. Callback conversion invisibly returns its input response.}
+\value{
+A fake client, a transport function, or the list of recorded requests.
+}
 \examples{
-client <- fake_lm(c("first answer", "second answer"))
-r <- request("example", list(message_user("hello")))
-response_text(complete(client, r))
-length(recorded_requests(client))
+
+transport <- fake_transport(list(list(status = 200L, body =
+  '{"id":"r","model":"gpt-5-mini","output":[{"type":"message","role":"assistant",
+    "content":[{"type":"output_text","text":"hi"}]}]}')))
+client <- new_lm("openai", api_key = "sk-example", transport = transport)
+response_text(complete(client, request("gpt-5-mini", list(message_user("hello")))))
+recorded_requests(transport)[[1]]$url
+
 }

@@ -1,0 +1,95 @@
+---
+title: "Files, batches, media and live sessions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Files, batches, media and live sessions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r}
+library(lm15)
+openai <- new_lm("openai", api_key = "sk-example")
+```
+
+Every operation on this page has two halves: a pure one that builds the HTTP
+request or reads a reply (used below, no network), and the call that sends it.
+
+## Images, audio and documents
+
+Media parts take bytes, a URL, a provider file id, or a local path read when
+the request is sent:
+
+```{r}
+pdf <- document_part(url = "https://example.org/report.pdf")
+req <- request("claude-haiku-4-5", list(message_user(list("Summarise this report.", pdf))))
+wire <- build_request(new_lm("anthropic", api_key = "sk-ant-example"), req)
+cat(substr(rawToChar(wire$body), 1, 160))
+```
+
+A provider with no slot for a kind of media refuses it by name rather than
+sending the request without it.
+
+## Files
+
+```{r}
+upload <- file_upload_request("notes.txt", bytes_data = charToRaw("Meeting notes"), media_type = "text/plain")
+wire <- file_op_build(openai, "upload", upload_request = upload)
+wire$method
+wire$url
+```
+
+`file_upload(openai, upload)` sends it and returns a `file_info()`; use its
+`id` in `image_part(file_id = )` and friends.
+
+## Batches
+
+A batch sends many requests at half price, answered within a day.
+`batch()` returns a handle: reading it never contacts the provider,
+`refresh()` fetches a new snapshot, and only `wait()` polls.
+
+```{r, eval = FALSE}
+job <- batch(openai, batch_request(list(
+  request("gpt-5-mini", list(message_user("A red fruit?"))),
+  request("gpt-5-mini", list(message_user("A green fruit?"))))))
+job <- wait(job, poll_every = 60, timeout = 24 * 3600)
+for (entry in results(job)) cat(entry$index, response_text(entry$response), "\n")
+```
+
+## Generating images, speech and video
+
+```{r}
+img <- image_generation_request("gpt-image-1", "A lighthouse at dusk", size = "1024x1024")
+generation_build(openai, img)$url
+```
+
+`image_generate(openai, img)` returns the images as parts; `speech_generate()`
+returns audio. Video is a job: `video_generate()` returns a handle to `wait()` on.
+
+## Live sessions
+
+A live session is a two-way conversation over a WebSocket (OpenAI Realtime,
+Gemini Live). The codec is shared with the harness that checks it; here it
+builds the frames a session would send first:
+
+```{r}
+cfg <- live_config("gpt-realtime", system = "Be brief.", voice = "marin")
+frames <- live_setup_frames(openai, cfg)
+cat(as_json(frames[[1]]))
+```
+
+```{r, eval = FALSE}
+session <- live(openai, cfg)
+session$send(live_client_text_event("Say hello."))
+answer <- result(turn(session))
+answer$text
+session$close()
+```
+
+A turn that exceeds its event or byte budget stops with a
+`CollectionLimitError` that keeps what it collected; it never pretends the turn
+ended.

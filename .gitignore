@@ -15,3 +15,5 @@ src/*.dll
 node_modules/
 dist/
 test-results/
+__pycache__/
+*.pyc

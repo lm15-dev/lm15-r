@@ -36,7 +36,7 @@ test_that("invalid assignments do not corrupt the original value", {
 test_that("role and media invariants hold for constructors and JSON", {
   expect_error(message_user(tool_call_part("c", "f")))
   expect_error(message_assistant(tool_result_part("c", list(text("ok")))))
-  expect_error(message("tool", list(text("not a tool result"))))
+  expect_error(new_message("tool", list(text_part("not a tool result"))))
   expect_error(image_part(url = "https://example.test/i", data = "YQ=="))
   expect_error(image_part())
   expect_error(from_json('{"type":"image","url":"https://example.test/i"}', "part"))

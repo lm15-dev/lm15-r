@@ -59,10 +59,10 @@
       event <- json_object(type = prompt$type, field_id = prompt$field_id)
       if (prompt$type == "select") event$options <- lapply(prompt$options, function(o) o$id)
       record(json_object(prompt = event))
-      if (!length(answers)) stop(login_cancelled("the script has no more answers"))
+      if (!length(answers)) stop(.login_cancelled("the script has no more answers"))
       answer <- answers[[1L]]; answers <<- answers[-1L]
       if (is.character(answer)) return(answer)
-      if (isTRUE(answer$cancel)) stop(login_cancelled("the script cancels here"))
+      if (isTRUE(answer$cancel)) stop(.login_cancelled("the script cancels here"))
       q <- query_of(last_url); state <- q$state %||% ""
       if (!is.null(answer$paste)) return(paste0(answer$paste, "#", state))
       if (!is.null(answer$paste_wrong_state)) return(paste0(answer$paste_wrong_state, "#not-the-state-of-this-attempt"))

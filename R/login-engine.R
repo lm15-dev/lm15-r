@@ -16,7 +16,7 @@
   "invalid_scope", "access_denied", "server_error", "temporarily_unavailable", "authorization_pending", "slow_down", "expired_token")
 
 # Outcomes the engine signals; the manager maps them to AUTH-24 errors.
-login_cancelled <- function(message = "login cancelled") structure(class = c("LoginCancelled", "error", "condition"), list(message = message, call = NULL))
+.login_cancelled <- function(message = "login cancelled") structure(class = c("LoginCancelled", "error", "condition"), list(message = message, call = NULL))
 .login_expired <- function(message) structure(class = c("lm15_login_expired", "error", "condition"), list(message = message, call = NULL))
 .login_denied <- function(message, status = NULL, provider_code = NULL, stage = "authorization")
   structure(class = c("lm15_login_denied", "error", "condition"), list(message = message, call = NULL, status = status, provider_code = provider_code, stage = stage))
@@ -30,7 +30,7 @@ login_cancelled <- function(message = "login cancelled") structure(class = c("Lo
   ctx$http <- http; ctx$sleep <- sleep; ctx$cancelled <- cancelled
   ctx$remaining <- function() ctx$deadline - ctx$clock()
   ctx$check <- function() {
-    if (isTRUE(ctx$cancelled())) stop(login_cancelled())
+    if (isTRUE(ctx$cancelled())) stop(.login_cancelled())
     if (ctx$remaining() <= 0) stop(.login_expired("login attempt deadline reached"))
   }
   ctx$wait <- function(seconds) {
@@ -41,7 +41,7 @@ login_cancelled <- function(message = "login cancelled") structure(class = c("Lo
     else {
       end <- ctx$clock() + seconds
       while ((left <- end - ctx$clock()) > 0) {
-        if (isTRUE(ctx$cancelled())) stop(login_cancelled())
+        if (isTRUE(ctx$cancelled())) stop(.login_cancelled())
         Sys.sleep(min(left, 0.25))
       }
     }
@@ -51,7 +51,7 @@ login_cancelled <- function(message = "login cancelled") structure(class = c("Lo
   ctx$prompt <- function(prompt) {
     ctx$check()
     if (is.null(ctx$ui)) .abort_auth("This operation needs a choice or input and no UI was supplied.", reason = "interaction_required", stage = "interaction", recovery = "provide_input", provider = ctx$provider)
-    answer <- tryCatch(ctx$ui$prompt(prompt), interrupt = function(e) stop(login_cancelled("login cancelled at the prompt")))
+    answer <- tryCatch(ctx$ui$prompt(prompt), interrupt = function(e) stop(.login_cancelled("login cancelled at the prompt")))
     if (!is.character(answer) || length(answer) != 1L || is.na(answer)) stop("The UI's prompt must return one string.", call. = FALSE)
     answer
   }

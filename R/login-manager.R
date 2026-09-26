@@ -155,7 +155,7 @@ new_auth <- function(store, ..., clock = function() as.numeric(Sys.time()), mono
     if (is.null(ui)) .abort_auth(paste0(d$id, ": choose a login method (several are available) or supply a UI."), reason = "interaction_required", stage = "interaction", recovery = "choose_method", provider = d$id)
     options <- lapply(candidates, function(m) .option(m$id, m$label, m$billing_note %||% m$reason))
     answer <- tryCatch(ui$prompt(.prompt("select", "method", paste0("How do you want to connect to ", d$label, "?"), options = options)),
-      interrupt = function(e) stop(login_cancelled("login cancelled at the method prompt")))
+      interrupt = function(e) stop(.login_cancelled("login cancelled at the method prompt")))
     for (m in candidates) if (identical(m$id, answer)) return(m)
     .abort_auth(paste0(d$id, ": the UI answered an option that was not offered."), reason = "invalid_login_state", stage = "interaction", recovery = "choose_method", provider = d$id)
   }
@@ -367,7 +367,7 @@ new_auth <- function(store, ..., clock = function() as.numeric(Sys.time()), mono
         if (inherits(e, "TransportError")) .abort_auth(paste0(provider, ": the renewal exchange timed out after it may have reached the provider; a rotated token cannot be spent twice, so sign in again."),
           reason = "indeterminate", stage = "renewal", commit_state = "unknown", recovery = "restart_login", provider = provider, connection_id = slot$connection_id)
         stop(e)
-      }, interrupt = function(e) { mark("indeterminate", keep_marker = TRUE); stop(login_cancelled("renewal interrupted")) })
+      }, interrupt = function(e) { mark("indeterminate", keep_marker = TRUE); stop(.login_cancelled("renewal interrupted")) })
       slot$renewal_in_flight <- NULL; slot$revision <- slot$revision + 1; slot$state <- "ready"
       if (!is.null(result$account_label)) slot$account_label <- result$account_label
       txn$write(put(document, slot, result$material))
@@ -428,15 +428,24 @@ print.lm15_forget_result <- function(x, ...) { cat("<lm15 logout of ", x$provide
 local_auth <- function(path = NULL, ...) new_auth(file_store(path), ...)
 memory_auth <- function(...) new_auth(memory_store(), ...)
 
-# Verbs over a manager: each is the manager's own operation.
-.auth_arg <- function(auth) { if (!inherits(auth, "lm15_auth")) stop("Expected an Auth from local_auth(), memory_auth() or new_auth().", call. = FALSE); auth }
-login_providers <- function(auth, ...) { .check_dots(...); .auth_arg(auth)$providers() }
-login_methods <- function(auth, provider, ...) { .check_dots(...); .auth_arg(auth)$methods(provider) }
-connections <- function(auth, ...) { .check_dots(...); .auth_arg(auth)$connections() }
-status <- function(auth, provider, ...) { .check_dots(...); .auth_arg(auth)$status(provider) }
-cancel_login <- function(auth, provider, ...) { .check_dots(...); .auth_arg(auth)$cancel_login(provider) }
-configure <- function(auth, provider, method, ..., answers = list(), settings = list(), replace = NULL) { .check_dots(...); .auth_arg(auth)$configure(provider, method, answers, settings, replace) }
-set_api_key <- function(auth, provider, key, ..., replace = NULL) { .check_dots(...); .auth_arg(auth)$set_api_key(provider, key, replace) }
-logout <- function(auth, target, ...) { .check_dots(...); .auth_arg(auth)$logout(target) }
-verify <- function(auth, provider, ...) { .check_dots(...); .auth_arg(auth)$verify(provider) }
-request_auth <- function(auth, provider, ..., pinned = NULL) { .check_dots(...); .auth_arg(auth)$request_auth(provider, pinned) }
+# The managed operations as functions. The provider (or target) comes first;
+# `auth` is the scope, the private local file unless another is given.
+# Constructing local_auth() reads and writes nothing (AUTH-14).
+.auth_arg <- function(auth) { if (!inherits(auth, "lm15_auth")) stop("auth must come from local_auth(), memory_auth() or new_auth().", call. = FALSE); auth }
+login <- function(provider, method = NULL, ..., auth = local_auth(), ui = NULL, settings = list(), answers = list(), replace = NULL,
+                  lifetime = 15 * 60, allow_unverified = FALSE) {
+  .check_dots(...)
+  auth <- .auth_arg(auth)
+  if (is.null(ui) && .interactive_terminal()) ui <- terminal_ui()
+  auth$login(provider, method, ui = ui, settings = settings, answers = answers, replace = replace, lifetime = lifetime, allow_unverified = allow_unverified)
+}
+login_providers <- function(..., auth = local_auth()) { .check_dots(...); .auth_arg(auth)$providers() }
+login_methods <- function(provider, ..., auth = local_auth()) { .check_dots(...); .auth_arg(auth)$methods(provider) }
+connections <- function(..., auth = local_auth()) { .check_dots(...); .auth_arg(auth)$connections() }
+status <- function(provider, ..., auth = local_auth()) { .check_dots(...); .auth_arg(auth)$status(provider) }
+cancel_login <- function(provider, ..., auth = local_auth()) { .check_dots(...); .auth_arg(auth)$cancel_login(provider) }
+configure <- function(provider, method, ..., answers = list(), settings = list(), replace = NULL, auth = local_auth()) { .check_dots(...); .auth_arg(auth)$configure(provider, method, answers, settings, replace) }
+set_api_key <- function(provider, key, ..., replace = NULL, auth = local_auth()) { .check_dots(...); .auth_arg(auth)$set_api_key(provider, key, replace) }
+logout <- function(target, ..., auth = local_auth()) { .check_dots(...); .auth_arg(auth)$logout(target) }
+verify <- function(provider, ..., auth = local_auth()) { .check_dots(...); .auth_arg(auth)$verify(provider) }
+request_auth <- function(provider, ..., pinned = NULL, auth = local_auth()) { .check_dots(...); .auth_arg(auth)$request_auth(provider, pinned) }
