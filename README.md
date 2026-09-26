@@ -1,5 +1,12 @@
 # lm15 for R: the API we want to build
 
+> **Status, 2026-09-26: not yet available.** The R package's API is being
+> designed; this README and its vignettes are the proposal under review, and
+> the examples on lm15.dev preview it. lm15 is released in [Python](https://github.com/lm15-dev/lm15-python) (1.0.1, stable),
+> [TypeScript](https://github.com/lm15-dev/lm15-ts), [Rust](https://github.com/lm15-dev/lm15-rs)
+> and [Go](https://github.com/lm15-dev/lm15-go) (release candidates); guides in every language at
+> [lm15.dev](https://lm15.dev/docs/).
+
 **Design preview—not instructions for the current implementation.**
 This README and the seven vignettes propose a coherent R interface for review.
 Some names and behavior are new. All examples are static, non-executable text;
