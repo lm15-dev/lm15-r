@@ -67,13 +67,16 @@ SH
   "$image" sh /build.sh
 if [[ ${WEBR_BUILD_DEPENDENCIES:-1} == 1 ]]; then
   mkdir -p "$out/runtime"
-  "$engine" run --rm --network=none -v "$out/runtime:/output" "$image" sh -c 'cp -a /opt/webr/dist/. /output/'
+  # The runtime is R itself (GPL-2 | GPL-3) and webR's bundled libraries:
+  # ship their licensing text beside them.
+  "$engine" run --rm --network=none -v "$out/runtime:/output" "$image" sh -c 'cp -a /opt/webr/dist/. /output/ && cp /opt/webr/LICENSE.md /output/LICENSE-webR.md && cp /opt/webr/R/build/R-*/COPYING /output/COPYING-R.txt'
 else
   # Development only: reuse dependencies already built with this image.
   while read -r name file; do
     ls "$out/${name}"_*.tgz >/dev/null
   done < "$out/sources/ORDER"
   test -f "$out/runtime/R.wasm"
+  test -f "$out/runtime/COPYING-R.txt"
 fi
 Rscript "$root/tools/prepare-webr-repo.R" "$out"
 printf 'WebAssembly packages and matching runtime written to %s\n' "$out"
