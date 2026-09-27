@@ -19,3 +19,13 @@ test_that("copying or changing router configuration cannot reuse another identit
   expect_identical(build_request(router_lm(first, "gpt-4.1"), request)$headers$authorization, "Bearer one")
   expect_identical(build_request(client, request)$headers$authorization, "Bearer one")
 })
+
+test_that("a router reads keys from the process environment (Sys.getenv() is a classed Dlist)", {
+  withr_env <- Sys.getenv("OPENAI_API_KEY", unset = NA)
+  Sys.setenv(OPENAI_API_KEY = "sk-from-the-environment")
+  on.exit(if (is.na(withr_env)) Sys.unsetenv("OPENAI_API_KEY") else Sys.setenv(OPENAI_API_KEY = withr_env), add = TRUE)
+  wire <- build_request(new_router(), request("gpt-4.1-mini", list(message_user("hi"))))
+  expect_identical(wire$headers$authorization, "Bearer sk-from-the-environment")
+  wire <- build_request(new_router(env = Sys.getenv()), request("gpt-4.1-mini", list(message_user("hi"))))
+  expect_identical(wire$headers$authorization, "Bearer sk-from-the-environment")
+})

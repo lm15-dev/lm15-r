@@ -1,6 +1,6 @@
 .auth_env <- function(env, name) {
   if (is.null(env)) return(Sys.getenv(name, unset = ""))
-  value <- unname(env[name])
+  value <- unname(unclass(env)[name])
   if (length(value) != 1L || is.na(value)) "" else value
 }
 credentials_path <- function(..., env = NULL) {

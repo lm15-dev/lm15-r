@@ -58,7 +58,8 @@ new_lm <- function(provider, ..., api_key = NULL, credential = NULL, base_url = 
   if (!is.null(transport) && !is.function(transport)) stop("transport must be a function.", call. = FALSE)
   if (!is.null(live_connect) && !is.function(live_connect)) stop("live_connect must be a function.", call. = FALSE)
   if (!is.null(env) && (!is.character(env) || (length(env) && is.null(names(env))))) stop("env must be a named character vector; character() disables environment lookup.", call. = FALSE)
-  lookup <- function(name) if (is.null(env)) Sys.getenv(name, unset = "") else unname(env[name]) %||% ""
+  # unclass: Sys.getenv() is a "Dlist", and a value keeping that class is not a plain string
+  lookup <- function(name) if (is.null(env)) Sys.getenv(name, unset = "") else unname(unclass(env)[name]) %||% ""
   named <- .check_named(d$id, credential)
   if (!is.null(named) && !is.null(api_key)) .abort("A named identity and an explicit api_key both answer 'who am I'; give one.", "not_configured", d$id)
   if (is.null(api_key)) {
