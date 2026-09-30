@@ -1,4 +1,10 @@
-# lm15 (development version)
+# lm15 1.0.1
+
+Implements the lm15 contract at commit `57e33d1`, the same commit as lm15
+for Python 1.2.0, TypeScript and Rust 1.0.0-rc.4 and Go v1.1.0-rc.3, and
+passes all 1,838 of its checks. Also since 1.0.0: `input_audio` in Chat
+Completions ingest reads ogg, opus, flac, aac, aiff, webm and mpeg as their
+true media types.
 
 * The `claude-code` provider claims Claude Code 2.1.285 (it claimed 2.1.170,
   which `claude-opus-5-5` refuses). When a model needs a newer release, pass

@@ -97,8 +97,8 @@ the mechanics are R's. Where R differs:
 
 ## Status
 
-* **Contract:** pinned at [`fe5cdf9`](https://github.com/lm15-dev/lm15-contract/commit/fe5cdf94b0494ebd9f968498e717dfeba8fb4df1), the same commit as Python
-  1.1.0, TypeScript and Rust 1.0.0-rc.2 and Go v1.1.0-rc.2: **1,788 of 1,788**
+* **Contract:** pinned at [`57e33d1`](https://github.com/lm15-dev/lm15-contract/commit/57e33d17f562f932df920e6c6e876d9d8799c53b), the same commit as Python
+  1.2.0, TypeScript and Rust 1.0.0-rc.4 and Go v1.1.0-rc.3: **1,838 of 1,838**
   checks pass, including all 43 sign-in lifecycle runs. The credentials file has
   been shared with Python, TypeScript, Rust and Go processes in every order,
   and concurrent renewal spends a refresh token once in every language pair.
