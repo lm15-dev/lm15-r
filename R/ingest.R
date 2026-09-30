@@ -1,3 +1,11 @@
+# MAP-12 rule 4 (amended 2026-09-29): OpenAI's server takes wav and mp3,
+# Gemini's any audio type, and DSPy writes the MIME subtype (mpeg for .mp3).
+# Each format reads as its true media type; a builder with no audio slot
+# raises at send (MAP-10).
+.ingest_audio_media_types <- c(
+  wav = "audio/wav", mp3 = "audio/mpeg", mpeg = "audio/mpeg", ogg = "audio/ogg", opus = "audio/opus",
+  flac = "audio/flac", aac = "audio/aac", aiff = "audio/aiff", webm = "audio/webm"
+)
 .ingest_keys <- function(x, allowed, where, provider) {
   if (!.is_object(x)) stop(paste(where, "must be a JSON object."), call. = FALSE)
   extra <- setdiff(names(x), allowed)
@@ -34,8 +42,10 @@
       .ingest_keys(b, c("type", "input_audio"), "audio block", provider)
       .ingest_keys(b$input_audio, c("data", "format"), "input_audio", provider)
       fmt <- b$input_audio$format
-      if (is.null(fmt) || !fmt %in% c("wav", "mp3")) stop("Audio input format must be wav or mp3.", call. = FALSE)
-      p <- audio_part(data = b$input_audio$data, media_type = if (fmt == "mp3") "audio/mpeg" else "audio/wav")
+      if (!is.character(fmt) || length(fmt) != 1L || is.na(fmt) || !fmt %in% names(.ingest_audio_media_types)) {
+        stop("Audio input format must be one of ", paste(sort(names(.ingest_audio_media_types)), collapse = ", "), ".", call. = FALSE)
+      }
+      p <- audio_part(data = b$input_audio$data, media_type = .ingest_audio_media_types[[fmt]])
     } else if (identical(k, "file") && role == "user") {
       .ingest_keys(b, c("type", "file"), "file block", provider)
       .ingest_keys(b$file, c("file_id", "file_data", "filename"), "file", provider)
