@@ -157,7 +157,17 @@ explain_auth <- function(provider, ..., api_keys = list(), env = NULL, path = NU
     }
     if (!is.null(d$placeholder_key)) add("placeholder", TRUE, "local-server placeholder")
   }
-  structure(list(provider = provider, configured = selected, steps = steps), class = "lm15_auth_report")
+  .with_backend_report(structure(list(provider = provider, configured = selected, steps = steps), class = "lm15_auth_report"), d, settings, env)
+}
+
+# A door without a host prints its backend settings the way a cloud door prints
+# its host settings (AUTH-7; AUTH-10 amended 2026-09-30): the Claude Code release
+# the claude-code door claims, and where it came from.
+.with_backend_report <- function(report, d, settings, env) {
+  if (!is.null(d$access$host) || (!length(d$access$backend_settings) && !length(settings))) return(report)
+  resolved <- .resolve_backend_settings(d$access, settings, function(name) .auth_env(env, name))
+  report$settings <- structure(resolved$values, sources = resolved$sources)
+  report
 }
 print.lm15_auth_report <- function(x, ...) {
   cat("Authentication for ", x$provider, ":\n", sep = "")
@@ -202,5 +212,5 @@ print.lm15_auth_report <- function(x, ...) {
     else add(paste0("env:", key), "absent", "not set")
   }
   if (!is.null(d$placeholder_key) && !isTRUE(s$logged_out)) { add("placeholder", if (selected) "shadowed" else "selected", "local-server placeholder"); selected <- TRUE }
-  structure(list(provider = provider, configured = selected, steps = steps), class = "lm15_auth_report")
+  .with_backend_report(structure(list(provider = provider, configured = selected, steps = steps), class = "lm15_auth_report"), d, list(), env)
 }

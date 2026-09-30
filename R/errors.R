@@ -78,6 +78,8 @@ normalize_error <- function(lm, status, body, ..., headers = json_object(), now 
   if (dialect == "anthropic" && is.null(raw)) raw <- data
   message <- if (.is_object(raw)) .wire_string(raw$message) else if (is.character(raw)) raw else ""
   if (lm$definition$access$backend == "chatgpt-codex" && is.character(data$detail)) message <- data$detail
+  # AUTH-10 backend settings: the minimum-version refusal names the setting to change.
+  if (identical(lm$definition$access$backend, "claude-code")) message <- .claude_code_version_guidance(message)
   pc <- if (.is_object(raw)) .wire_string(raw$code %||% raw$type %||% raw$status) else ""
   if (dialect == "gemini" && .is_object(raw)) pc <- .wire_string(raw$status)
   if (dialect == "anthropic" && .is_object(raw)) pc <- .wire_string(raw$type %||% raw$code)

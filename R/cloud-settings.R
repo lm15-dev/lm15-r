@@ -102,3 +102,53 @@
   resolved <- .resolve_host_settings(d, ctx$settings, ctx, probe = FALSE)
   structure(resolved$values, sources = resolved$sources)
 }
+
+# A door's backend settings (AUTH-10, amended 2026-09-30): the caller's value,
+# then `lookup` (a router's environment; NULL for a client built by hand), then
+# the table's backend_options value. A name the door does not declare is a
+# not_configured error naming the ones it does: a setting nothing reads would
+# otherwise be dropped with nothing said. Returns list(values, sources).
+.resolve_backend_settings <- function(access, explicit, lookup = NULL) {
+  explicit <- explicit %||% list()
+  known <- vapply(access$backend_settings %||% list(), function(s) s$name, "")
+  unknown <- sort(setdiff(names(explicit), known))
+  if (length(unknown)) {
+    hint <- if (length(known)) paste0("known: ", paste(known, collapse = ", ")) else "this door takes no settings"
+    fix <- if (length(known)) paste0("Pass only ", paste(known, collapse = ", "), " for ", access$provider) else paste0("Remove the settings entry for ", access$provider)
+    .abort(paste0(access$provider, ": unknown setting(s) ", paste0("'", unknown, "'", collapse = ", "), "; ", hint), "not_configured", access$provider, credential_hint = fix)
+  }
+  values <- list(); sources <- list()
+  for (s in access$backend_settings %||% list()) {
+    value <- .nonempty_string(explicit[[s$name]]); from <- "explicit"
+    if (is.null(value) && !is.null(lookup)) for (key in unlist(s$env)) {
+      candidate <- .nonempty_string(lookup(key))
+      if (!is.null(candidate)) { value <- candidate; from <- paste0("env:", key); break }
+    }
+    if (is.null(value)) { value <- access$backend_options[[s$name]]; from <- "default" }
+    values[[s$name]] <- value
+    sources[[s$name]] <- json_object(value = value, from = from)
+  }
+  list(values = values, sources = sources)
+}
+
+# The policy with resolved backend settings in backend_options. client_version
+# on the claude-code backend is also the version the user-agent header claims
+# (claude-cli/<client_version>); on chatgpt-codex it is the /models parameter.
+.with_backend_settings <- function(access, values) {
+  for (name in names(values)) access$backend_options[[name]] <- values[[name]]
+  if (identical(access$backend, "claude-code") && !is.null(values$client_version))
+    access$headers <- lapply(access$headers, function(h) if (tolower(h[[1L]]) == "user-agent") list(h[[1L]], paste0("claude-cli/", values$client_version)) else h)
+  access
+}
+
+# The claude-code door's minimum-version refusal with what an lm15 caller
+# changes (AUTH-10 backend settings): the server says "run 'claude update'",
+# which does not move the version lm15 claims. Other messages are unchanged.
+.claude_code_version_guidance <- function(message) {
+  m <- regmatches(message, regexec("Claude Code (\\S+) does not support this model; version (\\S+) or newer is required", message, perl = TRUE))[[1L]]
+  if (!length(m) || grepl("\n\n  To fix:", message, fixed = TRUE)) return(message)
+  required <- m[[3L]]
+  paste0(message, "\n\n  To fix:\n",
+    "    - lm15 sends this version itself; updating Claude Code does not change it\n",
+    "    - Set the claude-code setting client_version to ", required, " or newer (or LM15_CLAUDE_CODE_VERSION=", required, ")\n")
+}

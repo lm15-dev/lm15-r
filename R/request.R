@@ -266,7 +266,7 @@
     if (detail) .adapt("config.reasoning.summary", "substituted", "the Messages API has no summary detail levels; it returns thinking blocks whenever thinking runs, which is 'auto'", asked = r$summary, applied = "auto")
     if (adaptive) {
       if (!is.null(r$thinking_budget))
-        .adapt("config.reasoning.thinking_budget", "dropped", if (fmt == "deepseek") "this server ignores budget_tokens; effort is the dial" else if (fmt == "adaptive") "this server accepts budget_tokens without translating it; effort is the dial (protocols--messages.md)" else paste0(req$model, " takes thinking.type 'adaptive' with output_config.effort; budget_tokens is rejected by the API (live 2026-09-02)"), asked = r$thinking_budget)
+        .adapt("config.reasoning.thinking_budget", "dropped", if (fmt == "deepseek") "this server ignores budget_tokens; effort is the dial" else if (fmt == "adaptive") "this server accepts budget_tokens without translating it; effort is the dial (protocols--messages.md)" else paste0(req$model, " takes thinking.type 'adaptive' with output_config.effort; budget_tokens is rejected by the API (live 2026-09-02). Thinking is bounded only by max_tokens, which covers thinking and answer together: lower the effort or raise max_tokens"), asked = r$thinking_budget)
       if (fmt == "anthropic" && r$effort == "minimal") {
         .adapt("config.reasoning.effort", "clamped", "this model class has no 'minimal' level (output_config.effort is low|medium|high|xhigh|max); 'low' is the floor", asked = "minimal", applied = "low")
         r$effort <- "low"
@@ -319,13 +319,22 @@
   payload
 }
 
-# The Messages API requires max_tokens; when the caller set none, the class
-# default is used and recorded (MAP-13 defaulted). Output ceilings by class.
-.anthropic_default_max_tokens <- function(model) {
+# The max_tokens the Messages API requires and the caller did not set (MAP-13
+# defaulted; MAP-7 rule 6, amended 2026-09-30): a Claude model's own output
+# ceiling, the value OpenAI and Gemini apply when their field is omitted -
+# 128000 for the 4.6 generation and every later Claude (and any Claude name
+# this table has not met: a lower real ceiling is a loud 400, never a silent
+# truncation), 64000 for the 4.5 generation; the retired 3.x values stay. From
+# Anthropic's Models API max_tokens (receipts 2026-09-01, 2026-09-30). A name
+# that is not Claude's (DeepSeek, Kimi, Muse on an Anthropic-dialect server)
+# gets NULL: 16384 is sent, those servers publish their own ceilings.
+.claude_output_ceilings <- list(c("claude-3-haiku", 4096), c("claude-3-opus", 4096), c("claude-3-sonnet", 4096),
+  c("claude-3-5-", 8192), c("claude-3.5-", 8192),
+  c("claude-haiku-4-5", 64000), c("claude-sonnet-4-5", 64000), c("claude-opus-4-5", 64000), c("claude", 128000))
+.claude_output_ceiling <- function(model) {
   lowered <- tolower(model)
-  for (pair in list(c("claude-3-haiku", 4096), c("claude-3-opus", 4096), c("claude-3-sonnet", 4096), c("claude-3-5-", 8192), c("claude-3.5-", 8192)))
-    if (grepl(pair[[1L]], lowered, fixed = TRUE)) return(as.integer(pair[[2L]]))
-  16384L
+  for (pair in .claude_output_ceilings) if (grepl(pair[[1L]], lowered, fixed = TRUE)) return(as.integer(pair[[2L]]))
+  NULL
 }
 
 # xAI's own adaptations before the Chat Completions build (Python XaiLM._payload).
@@ -539,8 +548,13 @@ build_request <- function(lm, request, ..., stream = FALSE) {
   if (dialect == "anthropic") {
     visible_max_tokens <- c$max_tokens
     if (is.null(visible_max_tokens)) {
-      visible_max_tokens <- .anthropic_default_max_tokens(req$model)
-      .adapt("config.max_tokens", "defaulted", "the Messages API requires max_tokens and none was set; the class default was used", applied = visible_max_tokens)
+      # A Claude model gets its output ceiling as the WIRE value (on the manual
+      # class the visible part is what the thinking budget leaves); any other
+      # model 16384 visible (MAP-7 rule 6, amended 2026-09-30).
+      ceiling <- .claude_output_ceiling(req$model)
+      budget <- .anthropic_manual_budget(req, compat)
+      visible_max_tokens <- if (is.null(ceiling)) 16384L else if (is.null(budget)) ceiling else if (budget < ceiling) as.integer(ceiling - budget) else 16384L
+      .adapt("config.max_tokens", "defaulted", if (is.null(ceiling)) "the Messages API requires max_tokens and none was set; 16384 was used (this server's ceiling is its own)" else "the Messages API requires max_tokens and none was set; the model's output ceiling was used", applied = visible_max_tokens)
     }
   }
   payload <- switch(dialect, chat = json_object(model = req$model, messages = rows), responses = json_object(model = req$model, input = rows, stream = streaming), anthropic = json_object(model = req$model, messages = rows, stream = streaming, max_tokens = visible_max_tokens), gemini = json_object(contents = rows))
@@ -699,4 +713,12 @@ build_request <- function(lm, request, ..., stream = FALSE) {
   if (!touched) return(req)
   fields <- unclass(req); fields$messages <- messages; fields["system"] <- list(system)
   .new_value("Request", fields)
+}
+
+# The thinking budget the Anthropic manual class puts on the wire (MAP-7 rules 3
+# and 5), NULL when no budget is sent: the default max_tokens leaves it room.
+.anthropic_manual_budget <- function(req, compat) {
+  r <- req$config$reasoning
+  if (is.null(r) || r$effort == "off" || !identical(compat$thinking_format, "anthropic") || .adaptive_class(req$model)) return(NULL)
+  as.integer(r$thinking_budget %||% unname(.effort_budgets[[r$effort]]))
 }

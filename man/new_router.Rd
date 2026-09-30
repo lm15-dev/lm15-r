@@ -40,7 +40,7 @@ transport_curl(..., timeout = 120, connect_timeout = 30,
 \item{\dots}{Unused. Any argument given here is an error, so a misspelled option name is caught instead of ignored.}
 \item{api_keys}{Explicit credentials by provider: \code{list(openai = "sk-...")}. A string is an API key; \code{bearer_token()} and credential functions are also accepted. An explicit entry wins over everything else.}
 \item{base_urls}{Address overrides by provider.}
-\item{settings}{Host settings by provider (for new_router), or for this client (for new_lm).}
+\item{settings}{Settings by provider (for new_router), or for this client (for new_lm): a cloud provider's host settings, such as \code{list(region = "us-east-1")}, or a subscription provider's \code{client_version} (the Claude Code or Codex release it names; \code{LM15_CLAUDE_CODE_VERSION} and \code{LM15_CODEX_CLIENT_VERSION} when a router reads the environment). A setting the provider does not read is an error.}
 \item{catalog}{Model metadata used to route bare model names: a list of \code{model_info()} values or a registry from \code{new_model_registry()}.}
 \item{rules}{Routing rules as a list of \code{c(prefix, provider)}; \code{NULL} uses the built-in ones (\code{claude-} to Anthropic, \code{gpt-} to OpenAI, ...).}
 \item{env}{A named character vector read instead of the process environment. \code{NULL} reads the environment; \code{character()} reads nothing.}

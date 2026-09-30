@@ -60,6 +60,14 @@ new_lm <- function(provider, ..., api_key = NULL, credential = NULL, base_url = 
   if (!is.null(env) && (!is.character(env) || (length(env) && is.null(names(env))))) stop("env must be a named character vector; character() disables environment lookup.", call. = FALSE)
   # unclass: Sys.getenv() is a "Dlist", and a value keeping that class is not a plain string
   lookup <- function(name) if (is.null(env)) Sys.getenv(name, unset = "") else unname(unclass(env)[name]) %||% ""
+  if (is.null(d$access$host)) {
+    # A door without a host: `settings` are its backend settings (AUTH-10,
+    # amended 2026-09-30) - explicit, then a router's environment (a client
+    # built by hand, env = NULL, reads none for them), then the table.
+    backend <- .resolve_backend_settings(d$access, settings, if (is.null(env)) NULL else lookup)
+    d$access <- .with_backend_settings(d$access, backend$values)
+    settings <- backend$values
+  }
   named <- .check_named(d$id, credential)
   if (!is.null(named) && !is.null(api_key)) .abort("A named identity and an explicit api_key both answer 'who am I'; give one.", "not_configured", d$id)
   if (is.null(api_key)) {
