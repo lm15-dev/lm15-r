@@ -17,7 +17,8 @@ and contacts no server; credentials are resolved when a request is sent.
 \usage{
 new_router(..., api_keys = list(), base_urls = list(), settings = list(),
   catalog = list(), rules = NULL, env = NULL, transport = NULL,
-  live_connect = NULL, adaptations = "note", auth = NULL, credentials = list())
+  live_connect = NULL, adaptations = "note", auth = NULL,
+  credentials = list(), providers = list())
 
 new_lm(provider, ..., api_key = NULL, credential = NULL, base_url = NULL,
   compat = NULL, settings = list(), transport = NULL, env = NULL,
@@ -49,7 +50,8 @@ transport_curl(..., timeout = 120, connect_timeout = 30,
 \item{adaptations}{What to do when the wire cannot take a setting: \code{"note"} (adapt and record it on the response), \code{"silent"} (adapt, record nothing) or \code{"refuse"} (raise instead).}
 \item{auth}{A sign-in scope (\code{local_auth()}, ...) whose saved connections this router uses, or \code{NULL}. With a scope, environment keys are never used.}
 \item{credentials}{Named cloud identities by provider: \code{list(bedrock_chat = "cli")}. One of \code{"platform"}, \code{"workload"}, \code{"environment"}, \code{"cli"}.}
-\item{provider}{A provider id, such as \code{"openai"}, \code{"anthropic"} or \code{"xai"}. \code{providers()} lists them; an underscore is read as a hyphen.}
+\item{providers}{Providers lm15 does not list, for this router only: a list of \code{provider_definition()} values. They route by id and alias like built-in providers and take \code{api_keys} and \code{base_urls} entries by id. A spelling an lm15 provider or a litellm prefix already uses is an error.}
+\item{provider}{A provider id, such as \code{"openai"} or \code{"anthropic"} (\code{providers()} lists them; an underscore is read as a hyphen), or a \code{provider_definition()} for a provider lm15 does not list.}
 \item{api_key}{The credential: a key string, \code{api_key()}, \code{bearer_token()}, \code{aws_credentials()}, or a function returning one (called for every request). \code{NULL} uses the provider's declared chain.}
 \item{credential}{A named cloud identity (\code{"platform"}, \code{"workload"}, \code{"environment"} or \code{"cli"}) instead of walking the cloud chain.}
 \item{base_url}{The server's address, overriding the provider's.}
@@ -79,7 +81,7 @@ The curl transport never follows redirects and never retries.
 
 }
 \value{
-A router, a client, a transport function, a character vector of provider ids, or for \code{resolve()} a list with \code{provider}, \code{model} and \code{source}.
+A router, a client, a transport function, a character vector of provider ids, or for \code{resolve()} a list with \code{provider}, \code{model}, \code{source} and \code{declared} (\code{TRUE} for a provider from \code{new_router(providers = )}: no lm15 test backs it).
 }
 \examples{
 

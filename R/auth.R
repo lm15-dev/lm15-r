@@ -104,17 +104,21 @@ load_local_credential <- function(provider, ..., path = NULL, env = NULL, now = 
   if (info$expired) return(.refresh_local_credential(provider, info, env, now, transport, lock_timeout))
   info
 }
-.explicit_source <- function(provider, entries) {
+# `router`, when given, adds its declared providers to the names an entry may
+# use and to the shared-key comparison (AUTH-1 § Shared explicit keys).
+.explicit_source <- function(provider, entries, router = NULL) {
   if (!length(entries)) return(NULL)
   keys <- names(entries)
   if (is.null(keys)) .abort("Explicit credentials must be named by provider.", "not_configured")
   canonical <- gsub("_", "-", keys, fixed = TRUE)
   if (anyDuplicated(canonical)) .abort("Duplicate credential provider spellings.", "not_configured")
-  if (any(!canonical %in% providers())) .abort("Unknown explicit credential provider.", "not_configured")
+  lookup <- if (is.null(router)) .definition else function(p) .router_definition(router, p)
+  known <- if (is.null(router)) providers() else c(providers(), vapply(router$providers %||% list(), function(d) d$id, ""))
+  if (any(!canonical %in% known)) .abort("Unknown explicit credential provider.", "not_configured")
   candidates <- keys[canonical == provider]
   if (!length(candidates)) {
-    env_keys <- .definition(provider)$access$env_keys
-    if (length(env_keys)) candidates <- Filter(function(key) identical(.definition(key)$access$env_keys, env_keys), keys)
+    env_keys <- lookup(provider)$access$env_keys
+    if (length(env_keys)) candidates <- Filter(function(key) identical(lookup(key)$access$env_keys, env_keys), keys)
   }
   if (length(candidates) > 1L) .abort("Several explicit credential sources share this provider; configure its exact provider name.", "not_configured", provider)
   if (!length(candidates)) return(NULL)

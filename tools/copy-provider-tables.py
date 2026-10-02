@@ -87,7 +87,30 @@ for node in ast.walk(ast.parse((ref / 'registry.py').read_text())):
         policy.setdefault('backend_options', {})
         registry.append(dict(id=id_, dialect=dialect, compat=compat, access=policy, placeholder_key=kw.get('placeholder_key'), console_url=kw.get('console_url')))
 
-out = {'providers': registry, 'chat_model_prefixes': env['LITELLM_PROVIDER_PREFIXES'], 'chat_client_keywords': env['_CLIENT_KEYWORDS']}
+# The router's built-in prefix rules, in match order (router.py DEFAULT_RULES).
+rules = None
+for node in ast.parse((ref / 'router.py').read_text()).body:
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == 'DEFAULT_RULES':
+        rules = []
+        for call in node.value.elts:
+            if not (isinstance(call, ast.Call) and getattr(call.func, 'id', None) == 'RouteRule'):
+                raise ValueError(ast.dump(call))
+            prefix, provider = (evaluate(a) for a in call.args[:2])
+            note = next((evaluate(k.value) for k in call.keywords if k.arg == 'note'), '')
+            rules.append({'prefix': prefix, 'provider': provider, 'note': note})
+if not rules: raise ValueError('DEFAULT_RULES not found in router.py')
+
+# Every knob each compat class declares (compat.py dataclass fields), so a
+# caller's compat list can be checked by name instead of silently ignored.
+compat_fields = {}
+for node in ast.parse((ref / 'compat.py').read_text()).body:
+    name = {'OpenAIChatCompat': 'chat', 'OpenAIResponsesCompat': 'responses', 'AnthropicCompat': 'anthropic'}.get(getattr(node, 'name', None))
+    if isinstance(node, ast.ClassDef) and name:
+        compat_fields[name] = [s.target.id for s in node.body if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)]
+if sorted(compat_fields) != ['anthropic', 'chat', 'responses']: raise ValueError('compat classes not found in compat.py')
+
+out = {'providers': registry, 'chat_model_prefixes': env['LITELLM_PROVIDER_PREFIXES'], 'chat_client_keywords': env['_CLIENT_KEYWORDS'],
+       'default_rules': rules, 'compat_fields': compat_fields}
 for dialect, prefix in [('responses', 'OPENAI_RESPONSES'), ('chat', 'OPENAI_CHAT'), ('anthropic', 'ANTHROPIC')]:
     out[dialect] = env[prefix + '_PRESETS']
     out[dialect + '_urls'] = env[prefix + '_PRESET_BASE_URLS']

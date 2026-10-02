@@ -30,7 +30,7 @@ route_openai_chat(router, body, ...)
 
 resolve_openai_chat(router, model, ...)
 
-openai_chat_model_string(model, ...)
+openai_chat_model_string(model, ..., providers = list())
 
 }
 \arguments{
@@ -44,6 +44,7 @@ openai_chat_model_string(model, ...)
 \item{streaming}{Whether to stream; by default the body's \code{stream} field.}
 \item{on_event}{A function called with each event while streaming.}
 \item{router}{A router from \code{new_router()}.}
+\item{providers}{Declared providers (\code{provider_definition()} values) whose ids and aliases also read as litellm prefixes; \code{resolve_openai_chat()} passes its router's.}
 }
 \value{
 A Request, a Response, a routing list, or a model string.

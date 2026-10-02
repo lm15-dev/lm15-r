@@ -1,10 +1,12 @@
-openai_chat_model_string <- function(model, ...) {
+openai_chat_model_string <- function(model, ..., providers = list()) {
   .check_dots(...); .string(model, "model")
   if (grepl(":", model, fixed = TRUE)) return(model)
   slash <- regexpr("/", model, fixed = TRUE)[[1L]]
   if (slash > 0L && slash < nchar(model)) {
     head <- substr(model, 1L, slash - 1L)
     provider <- .provider_tables()$chat_model_prefixes[[head]]
+    # A declared provider's id or alias, in either spelling (new_router(providers = )).
+    if (is.null(provider)) for (d in providers) if (canonical_provider(head) %in% c(d$id, unlist(d$aliases))) { provider <- d$id; break }
     if (is.null(provider)) .abort("Unknown or ambiguous foreign provider prefix; use an explicit provider:model name.", "unknown_model", model = model)
     return(paste0(provider, ":", substring(model, slash + 1L)))
   }
@@ -12,7 +14,7 @@ openai_chat_model_string <- function(model, ...) {
 }
 resolve_openai_chat <- function(router, model, ...) {
   .check_dots(...)
-  resolution <- resolve(router, openai_chat_model_string(model))
+  resolution <- resolve(router, openai_chat_model_string(model, providers = router$providers %||% list()))
   if (resolution$source == "rule" && resolution$provider == "openai") resolution <- resolve(router, paste0("openai-chat:", resolution$model))
   resolution
 }

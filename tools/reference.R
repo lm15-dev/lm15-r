@@ -227,7 +227,8 @@ A router picks the provider from the model string and builds a client for it
 on first use. A client talks to one provider. Constructing either reads no file
 and contacts no server; credentials are resolved when a request is sent.
 )-",
-  args = c(api_keys = "Explicit credentials by provider: \\code{list(openai = \"sk-...\")}. A string is an API key; \\code{bearer_token()} and credential functions are also accepted. An explicit entry wins over everything else.",
+  args = c(provider = "A provider id, such as \\code{\"openai\"} or \\code{\"anthropic\"} (\\code{providers()} lists them; an underscore is read as a hyphen), or a \\code{provider_definition()} for a provider lm15 does not list.",
+    api_keys = "Explicit credentials by provider: \\code{list(openai = \"sk-...\")}. A string is an API key; \\code{bearer_token()} and credential functions are also accepted. An explicit entry wins over everything else.",
     base_urls = "Address overrides by provider.",
     settings = "Settings by provider (for new_router), or for this client (for new_lm): a cloud provider's host settings, such as \\code{list(region = \"us-east-1\")}, or a subscription provider's \\code{client_version} (the Claude Code or Codex release it names; \\code{LM15_CLAUDE_CODE_VERSION} and \\code{LM15_CODEX_CLIENT_VERSION} when a router reads the environment). A setting the provider does not read is an error.",
     catalog = "Model metadata used to route bare model names: a list of \\code{model_info()} values or a registry from \\code{new_model_registry()}.",
@@ -236,6 +237,7 @@ and contacts no server; credentials are resolved when a request is sent.
     adaptations = "What to do when the wire cannot take a setting: \\code{\"note\"} (adapt and record it on the response), \\code{\"silent\"} (adapt, record nothing) or \\code{\"refuse\"} (raise instead).",
     auth = "A sign-in scope (\\code{local_auth()}, ...) whose saved connections this router uses, or \\code{NULL}. With a scope, environment keys are never used.",
     credentials = "Named cloud identities by provider: \\code{list(bedrock_chat = \"cli\")}. One of \\code{\"platform\"}, \\code{\"workload\"}, \\code{\"environment\"}, \\code{\"cli\"}.",
+    providers = "Providers lm15 does not list, for this router only: a list of \\code{provider_definition()} values. They route by id and alias like built-in providers and take \\code{api_keys} and \\code{base_urls} entries by id. A spelling an lm15 provider or a litellm prefix already uses is an error.",
     api_key = "The credential: a key string, \\code{api_key()}, \\code{bearer_token()}, \\code{aws_credentials()}, or a function returning one (called for every request). \\code{NULL} uses the provider's declared chain.",
     credential = "A named cloud identity (\\code{\"platform\"}, \\code{\"workload\"}, \\code{\"environment\"} or \\code{\"cli\"}) instead of walking the cloud chain.",
     base_url = "The server's address, overriding the provider's.",
@@ -260,13 +262,56 @@ the walk.
 sending anything. \code{router_lm()} returns the client a router would use.
 The curl transport never follows redirects and never retries.
 )-",
-  value = "A router, a client, a transport function, a character vector of provider ids, or for \\code{resolve()} a list with \\code{provider}, \\code{model} and \\code{source}.",
+  value = "A router, a client, a transport function, a character vector of provider ids, or for \\code{resolve()} a list with \\code{provider}, \\code{model}, \\code{source} and \\code{declared} (\\code{TRUE} for a provider from \\code{new_router(providers = )}: no lm15 test backs it).",
   examples = r"-(
 router <- new_router(api_keys = list(openai = "sk-example"))
 resolve(router, "gpt-5-mini")
 resolve(router, "groq:llama-3.3-70b-versatile")
 head(providers())
 local <- new_lm("ollama")  # a keyless local server at its default address
+)-"),
+
+page("provider_definition", "Declare a provider lm15 does not list",
+  c("provider_definition"),
+  description = r"-(
+A gateway, a hosting service lm15 has not tested, a second OpenAI-compatible
+vendor: describe it once and pass it to \code{new_router(providers = list(...))}.
+The router then treats it like a built-in provider, by name
+(\code{"id:model"} and each alias), with \code{api_keys}, \code{base_urls} and
+the declared environment variables, in that router only. Nothing is registered
+globally. \code{new_lm()} also accepts a definition directly.
+)-",
+  args = c(id = "The provider name: lower case, words joined by \\code{-} (\\code{\"nebius\"}). It is what goes before \\code{:} in a model string.",
+    dialect = "The wire the server speaks: \\code{\"openai-chat\"} (Chat Completions, the usual one), \\code{\"openai-responses\"} or \\code{\"anthropic\"} (Messages).",
+    base_url = "The server's API root, such as \\code{\"https://api.tokenfactory.nebius.com/v1\"}.",
+    env_keys = "Environment variables that may hold the key, read in order.",
+    compat = "How the server differs from the dialect's defaults: a named list of knobs (lm15's compat names, such as \\code{list(max_tokens_field = \"max_tokens\")}) or the name of a preset lm15 knows. An empty list means the dialect's defaults; an unknown knob name is an error.",
+    supports = "What the server offers: any of \\code{\"complete\"}, \\code{\"stream\"}, \\code{\"models\"}, \\code{\"files\"}, \\code{\"batches\"}, \\code{\"images\"}, \\code{\"speech\"}, \\code{\"video\"}, \\code{\"live\"}, \\code{\"responses_api\"}, \\code{\"caches\"}.",
+    auth_scheme = "How the key travels: \\code{\"bearer\"} (an Authorization header) or \\code{\"x-api-key\"}.",
+    headers = "A named character vector of headers sent on every request.",
+    aliases = "Extra spellings accepted before \\code{:}; never emitted.",
+    placeholder_key = "For a keyless local server, the key to send when none is configured. Not combined with \\code{env_keys}.",
+    console_url = "Where a person gets a key.",
+    note = "One line describing the provider."),
+  details = r"-(
+A declaration is not a receipt. lm15's own providers are pinned from live
+captures; a declared provider is your word, and \code{resolve()} says so with
+\code{declared = TRUE}. A key-based server only: a subscription login or a
+cloud identity chain needs lm15's own support. When a declared provider gains
+lm15 support, its name becomes a built-in one and the declaration is refused:
+delete it.
+)-",
+  value = "A provider definition for \\code{new_router(providers = )} or \\code{new_lm()}.",
+  examples = r"-(
+nebius <- provider_definition(
+  "nebius",
+  base_url = "https://api.tokenfactory.nebius.com/v1",
+  env_keys = "NEBIUS_API_KEY",
+  supports = c("complete", "stream", "models"),
+  aliases = "tokenfactory"
+)
+router <- new_router(providers = list(nebius), env = c(NEBIUS_API_KEY = "example"))
+resolve(router, "tokenfactory:deepseek-ai/DeepSeek-R1-0528")
 )-"),
 
 page("complete", "Send a request",
@@ -469,7 +514,8 @@ refused by name; nothing is dropped silently.
     choice = "Which choice to read when the body has several.",
     streaming = "Whether to stream; by default the body's \\code{stream} field.",
     on_event = "A function called with each event while streaming.",
-    router = "A router from \\code{new_router()}.", lm = "A router from \\code{new_router()} or a client from \\code{new_lm()}."),
+    router = "A router from \\code{new_router()}.", lm = "A router from \\code{new_router()} or a client from \\code{new_lm()}.",
+    providers = "Declared providers (\\code{provider_definition()} values) whose ids and aliases also read as litellm prefixes; \\code{resolve_openai_chat()} passes its router's."),
   value = "A Request, a Response, a routing list, or a model string.",
   examples = r"-(
 body <- json_object(model = "gpt-5-mini",
