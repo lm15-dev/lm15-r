@@ -16,7 +16,7 @@ live_setup_frames <- function(lm, config, ...) {
   if (any(vapply(config$tools, function(tool) tool$type == "builtin", logical(1)))) .unsupported(lm$definition$id, "builtin tools in live sessions")
   instructions <- if (is.character(config$system)) config$system else if (!is.null(config$system)) .parts_text(config$system, lm$definition$id) else NULL
   functions <- Filter(function(t) t$type == "function", config$tools)
-  tools <- lapply(functions, function(t) json_object(name = t$name, description = t$description, parameters = t$parameters))
+  tools <- lapply(functions, function(t) .json_object(c(unclass(.with_tool_description(json_object(name = t$name), t)), list(parameters = t$parameters))))
   if (dialect == "gemini") {
     setup <- json_object(model = if (startsWith(config$model, "models/")) config$model else paste0("models/", config$model))
     if (!is.null(instructions)) setup$systemInstruction <- json_object(parts = list(json_object(text = instructions)))

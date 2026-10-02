@@ -167,16 +167,28 @@
   }
   TRUE
 }
+# MAP-17: add a function tool's description to a wire declaration when it has one. A
+# tool without a description carries no description key: it is never sent as null
+# (Anthropic and Groq refuse null with a 400; lm15-contract
+# receipts/2026-10-02-tool-description). "" is the same value as NULL in canonical JSON
+# (omit-empty), so it is left off too. Call it right after the name so the documented
+# key order holds.
+.with_tool_description <- function(out, tool) {
+  description <- tool$description
+  if (!is.null(description) && nzchar(description)) out$description <- description
+  out
+}
 .gemini_declaration <- function(tool) {
-  out <- json_object(name = tool$name, description = tool$description)
+  out <- .with_tool_description(json_object(name = tool$name), tool)
   out[[if (.gemini_openapi_schema(tool$parameters)) "parameters" else "parametersJsonSchema"]] <- tool$parameters
   out
 }
 .tool_wire <- function(tool, dialect, compat, provider) {
   if (tool$type == "builtin") return(.builtin(tool, dialect, compat, provider))
-  if (dialect == "anthropic") return(json_object(name = tool$name, description = tool$description, input_schema = tool$parameters))
   if (dialect == "gemini") return(.gemini_declaration(tool))
-  out <- json_object(name = tool$name, description = tool$description, parameters = tool$parameters)
+  out <- .with_tool_description(json_object(name = tool$name), tool)
+  if (dialect == "anthropic") return(.json_object(c(unclass(out), list(input_schema = tool$parameters))))
+  out <- .json_object(c(unclass(out), list(parameters = tool$parameters)))
   if (dialect %in% c("chat", "responses") && compat$strict_tools == "include") out$strict <- FALSE
   if (dialect == "chat") return(json_object(type = "function", "function" = out))
   if (dialect == "responses") out <- .json_object(c(list(type = "function"), out))
