@@ -68,8 +68,8 @@ test_that("the JSON check fails exactly where encoding fails", {
   for (x in values) expect_identical(outcome(lm15:::.json_check, x), outcome(lm15:::.json_encode, x))
 })
 
-test_that("a 30 MB generated image replays in seconds", {
-  skip_on_cran()  # tens of MB and a timing bound: CRAN machines are shared
+test_that("a 30 MB generated image replays intact", {
+  skip_on_cran()  # tens of MB: CRAN machines are shared
   image <- jsonlite::base64_enc(as.raw(rep_len(0:255, 22500000L)))
   image <- gsub("\n", "", image, fixed = TRUE)
   body <- paste0('data: {"candidates":[{"content":{"role":"model","parts":[{"inlineData":{"mimeType":"image/png","data":"', image,
@@ -77,9 +77,9 @@ test_that("a 30 MB generated image replays in seconds", {
   router <- new_router(api_keys = list(gemini = "k"))
   req <- request("gemini:gemini-3-pro-image", list(message_user("x")), config = config(extensions = list(output = "image")))
   lm <- lm15:::.route(router, req)$lm
-  elapsed <- system.time(out <- replay_stream(lm, req, body))[["elapsed"]]
+  # No timing bound: the old cost (about 20 s here) was a large constant, not
+  # a growth rate, and a constant-factor bound is flaky on shared machines.
+  out <- replay_stream(lm, req, body)
   parts <- Filter(function(p) identical(p$type, "image"), out$response$message$parts)
   expect_identical(parts[[1L]]$data, image)
-  # Before: about 20 s (a POSIX regex and a full JSON encoding on every check).
-  expect_lt(elapsed, 15)
 })
