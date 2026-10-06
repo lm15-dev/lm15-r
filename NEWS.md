@@ -1,5 +1,17 @@
 # lm15 (development version)
 
+* Long streamed replies no longer fail at the last moment. The stream reader
+  refused a line over 1 MiB and an event over 8 MiB, and real streams are
+  larger: Gemini sends a 4K image as one 29.7 MB line, and OpenAI Responses
+  repeats the whole response, system prompt included, in its first and last
+  events. Streams now take an event of any size, as a non-streamed reply
+  does; both stay bounded by the transport's whole-reply limit
+  (`transport_curl(max_response_bytes = 128 * 1024^2)`). Splitting a long
+  line out of many network reads is now linear (a 30 MB line: 1.3 s; the old
+  splitter took 2.7 s for 4 MB, growing with the square of the length).
+  lm15-contract INV-056 (`changes/2026-10-06-sse-event-bound.md`); contract
+  `0f3ea82`.
+
 * A tool with no description works on every provider. A `function_tool()`
   with only a name and parameters was sent with `"description": null`, which
   Anthropic and Groq refuse with a 400. The description key is now left out

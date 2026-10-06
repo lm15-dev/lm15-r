@@ -1,35 +1,52 @@
 # R's streaming surface is callback-based: the HTTP read remains in this
 # process and callbacks run on R's thread, never on a background R thread.
-.new_sse <- function(on_frame, max_line_bytes = 1024^2, max_event_bytes = 8 * 1024^2) {
-  buffer <- raw(); data <- character(); event <- NULL; event_bytes <- 0
+# INV-056: no size limit by default. A provider sends whole objects as one
+# line (OpenAI Responses repeats the full response, system prompt included,
+# in response.completed; Gemini sends a 4K image as one 29.7 MB line), a
+# non-streamed reply has no limit either, and a stream is accumulated into
+# the whole reply anyway. The limits here are opt-in caps. Splitting is
+# linear: each chunk is searched once, and an unfinished line keeps its
+# pieces until its newline arrives, then is joined once.
+.new_sse <- function(on_frame, max_line_bytes = Inf, max_event_bytes = Inf) {
+  pieces <- list(); pending <- 0; data <- character(); event <- NULL; event_bytes <- 0
   line <- function(bytes) {
     if (length(bytes) > max_line_bytes) .abort("SSE line exceeds the configured limit.", "transport")
     event_bytes <<- event_bytes + length(bytes)
     if (event_bytes > max_event_bytes) .abort("SSE event exceeds the configured limit.", "transport")
-    value <- sub("\r$", "", rawToChar(bytes))
-    if (!nzchar(value)) {
+    n <- length(bytes)
+    if (n && bytes[[n]] == as.raw(13L)) bytes <- bytes[-n]
+    if (!length(bytes)) {
       if (length(data)) on_frame(paste(data, collapse = "\n"), event)
       data <<- character(); event <<- NULL; event_bytes <<- 0; return(invisible(NULL))
     }
+    value <- rawToChar(bytes)
     if (startsWith(value, "data:")) data <<- c(data, sub("^[[:space:]]+", "", substring(value, 6L)))
     else if (startsWith(value, "event:")) event <<- trimws(substring(value, 7L))
   }
+  take <- function(tail) {
+    if (!length(pieces)) return(tail)
+    out <- do.call(c, c(pieces, list(tail)))
+    pieces <<- list(); pending <<- 0
+    out
+  }
   feed <- function(chunk) {
-    buffer <<- c(buffer, chunk)
-    repeat {
-      i <- which(buffer == as.raw(10L))
-      if (!length(i)) break
-      end <- i[[1L]]
-      line(if (end > 1L) buffer[seq_len(end - 1L)] else raw())
-      buffer <<- if (end < length(buffer)) buffer[seq.int(end + 1L, length(buffer))] else raw()
+    if (!length(chunk)) return(invisible(NULL))
+    start <- 1L
+    for (end in which(chunk == as.raw(10L))) {
+      line(take(if (end > start) chunk[start:(end - 1L)] else raw()))
+      start <- end + 1L
     }
-    if (length(buffer) > max_line_bytes) .abort("SSE line exceeds the configured limit.", "transport")
+    if (start <= length(chunk)) {
+      pieces[[length(pieces) + 1L]] <<- chunk[start:length(chunk)]
+      pending <<- pending + (length(chunk) - start + 1L)
+      if (pending > max_line_bytes) .abort("SSE line exceeds the configured limit.", "transport")
+    }
     invisible(NULL)
   }
   finish <- function() {
-    if (length(buffer)) line(buffer)
+    if (pending > 0) line(take(raw()))
     if (length(data)) on_frame(paste(data, collapse = "\n"), event)
-    buffer <<- raw(); data <<- character(); invisible(NULL)
+    pieces <<- list(); pending <<- 0; data <<- character(); invisible(NULL)
   }
   list(feed = feed, finish = finish)
 }
