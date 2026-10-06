@@ -27,9 +27,14 @@
 .base64 <- function(x, field) {
   if (is.raw(x)) x <- .base64_encode(x)
   .string(x, field)
-  payload <- sub("^data:[^,]*;base64,", "", x)
-  payload <- gsub("[[:space:]]", "", payload)
-  if (!nzchar(payload) || nchar(payload) %% 4L || !grepl("^[A-Za-z0-9+/]*={0,2}$", payload)) .field_error(field, "must contain base64 data")
+  # PCRE, and a copy only when there is something to remove: a generated
+  # image is one tens-of-megabytes string (INV-056), on which the default
+  # regex engine took about a second per check, and this runs several times
+  # per image. Same rule: an optional data-URL prefix, spaces ignored, the
+  # alphabet, a length that is a multiple of 4, at most two '='.
+  payload <- if (startsWith(x, "data:")) sub("^data:[^,]*;base64,", "", x, perl = TRUE) else x
+  if (grepl("[[:space:]]", payload, perl = TRUE)) payload <- gsub("[[:space:]]", "", payload, perl = TRUE)
+  if (!nzchar(payload) || nchar(payload, type = "bytes") %% 4L || !grepl("^[A-Za-z0-9+/]*={0,2}$", payload, perl = TRUE)) .field_error(field, "must contain base64 data")
   # Validation examines the normalized payload; the original spelling is
   # retained, matching the reference's media serialization.
   x
@@ -75,7 +80,7 @@
   }
   if (desc == "json_value") {
     # An opaque JSON value where null is a value (DataPart$value, INV-002).
-    tryCatch(.json_encode(x), error = function(e) .field_error(field, "must be a JSON value"))
+    tryCatch(.json_check(x), error = function(e) .field_error(field, "must be a JSON value"))
     return(x)
   }
   if (is.null(x)) .field_error(field, "is required")
@@ -100,7 +105,7 @@
   }
   if (desc == "json") {
     # Any JSON value (MAP-13 asked/applied); checked only for being encodable.
-    tryCatch(.json_encode(x), error = function(e) .field_error(field, "must be a JSON value"))
+    tryCatch(.json_check(x), error = function(e) .field_error(field, "must be a JSON value"))
     return(x)
   }
   if (desc == "base64") return(.base64(x, field))
@@ -119,7 +124,7 @@
   }
   if (desc == "object") {
     if (!.is_object(x)) .field_error(field, "must be a JSON object; use json_object() for an empty object")
-    .json_encode(x)
+    .json_check(x)
     return(x)
   }
   if (desc == "system") {

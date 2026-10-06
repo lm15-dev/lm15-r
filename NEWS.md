@@ -9,6 +9,9 @@
   (`transport_curl(max_response_bytes = 128 * 1024^2)`). Splitting a long
   line out of many network reads is now linear (a 30 MB line: 1.3 s; the old
   splitter took 2.7 s for 4 MB, growing with the square of the length).
+  Reading a 30 MB generated image end to end over HTTP now takes about 4 s
+  (it took 45 s): base64 is checked with a PCRE pattern, and fields that
+  only need to be valid JSON are walked rather than encoded and discarded.
   lm15-contract INV-056 (`changes/2026-10-06-sse-event-bound.md`); contract
   `0f3ea82`.
 

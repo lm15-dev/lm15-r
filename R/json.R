@@ -67,6 +67,30 @@ json_array <- function(...) structure(unname(list(...)), class = c("lm15_json_ar
   stop("Only finite JSON values are supported.", call. = FALSE)
 }
 
+# Fails exactly where .json_encode fails, without building the text. A field
+# that only has to be encodable (a provider's reply object, an opaque value)
+# is checked with this: such an object can carry a 30 MB image (INV-056),
+# and encoding it only to discard the result cost seconds per check.
+.json_check <- function(x, depth = 0L) {
+  if (depth > 256L) stop("JSON nesting exceeds 256 levels.", call. = FALSE)
+  if (inherits(x, "lm15_value")) x <- as_dict(x)
+  if (is.null(x) || inherits(x, "lm15_json_number") || inherits(x, "lm15_integer")) return(invisible(TRUE))
+  if (.is_object(x)) {
+    n <- names(x)
+    if (length(x) && (anyNA(n) || anyDuplicated(n))) stop("Invalid JSON object names.", call. = FALSE)
+    for (i in seq_along(x)) .json_check(x[[i]], depth + 1L)
+    return(invisible(TRUE))
+  }
+  if (.is_array(x)) {
+    for (i in seq_along(x)) .json_check(x[[i]], depth + 1L)
+    return(invisible(TRUE))
+  }
+  if (length(x) != 1L || is.na(x)) stop("JSON scalars must have length one and cannot be NA; use json_array() for arrays.", call. = FALSE)
+  if (is.object(x)) stop("Unsupported object in JSON payload.", call. = FALSE)
+  if (is.character(x) || is.logical(x) || is.integer(x) || (is.double(x) && is.finite(x))) return(invisible(TRUE))
+  stop("Only finite JSON values are supported.", call. = FALSE)
+}
+
 # A recursive-descent reader that preserves numeric tokens, arrays and
 # objects. One regular-expression pass splits the text into tokens (linear
 # in its size; a provider's model catalog can be several hundred KB), and

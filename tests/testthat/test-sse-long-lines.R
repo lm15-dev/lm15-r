@@ -44,6 +44,7 @@ test_that("chunked feeding matches one-shot parsing for any chunking", {
 })
 
 test_that("a 30 MB line in 16 KiB reads splits in linear time", {
+  skip_on_cran()  # tens of MB and a timing bound: CRAN machines are shared
   body <- c(charToRaw("data: "), as.raw(rep(97L, 30 * 1024^2)), charToRaw("\n\n"))
   elapsed <- system.time(frames <- sse_frames(body, 16L * 1024L))[["elapsed"]]
   expect_length(frames, 1L)
@@ -51,4 +52,34 @@ test_that("a 30 MB line in 16 KiB reads splits in linear time", {
   # The old splitter re-concatenated and rescanned the pending line on every
   # read (about 1,900 reads x 15 MB here): minutes.
   expect_lt(elapsed, 10)
+})
+
+test_that("base64 validation keeps its rule", {
+  ok <- c("QUJD", "QUI=", "QQ==", "data:image/png;base64,QUJD", " QU JD \n")
+  bad <- c("", "QUJ", "QQ===", "Q===", "QU*D", "=QUJ", "QUJD\u00e9")
+  for (x in ok) expect_identical(lm15:::.base64(x, "data"), x)
+  for (x in bad) expect_error(lm15:::.base64(x, "data"), "base64|non-empty")
+})
+
+test_that("the JSON check fails exactly where encoding fails", {
+  values <- list(json_object(a = 1L), list(1, 2), NA, c(1, 2), Inf, json_object(a = NA), 1.5, "x", TRUE, Sys.Date(),
+                 structure(list(1, 2), names = c("a", "a")), lm15:::.json_number("1e400"))
+  outcome <- function(f, x) tryCatch({ f(x); "ok" }, error = function(e) conditionMessage(e))
+  for (x in values) expect_identical(outcome(lm15:::.json_check, x), outcome(lm15:::.json_encode, x))
+})
+
+test_that("a 30 MB generated image replays in seconds", {
+  skip_on_cran()  # tens of MB and a timing bound: CRAN machines are shared
+  image <- jsonlite::base64_enc(as.raw(rep_len(0:255, 22500000L)))
+  image <- gsub("\n", "", image, fixed = TRUE)
+  body <- paste0('data: {"candidates":[{"content":{"role":"model","parts":[{"inlineData":{"mimeType":"image/png","data":"', image,
+                 '"}}]},"finishReason":"STOP","index":0}],"usageMetadata":{"promptTokenCount":3,"candidatesTokenCount":2,"totalTokenCount":5}}\r\n\r\n')
+  router <- new_router(api_keys = list(gemini = "k"))
+  req <- request("gemini:gemini-3-pro-image", list(message_user("x")), config = config(extensions = list(output = "image")))
+  lm <- lm15:::.route(router, req)$lm
+  elapsed <- system.time(out <- replay_stream(lm, req, body))[["elapsed"]]
+  parts <- Filter(function(p) identical(p$type, "image"), out$response$message$parts)
+  expect_identical(parts[[1L]]$data, image)
+  # Before: about 20 s (a POSIX regex and a full JSON encoding on every check).
+  expect_lt(elapsed, 15)
 })
