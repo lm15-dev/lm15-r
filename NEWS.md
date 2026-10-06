@@ -1,4 +1,17 @@
-# lm15 (development version)
+# lm15 1.1.0
+
+Implements the lm15 contract at commit `0f3ea82`, the same commit as lm15 for
+Python 1.2.1, TypeScript and Rust 1.0.0-rc.5 and Go v1.1.0-rc.4, and passes
+all 1,901 of its checks.
+
+* New: `provider_definition()` declares a provider lm15 does not list (a
+  gateway, an untested host, a second OpenAI-compatible vendor). Pass it to
+  `new_router(providers = list(...))` and the router treats it like a built-in
+  provider, by name and alias, with `api_keys`, `base_urls` and the declared
+  environment variables, in that router only; `new_lm()` also accepts one. A
+  name another provider, a litellm prefix or a managed-login route already
+  uses is refused, and so is an unknown compat knob. The built-in routing
+  rules are now copied from the reference.
 
 * Long streamed replies no longer fail at the last moment. The stream reader
   refused a line over 1 MiB and an event over 8 MiB, and real streams are

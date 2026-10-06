@@ -97,14 +97,15 @@ the mechanics are R's. Where R differs:
 
 ## Status
 
-* **Contract:** pinned at [`57e33d1`](https://github.com/lm15-dev/lm15-contract/commit/57e33d17f562f932df920e6c6e876d9d8799c53b), the same commit as Python
-  1.2.0, TypeScript and Rust 1.0.0-rc.4 and Go v1.1.0-rc.3: **1,838 of 1,838**
+* **Contract:** pinned at [`0f3ea82`](https://github.com/lm15-dev/lm15-contract/commit/0f3ea829eeff53e3b944656f2e52c1dc4b358d95), the same commit as Python
+  1.2.1, TypeScript and Rust 1.0.0-rc.5 and Go v1.1.0-rc.4: **1,901 of 1,901**
   checks pass, including all 43 sign-in lifecycle runs. The credentials file has
   been shared with Python, TypeScript, Rust and Go processes in every order,
   and concurrent renewal spends a refresh token once in every language pair.
 * **Live:** checked against a real vLLM server (chat, streaming, model
-  listing, errors, the judgment fallback). No paid provider has been called
-  from R yet.
+  listing, errors, the judgment fallback), and one paid call so far: a
+  streamed `openai:gpt-4.1-mini` reply through a router with a 74 KB system
+  prompt (2026-10-06).
 * **Platforms:** `R CMD check` passes on Linux, Windows and macOS (CI), and
   the package runs in the browser through webR (tested in Chromium).
 
