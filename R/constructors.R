@@ -165,9 +165,20 @@ tool_choice <- function(..., mode = "auto", allowed = list(), parallel = NULL) {
   .new_value("ToolChoice", list(mode = mode, allowed = allowed, parallel = parallel))
 }
 
-reasoning <- function(effort, ..., thinking_budget = NULL, summary = NULL) {
+reasoning <- function(effort = NULL, ..., thinking_budget = NULL, summary = NULL) {
   .check_dots(...)
+  if (is.null(effort)) {
+    if (is.null(thinking_budget)) stop("reasoning() needs effort (one of off, minimal, low, medium, high, xhigh, max) or thinking_budget; leave config(reasoning = ) unset to let the model decide.", call. = FALSE)
+    if (is.numeric(thinking_budget) && length(thinking_budget) == 1L && !is.na(thinking_budget) && thinking_budget == 0) stop("thinking_budget must be > 0; to turn thinking off, use reasoning(\"off\") with no budget.", call. = FALSE)
+    # A budget alone fills effort from MAP-7 rule 3's table read the other way (amended 2026-10-10).
+    if (is.numeric(thinking_budget) && length(thinking_budget) == 1L && !is.na(thinking_budget) && thinking_budget > 0) effort <- .effort_for_budget(thinking_budget)
+  }
+  if (identical(effort, "none")) stop("unsupported reasoning effort: none (lm15 spells \"none\" as effort = \"off\").", call. = FALSE)
   .new_value("Reasoning", list(effort = effort, thinking_budget = thinking_budget, summary = summary))
+}
+.effort_for_budget <- function(budget) {
+  fits <- names(.effort_budgets)[.effort_budgets <= budget]
+  if (length(fits)) fits[[length(fits)]] else "minimal"
 }
 
 cache_config <- function(..., mode = "auto", retention = NULL, key = NULL, prefix_until_index = NULL, prefix = NULL, resource = NULL) {

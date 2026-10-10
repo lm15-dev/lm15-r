@@ -323,7 +323,13 @@ message_tool <- function(id, content, ..., is_error = FALSE, name = NULL) {
 response_text <- function(response, ...) {
   .check_dots(...)
   parts <- response$message$parts
-  if (any(!vapply(parts, function(p) p$type %in% c("text", "thinking", "citation"), logical(1)))) return(NULL)
+  if (any(!vapply(parts, function(p) p$type %in% c("text", "thinking", "citation"), logical(1)))) {
+    # A structured answer that came back as a DataPart (MAP-14) reads as its compact JSON, so response_text and
+    # parse_json work whichever form the wire gave it (types.md §Response, amended 2026-10-10).
+    data <- Filter(function(p) p$type == "data", parts)
+    only_data <- all(vapply(parts, function(p) p$type %in% c("data", "thinking", "citation"), logical(1)))
+    return(if (length(data) == 1L && only_data) .data_part_text(data[[1L]]) else NULL)
+  }
   texts <- Filter(function(p) p$type == "text", parts)
   if (!length(texts)) return(NULL)
   paste(vapply(texts, function(p) p$text, ""), collapse = "\n")

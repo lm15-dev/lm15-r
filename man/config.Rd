@@ -20,7 +20,7 @@ config(..., max_tokens = NULL, temperature = NULL, top_p = NULL, top_k = NULL,
   cache = NULL, service_tier = NULL, user_id = NULL, store = NULL,
   logprobs = NULL, probabilities = NULL, extensions = NULL)
 
-reasoning(effort, ..., thinking_budget = NULL, summary = NULL)
+reasoning(effort = NULL, ..., thinking_budget = NULL, summary = NULL)
 
 tool_choice(..., mode = "auto", allowed = list(), parallel = NULL)
 
@@ -53,7 +53,7 @@ builtin_tool(name, ..., config = NULL)
 \item{logprobs}{Ask for token log-probabilities: 0 for the chosen tokens, n for n alternatives too.}
 \item{probabilities}{For judgment requests: \code{"off"}, \code{"if_available"} or \code{"required"}; see \code{\link{judgments}}.}
 \item{extensions}{A JSON object of provider-specific fields passed through unchanged (\code{json_object()}), or \code{NULL}.}
-\item{effort}{One of \code{"off"}, \code{"minimal"}, \code{"low"}, \code{"medium"}, \code{"high"}, \code{"xhigh"}, \code{"max"}.}
+\item{effort}{One of \code{"off"}, \code{"minimal"}, \code{"low"}, \code{"medium"}, \code{"high"}, \code{"xhigh"}, \code{"max"}. May be omitted when \code{thinking_budget} is given: it is then the highest level whose budget (1024, 2048, 8192, 16384, 24576, 32768) is at or below it, \code{"minimal"} below 1024.}
 \item{thinking_budget}{A reasoning token budget for providers that take one.}
 \item{summary}{Show reasoning: \code{"auto"}, \code{"concise"} or \code{"detailed"}.}
 \item{mode}{For \code{tool_choice()}: \code{"auto"}, \code{"required"} or \code{"none"}; for \code{cache_config()}: \code{"auto"} or \code{"off"}.}
