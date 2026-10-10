@@ -1,3 +1,22 @@
+# lm15 1.1.1
+
+Implements the lm15 contract at commit `880f72c`, the same commit as lm15 for
+Python 1.2.2, TypeScript and Rust 1.0.0-rc.6 and Go v1.1.0-rc.5, and passes
+all 1,904 of its checks.
+
+* A wrong or expired key is an `AuthError` (code `"auth"`) on every provider.
+  Gemini and xAI answer a key they refuse with HTTP 400, and lm15 reported
+  `invalid_request`, so a handler for `AuthError` missed them. Gemini is
+  recognized by the reason its error carries (`API_KEY_INVALID`, which also
+  covers an expired key), xAI by its exact sentence; any other Gemini 400 is
+  still `invalid_request`. lm15-contract MAP-18
+  (`changes/2026-10-10-bad-key-and-misplaced-key.md`).
+
+* A value given as a named cloud identity that is not one of `platform`,
+  `workload`, `environment` or `cli` is no longer repeated in the error: it is
+  usually an API key in the wrong argument. The message says so and that a key
+  goes in `api_key`.
+
 # lm15 1.1.0
 
 Implements the lm15 contract at commit `0f3ea82`, the same commit as lm15 for

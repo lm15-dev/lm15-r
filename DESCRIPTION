@@ -1,6 +1,6 @@
 Package: lm15
 Title: One Interface to Many Language Model Providers
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: person("Maxime", "Rivest", email = "mrive052@gmail.com", role = c("aut", "cre", "cph"))
 Description: Builds one request for many language model providers ('OpenAI',
     'Anthropic', 'Google Gemini', 'xAI', 'Microsoft Azure', 'Amazon Bedrock',
