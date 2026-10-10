@@ -244,7 +244,8 @@ cloud_credential_provider <- function(provider, ..., env = NULL, settings = list
 .check_named <- function(provider, named) {
   if (is.null(named)) return(NULL)
   .string(named, "credential")
-  if (!named %in% .named_credentials) .abort(paste0("Unknown named identity '", named, "'; use one of ", paste(.named_credentials, collapse = ", "), "."), "not_configured", provider)
+  # AUTH-1/AUTH-5 (amended 2026-10-10): a value that is not a name is usually a key in the wrong argument; never repeat it.
+  if (!named %in% .named_credentials) .abort(paste0("Unknown named identity (one of ", paste(.named_credentials, collapse = ", "), "); the value given is not shown, because it may be a key. If it is your API key, pass it as api_key."), "not_configured", provider)
   if (!.definition(provider)$access$credential_policy %in% names(.named_rungs)) .abort("A named identity applies only to a cloud door (Azure, AWS or Google Cloud).", "not_configured", provider)
   named
 }

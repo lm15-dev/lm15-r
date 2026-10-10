@@ -62,6 +62,35 @@ retryable <- function(error) inherits(error, "LM15Error") && error$code %in% c("
   }
   FALSE
 }
+# MAP-18: the pinned forms of a provider's "this key is not valid" answer that
+# arrive without HTTP 401 (lm15-contract spec/auth-failed.json, carried
+# verbatim; each form has a live receipt). A form with `reason` also needs that
+# reason in a Google google.rpc.ErrorInfo detail of the body.
+.auth_failed_forms <- list(
+  list(code = "INVALID_ARGUMENT", reason = "API_KEY_INVALID"),        # Gemini (2026-10-10)
+  list(code = "invalid-argument", prefix = "Incorrect API key provided") # xAI (2026-10-10)
+)
+.google_error_reasons <- function(err) {
+  if (!.is_object(err) || !is.list(err$details)) return(character())
+  out <- character()
+  for (d in err$details) {
+    if (!.is_object(d) || !is.character(d$reason) || !endsWith(.wire_string(d[["@type"]]), "google.rpc.ErrorInfo")) next
+    out <- c(out, d$reason)
+  }
+  out
+}
+.pinned_auth_failure <- function(code, message, reasons = character()) {
+  if (!nzchar(code)) return(FALSE)
+  for (f in .auth_failed_forms) {
+    if (!identical(f$code, code)) next
+    if (!is.null(f$reason) && !(f$reason %in% reasons)) next
+    if (!is.null(f$prefix) && !startsWith(message, f$prefix)) next
+    if (!is.null(f$contains) && !grepl(f$contains, message, fixed = TRUE)) next
+    if (!is.null(f$suffix) && !endsWith(message, f$suffix)) next
+    return(TRUE)
+  }
+  FALSE
+}
 .model_error <- function(message) grepl("model", message, ignore.case = TRUE) && grepl("not found|does not exist|not exist|not supported|unsupported|not available|unknown", message, ignore.case = TRUE)
 .context_error <- function(message, dialect) {
   if (dialect == "anthropic") return(grepl("prompt is too long|too many tokens|context window|context length", message, ignore.case = TRUE) || (grepl("token", message, ignore.case = TRUE) && grepl("limit|exceed", message, ignore.case = TRUE)))
@@ -94,6 +123,7 @@ normalize_error <- function(lm, status, body, ..., headers = json_object(), now 
   model_candidate <- if (dialect == "anthropic") pc %in% c("not_found_error", "resource_not_found_error") else status == 404L || dialect == "gemini" || lm$definition$access$backend == "chatgpt-codex"
   if (model_candidate && .model_error(message)) code <- "unsupported_model"
   if (.pinned_model_not_found(pc, message)) code <- "unsupported_model"  # MAP-15
+  if (.pinned_auth_failure(pc, message, .google_error_reasons(raw))) code <- "auth"  # MAP-18: before every other test, so last here
   if (!nzchar(message)) message <- paste("Provider returned HTTP", status)
   pairs <- .header_pairs(headers)
   header <- function(name) { for (p in pairs) if (identical(p[[1L]], tolower(name)) && nzchar(p[[2L]])) return(p[[2L]]); NULL }
