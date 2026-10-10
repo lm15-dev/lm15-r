@@ -1,3 +1,18 @@
+# lm15 1.1.2
+
+Implements the lm15 contract at commit `8eedbae`, the same commit as lm15 for
+Python 1.2.3, TypeScript and Rust 1.0.0-rc.7 and Go v1.1.0-rc.6, and passes
+all 1,904 of its checks.
+
+* `response_text()` and `parse_json()` read a structured answer that came
+  back as a data part (a JSON schema with a boolean or enum property is a
+  judgment request, answered that way); they returned `NULL` and failed.
+
+* `reasoning(thinking_budget = 1024)` works without `effort`: it is the
+  highest level whose budget (1024, 2048, 8192, 16384, 24576, 32768) is at or
+  below the given one, `"minimal"` below 1024. `reasoning("none")` and a zero
+  budget say how to turn thinking off (`reasoning("off")`).
+
 # lm15 1.1.1
 
 Implements the lm15 contract at commit `880f72c`, the same commit as lm15 for
