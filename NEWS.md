@@ -1,3 +1,17 @@
+# lm15 1.2.0
+
+Implements the lm15 contract at commit `88bb560`, the same commit as lm15 for
+Python 1.3.0, TypeScript and Rust 1.0.0-rc.8 and Go v1.1.0-rc.7, and passes
+all 1,905 of its checks.
+
+* The Meta login (`device`) reaches the Muse Code subscription, Muse Wonder
+  Full included (`meta:muse-wonder-full-1.0`, Power and Maximum Usage
+  plans). Requests go to the address Meta names when it hands out the key,
+  only when that is an https `meta.ai` address; any other address is
+  refused before the key is sent. The connection's account label names the
+  plan, or says "no Muse Code subscription (pay-as-you-go)". The method stays
+  unverified: Meta's terms reserve this key for Muse Code.
+
 # lm15 1.1.2
 
 Implements the lm15 contract at commit `8eedbae`, the same commit as lm15 for
