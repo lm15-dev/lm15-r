@@ -351,8 +351,30 @@ str.lm15_request_auth <- function(object, ...) { print.lm15_request_auth(object)
   if (!r$ok) .deny(paste0("Meta API key mint failed (HTTP ", r$status, ")"), status = r$status, stage = "exchange")
   key <- .nonempty(r$body$api_key)
   if (is.null(key)) { action <- .http_url(r$body$action_url); .deny(paste0("Meta did not issue an API key", if (!is.null(action)) paste0("; complete setup at ", action))) }
+  base_url <- .meta_api_base(r$body$base_url)
+  # No expiry in the reply; a daily re-mint is free (the same key, live 2026-10-12).
   now_ms <- .now_ms(ctx); life <- 24 * 60 * 60
-  json_object(type = "oauth", access = key, refresh = identity, issued_at = .ms_token(now_ms), lifetime_s = as.double(life), expires = .ms_token(now_ms + life * 1000))
+  material <- json_object(type = "oauth", access = key, refresh = identity, issued_at = .ms_token(now_ms), lifetime_s = as.double(life), expires = .ms_token(now_ms + life * 1000))
+  if (!is.null(base_url)) material$base_url <- base_url
+  .login_result(material, "Meta (Muse subscription)", renewal = "remint", account_label = .meta_plan(r$body))
+}
+# The mint's base_url when the key may go there: https, a meta.ai host, no
+# userinfo or query; NULL when absent; anything else is refused before the key
+# is sent (lm15-contract changes/2026-10-12-muse-code-subscription.md D1).
+.meta_api_base <- function(value) {
+  if (is.null(value)) return(NULL)
+  parts <- if (!is.null(.json_str(value)) && nzchar(value)) .url_parts(value) else NULL
+  ok <- !is.null(parts) && parts$scheme == "https" && is.null(parts$userinfo) && !nzchar(parts$query) &&
+    (parts$host == "meta.ai" || endsWith(parts$host, ".meta.ai"))
+  if (!ok) .deny("Meta named an API address outside meta.ai for the minted key; refusing to send it there")
+  sub("/+$", "", value)
+}
+# Display text for the account's plan; NULL when the reply is silent.
+.meta_plan <- function(body) {
+  active <- body$is_subs_active
+  if (isTRUE(active)) return(.nonempty(body$subs_tier_name) %||% "Muse Code subscription")
+  if (identical(active, FALSE)) return("no Muse Code subscription (pay-as-you-go)")
+  NULL
 }
 .meta_flow <- .flow(
   login = function(ctx, method, settings, answers) {
@@ -375,14 +397,14 @@ str.lm15_request_auth <- function(object, ...) { print.lm15_request_auth(object)
       .deny(paste0("Meta device token request failed (HTTP ", p$status, ")"))
     }
     identity <- .run_device_flow(ctx, poll, interval, expires)
-    .login_result(.meta_mint(ctx, identity), "Meta (Muse subscription)", renewal = "remint")
+    .meta_mint(ctx, identity)
   },
   renew = function(ctx, material, settings) {
     identity <- .nonempty(material$refresh)
     if (is.null(identity)) .deny("Meta credential has no identity token to re-mint with")
-    .login_result(.meta_mint(ctx, identity), "Meta (Muse subscription)", renewal = "remint")
+    .meta_mint(ctx, identity)
   },
-  request_auth = function(material, settings) .request_auth_value(api_key(material$access)))
+  request_auth = function(material, settings) .request_auth_value(api_key(material$access), base_url = .nonempty(material$base_url)))
 
 # ---- OpenRouter (authorization code minting a user-controlled key) ---------
 .openrouter_flow <- .flow(
@@ -490,8 +512,11 @@ str.lm15_request_auth <- function(object, ...) { print.lm15_request_auth(object)
   "kimi-code" = list(flow = .kimi_flow, descriptor = .descriptor("kimi-code", "Kimi Code (subscription)", "Moonshot AI", "kimi-code", list(
     .method("device", "Sign in with Kimi Code (subscription)", "account", "device_code", "unverified", "no live receipt yet", delivery = "device", subscription = TRUE)))),
   meta = list(flow = .meta_flow, descriptor = .descriptor("meta", "Meta", "Meta", c("meta", "meta-chat", "meta-anthropic"), list(
-    .method("device", "Sign in with Meta (Muse subscription)", "account", "device_code", "unverified", "no live receipt yet", delivery = "device", subscription = TRUE,
-      billing_note = "Minted Model API keys are tied to the Muse subscription; verify entitlement on your account.")), console_url = "https://dev.meta.ai")),
+    .method("device", "Sign in with Meta (Muse subscription)", "account", "device_code", "unverified",
+      paste("login, mint and inference observed 2026-10-12; Meta's Model API terms (\u00a7 3.2) reserve the Muse Code key for Muse Code;",
+        "using it here is outside those terms and puts the Meta account at risk. Subscription traffic is Contributor mode by default (Meta may train on it)."),
+      delivery = "device", subscription = TRUE,
+      billing_note = "Billed to the Muse Code plan when it is active (muse-wonder-full-1.0 needs Power or Maximum Usage); without one, Meta bills the key pay-as-you-go.")), console_url = "https://dev.meta.ai")),
   openrouter = list(flow = .openrouter_flow, descriptor = .descriptor("openrouter", "OpenRouter", "OpenRouter", "openrouter", list(
     .method("browser", "Sign in with OpenRouter (creates an API key for this app)", "account", "authorization_code", "unverified", "Login, key limit, inference and persistence observed 2026-09-23; broader support review pending",
       delivery = c("loopback", "manual"), billing_note = "The minted key spends your OpenRouter credits like any other key.")), console_url = "https://openrouter.ai/keys")))
