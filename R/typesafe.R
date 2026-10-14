@@ -5,9 +5,11 @@
 # the judgment properties of the json_schema are its `questions` (MAP-14
 # section 2), and the answers come back as one data part with a distribution
 # per judgment and method "provider_classification" (section 3). Jev
-# generates no text: a request without judgments, with tools, with media, a
-# system prompt or a conversation is refused before the wire, the native
-# place named.
+# generates no text: a request without judgments, with tools, a system
+# prompt or a conversation is refused before the wire, the native place
+# named. Images reach Jev as top-level `assets` named by a reference string
+# written where the image belongs in the state (changes/2026-10-14-jev-images.md);
+# audio, video and documents are refused (MAP-10).
 
 # Config knobs with no home on the systemone wire: dropped with a record.
 .typesafe_dropped <- c("max_tokens", "temperature", "top_p", "top_k", "stop", "seed", "frequency_penalty",
@@ -15,11 +17,35 @@
 
 .typesafe_refuse <- function(feature, why) stop(lm15_error(paste0("typesafe: ", why), code = "unsupported_feature", provider = "typesafe", feature = feature))
 
+# Images are off unless each request that carries one sends this header
+# (live 400 without it, 2026-10-14).
+.typesafe_images_header <- "typesafe-danger-zone-images"
+# The asset formats systemone reads: PNG and JPEG, nothing else.
+.typesafe_image_formats <- c("image/png" = "png", "image/jpeg" = "jpg", "image/jpg" = "jpg")
+# The n-th image's reference (1-based, in part order); `>` closes it so
+# `<lm15-image-1>` never matches inside `<lm15-image-10>`.
+.typesafe_image_reference <- function(n) paste0("<lm15-image-", n, ">")
+
+# An image reaches systemone as inline PNG or JPEG bytes, or not at all
+# (MAP-10 rule 1); lm15 never fetches or converts media.
+.typesafe_check_image <- function(part, at) {
+  if (!is.null(part$url) || !is.null(part$file_id))
+    .typesafe_refuse(at, paste0("systemone takes image bytes, not ", if (!is.null(part$url)) "a URL" else "a file id", "; fetch the image and pass its data or path (changes/2026-10-14-jev-images.md)"))
+  if (!tolower(part$media_type %||% "image/png") %in% names(.typesafe_image_formats))
+    .typesafe_refuse(at, paste0("systemone reads PNG or JPEG images, got '", part$media_type, "'; convert the image first (lm15 never converts media)"))
+  invisible(NULL)
+}
+
+# The state and its assets (2026-09-19 D1/D2; 2026-10-14 D1/D2): one text or
+# data part verbatim, one image its reference, a message holding an image
+# beside other parts the array of its parts in order.
 .typesafe_state <- function(req) {
   for (m in seq_along(req$messages)) for (p in seq_along(req$messages[[m]]$parts)) {
     part <- req$messages[[m]]$parts[[p]]
-    if (!part$type %in% c("text", "data"))
-      .typesafe_refuse(sprintf("messages[%d].parts[%d]", m - 1L, p - 1L), paste0("a ", part$type, " part has no slot on the systemone wire (MAP-10); Jev reads text or data"))
+    at <- sprintf("messages[%d].parts[%d]", m - 1L, p - 1L)
+    if (identical(part$type, "image")) .typesafe_check_image(part, at)
+    else if (!part$type %in% c("text", "data"))
+      .typesafe_refuse(at, paste0("a ", part$type, " part has no slot on the systemone wire (MAP-10); Jev reads text, data, or PNG/JPEG images"))
   }
   if (!is.null(req$system))
     .typesafe_refuse("system", "Jev has no system prompt; put context in the state as a named key (message_user(data_part(list(policy = ..., note = ...)))), or the framing in each question's description")
@@ -27,10 +53,21 @@
     .typesafe_refuse("messages", paste0("Jev judges one state, got ", length(req$messages), " messages; put a transcript in the state as an array or object (message_user(data_part(list(messages = ...)))), where a question can point at a turn with a backtick path"))
   message <- req$messages[[1L]]
   if (message$role != "user") .typesafe_refuse("messages[0].role", paste0("Jev's state is a user message, got role '", message$role, "'"))
-  if (length(message$parts) != 1L)
+  has_image <- any(vapply(message$parts, function(part) identical(part$type, "image"), logical(1)))
+  if (length(message$parts) != 1L && !has_image)
     .typesafe_refuse("messages[0].parts", paste0("Jev's state is one text or data part, got ", length(message$parts), " parts; put several pieces in one data part as named keys"))
-  only <- message$parts[[1L]]
-  if (only$type == "text") only$text else only$value
+  assets <- json_object()
+  element <- function(part) {
+    if (part$type == "text") return(part$text)
+    if (part$type == "data") return(part$value)
+    reference <- .typesafe_image_reference(length(assets) + 1L)
+    assets[[reference]] <<- json_object(type = "image",
+      format = unname(.typesafe_image_formats[[tolower(part$media_type %||% "image/png")]]),
+      data_base64 = .media_base64(part))
+    reference
+  }
+  state <- if (length(message$parts) == 1L) element(message$parts[[1L]]) else .json_array(lapply(message$parts, element))
+  list(state = state, assets = assets)
 }
 
 .typesafe_questions <- function(req) {
@@ -74,7 +111,9 @@
   }
   questions <- .typesafe_questions(req)
   payload <- json_object(model = req$model)
-  payload["state"] <- list(.typesafe_state(req))
+  state <- .typesafe_state(req)
+  payload["state"] <- list(state$state)
+  if (length(state$assets)) payload$assets <- state$assets
   payload$questions <- questions
   for (key in names(c$extensions)) {
     value <- c$extensions[[key]]
@@ -87,7 +126,10 @@
 .typesafe_build <- function(lm, req, stream) {
   if (stream) .typesafe_refuse("stream", "systemone answers in one piece; there is no stream to wrap")
   built <- .collecting(lm$adaptations %||% "note", lm$definition$id, function() .typesafe_payload(lm, req))
-  wire <- .emit(lm, "POST", "/v1/systemone", built$value, model = req$model)
+  # The caller put an image in the request: that is the opt-in the header
+  # exists for (changes/2026-10-14-jev-images.md D3).
+  headers <- if (!is.null(built$value$assets)) setNames(list("true"), .typesafe_images_header) else list()
+  wire <- .emit(lm, "POST", "/v1/systemone", built$value, headers = headers, model = req$model)
   wire$adaptations <- built$records
   wire
 }

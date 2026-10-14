@@ -147,3 +147,37 @@ test_that("jev routes to typesafe, which answers a distribution per judgment", {
   err <- normalize_error(lm, 422L, '{"detail": [{"type": "missing", "loc": ["body", "questions", "q"], "msg": "Field required"}]}')
   expect_match(conditionMessage(err), "questions.q: Field required", fixed = TRUE)
 })
+
+test_that("images reach jev as assets named in the state, with the opt-in header", {
+  # lm15-contract changes/2026-10-14-jev-images.md D1-D4
+  lm <- new_lm("typesafe", api_key = "k", transport = fake_transport(list()))
+  fmt <- config(response_format = judgments(circle = yes_no("Is there a red circle in the image?")))
+  png <- "iVBORw0KGgo="; jpg <- "/9j/4AAQ"
+  build <- function(parts) build_request(lm, request("jev-latest", list(message_user(parts)), config = fmt))
+  body <- function(w) jsonlite::fromJSON(rawToChar(w$body), simplifyVector = FALSE)
+  w <- build(list(image_part(data = png, media_type = "image/png")))
+  b <- body(w)
+  expect_identical(names(b), c("model", "state", "assets", "questions"))
+  expect_identical(b$state, "<lm15-image-1>")
+  expect_identical(b$assets, list("<lm15-image-1>" = list(type = "image", format = "png", data_base64 = png)))
+  expect_identical(w$headers[["typesafe-danger-zone-images"]], "true")
+  expect_length(w$adaptations, 0L)
+  b <- body(build(list(text_part("A red ball."), image_part(data = png, media_type = "image/png"), data_part(list(k = 1L)),
+                       image_part(data = jpg, media_type = "image/jpeg"))))
+  expect_identical(b$state, list("A red ball.", "<lm15-image-1>", list(k = 1L), "<lm15-image-2>"))
+  expect_identical(b$assets[["<lm15-image-2>"]]$format, "jpg")
+  plain <- build(list(text_part("no picture")))
+  expect_null(plain$headers[["typesafe-danger-zone-images"]])
+  expect_null(body(plain)$assets)
+  bad <- list(
+    list(image_part(url = "https://example.com/a.png"), "not a URL"),
+    list(image_part(file_id = "file_1"), "not a file id"),
+    list(image_part(data = "UklGRg==", media_type = "image/webp"), "PNG or JPEG"),
+    list(audio_part(data = "UklGRg=="), "no slot on the systemone wire"))
+  for (case in bad) {
+    err <- tryCatch(build(list(text_part("x"), case[[1L]])), error = function(e) e)
+    expect_s3_class(err, "UnsupportedFeatureError")
+    expect_identical(err$feature, "messages[0].parts[1]")
+    expect_match(conditionMessage(err), case[[2L]], fixed = TRUE)
+  }
+})
