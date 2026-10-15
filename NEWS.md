@@ -1,3 +1,16 @@
+# lm15 1.3.0
+
+Implements the lm15 contract at commit `10645e5`, the same commit as lm15 for
+Python 1.4.0, TypeScript and Rust 1.0.0-rc.9 and Go v1.1.0-rc.8, and passes
+all 1,911 of its checks.
+
+* Jev (provider `typesafe`) reads pictures. Put a PNG or JPEG `image_part()` in
+  the one user message, on its own or beside text and data parts (sent as an
+  ordered list), and ask judgments about it. lm15 sends the bytes where
+  TypeSafe expects them and adds its `TypeSafe-Danger-Zone-Images: true`
+  opt-in header; TypeSafe calls images beta. A picture given by URL or file
+  id, another format, audio and video are refused before the wire.
+
 # lm15 1.2.0
 
 Implements the lm15 contract at commit `88bb560`, the same commit as lm15 for
