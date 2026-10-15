@@ -94,7 +94,8 @@
     refuse(paste0("config.extensions.", name), "unknown measurement extension semantics; dropping it could lose privacy, money or action controls")
   }
 }
-.judgment_mixed <- function(req) length(.non_judgment_properties(req$config$response_format$schema, request_judgments(req))) > 0L
+# A bounding box is never scored: like ordinary output, the generated call answers it.
+.judgment_mixed <- function(req) length(.non_judgment_properties(req$config$response_format$schema, .request_measurable_judgments(req))) > 0L
 .judgment_generated_request <- function(req) { cfg <- unclass(req$config); cfg$probabilities <- "off"; .with_config(req, .new_value("Config", cfg)) }
 
 # The offline preflight shared by plan() and complete(): no tokenization,
@@ -178,7 +179,7 @@
   if (length(texts) != 1L) bad("generated judgment answer needs one JSON object")
   value <- tryCatch(.json_decode(answer$message$parts[[texts]]$text), error = function(e) bad("the answer is not JSON"))
   if (!.is_object(value)) bad("generated judgment answer needs a JSON object")
-  measured <- names(request_judgments(generated))
+  measured <- names(.request_measurable_judgments(generated))
   for (name in unlist(generated$config$response_format$schema$required))
     if ((unmeasured || !name %in% measured) && !name %in% names(value)) bad(paste0("generated answer is missing required property '", name, "'"))
   parts <- answer$message$parts
@@ -189,7 +190,7 @@
 
 .judgment_complete <- function(lm, request) {
   adaptations <- .judgment_adaptations(lm, request)
-  found <- request_judgments(request); calls <- 0L
+  found <- .request_measurable_judgments(request); calls <- 0L
   base <- .judgment_base_messages(lm, request)
   send <- function(messages, continue_final) { calls <<- calls + 1L; .judgment_tokens(lm, .send_wire(lm, .judgment_tokenize_wire(lm, request$model, messages, continue_final))) }
   turn <- function(j, answer) c(base, list(json_object(role = "user", content = .judgment_ask(j)), json_object(role = "assistant", content = answer)))

@@ -181,3 +181,98 @@ test_that("images reach jev as assets named in the state, with the opt-in header
     expect_match(conditionMessage(err), case[[2L]], fixed = TRUE)
   }
 })
+
+test_that("a bounding box is a judgment read by its shape, with no keys and no bounds", {
+  # lm15-contract changes/2026-10-15-bounding-box.md D1, D4
+  prop <- bounding_box("the coffee mug")
+  expect_identical(prop$type, "object")
+  expect_identical(prop$description, "the coffee mug")
+  expect_identical(names(prop$properties), c("top", "bottom", "left", "right"))
+  expect_identical(unlist(prop$required), c("top", "bottom", "left", "right"))
+  expect_false(prop$additionalProperties)
+  for (edge in prop$properties) {
+    expect_identical(edge$type, "number")
+    expect_match(edge$description, "fraction", fixed = TRUE)
+    expect_null(edge$minimum); expect_null(edge$maximum)  # Anthropic answers 400 on bounds (receipted)
+  }
+  find <- judgments(mug = bounding_box("the coffee mug"), mug_visible = yes_no("Is there a coffee mug in the image?"))
+  found <- judgments_in_schema(find$schema)
+  expect_identical(found$mug$kind, "box")
+  expect_length(found$mug$keys, 0L)
+  expect_identical(found$mug$instruction, "the coffee mug")
+  expect_identical(names(lm15:::.measurable_judgments(found)), "mug_visible")
+  edge <- json_object(type = "number")
+  all4 <- function(s) json_object(top = s, bottom = s, left = s, right = s)
+  shapes <- json_object(
+    hand_written = json_object(properties = json_object(left = edge, top = edge, right = edge, bottom = edge)),
+    bounded = json_object(type = "object", properties = all4(json_object(type = "number", minimum = 0L, maximum = 1L))),
+    extra_edge = json_object(type = "object", properties = json_object(top = edge, bottom = edge, left = edge, right = edge, label = json_object(type = "string"))),
+    integer_edges = json_object(type = "object", properties = all4(json_object(type = "integer"))),
+    pixels = json_object(type = "object", properties = json_object(x = edge, y = edge, w = edge, h = edge)))
+  read <- judgments_in_schema(json_object(type = "object", properties = shapes))
+  expect_identical(names(read), c("hand_written", "bounded"))
+  expect_identical(unname(vapply(read, function(j) j$kind, "")), c("box", "box"))
+  # The wire rewrites leave a box untouched; the schema goes verbatim.
+  a <- wire_body(build_request(new_lm("anthropic", api_key = "k"), request("claude-haiku-4-5", list(note), config = config(response_format = find, max_tokens = 50L))))
+  expect_identical(as_json(a$output_config$format$schema$properties$mug), as_json(find$schema$properties$mug))
+  g <- wire_body(build_request(new_lm("gemini", api_key = "k"), request("gemini-2.5-flash", list(note), config = config(response_format = find))))
+  expect_identical(as_json(g$generationConfig$responseJsonSchema$properties$mug), as_json(find$schema$properties$mug))
+  # The probabilities policy concerns only keyed judgments.
+  only <- judgments(mug = bounding_box("the coffee mug"))
+  chat <- new_lm("openai-chat", api_key = "k", transport = fake_transport(list()))
+  for (policy in c("if_available", "required"))
+    expect_length(plan(chat, request("gpt-5-mini", list(note), config = config(response_format = only, probabilities = policy))), 0L)
+  err <- tryCatch(plan(chat, request("gpt-5-mini", list(note), config = config(response_format = find, probabilities = "required"))), UnsupportedFeatureError = identity)
+  expect_identical(err$feature, "config.probabilities")
+})
+
+test_that("jev asks a box question with the opt-in header and answers it verbatim", {
+  # lm15-contract changes/2026-10-15-bounding-box.md D2, D3
+  find <- judgments(mug = bounding_box("the coffee mug"), mug_visible = yes_no("Is there a coffee mug in the image?"))
+  only <- judgments(mug = bounding_box("the coffee mug"))
+  photo <- list(message_user(list(image_part(data = "iVBORw0KGgo=", media_type = "image/png"))))
+  lm <- new_lm("typesafe", api_key = "k", transport = fake_transport(list()))
+  w <- build_request(lm, request("jev-preview", photo, config = config(response_format = find)))
+  b <- jsonlite::fromJSON(rawToChar(w$body), simplifyVector = FALSE)
+  expect_identical(b$questions$mug, list(type = "box", instructions = "the coffee mug"))
+  expect_identical(w$headers[["typesafe-danger-zone-images"]], "true")
+  w <- build_request(lm, request("jev-preview", list(message_user("a kitchen")), config = config(response_format = only)))
+  expect_identical(w$headers[["typesafe-danger-zone-images"]], "true")
+  expect_null(jsonlite::fromJSON(rawToChar(w$body), simplifyVector = FALSE)$assets)
+  answer <- function(answers) list(status = 200L, body = as_json(json_object(model = "jev-1.14.0", answers = answers)), headers = list())
+  box <- json_object(top = 0.25, bottom = 0.82, left = 0.44, right = 1L)
+  answers <- json_object(mug = json_object(type = "box", box = box, confidence = 0.92), mug_visible = json_object(type = "noul", noul = 0.97))
+  r <- complete(new_lm("typesafe", api_key = "k", transport = fake_transport(list(answer(answers)))),
+                request("jev-preview", photo, config = config(response_format = find, probabilities = "required")))
+  expect_identical(as_json(response_data(r)$mug), '{"top":0.25,"bottom":0.82,"left":0.44,"right":1}')
+  expect_true(response_data(r)$mug_visible)
+  expect_identical(names(response_probabilities(r)), "mug_visible")
+  expect_equal(as.numeric(unclass(r$provider_data$typesafe$answers$mug$confidence)), 0.92)
+  r <- complete(new_lm("typesafe", api_key = "k", transport = fake_transport(list(answer(json_object(mug = answers$mug))))),
+                request("jev-preview", photo, config = config(response_format = only)))
+  expect_null(response_probabilities(r))
+  bad <- list(
+    list(json_object(top = 0.1, bottom = 0.2, left = 0.3), "answers.mug.box"),
+    list(json_object(top = 0.1, bottom = 1.2, left = 0.3, right = 0.4), "answers.mug.box.bottom"),
+    list(json_object(top = "0.1", bottom = 0.2, left = 0.3, right = 0.4), "answers.mug.box.top"),
+    list(json_array(0.1, 0.2, 0.3, 0.4), "answers.mug.box"))
+  for (case in bad) {
+    err <- tryCatch(complete(new_lm("typesafe", api_key = "k", transport = fake_transport(list(answer(json_object(mug = json_object(type = "box", box = case[[1L]])))))),
+                             request("jev-preview", photo, config = config(response_format = only))), error = function(e) e)
+    expect_match(conditionMessage(err), case[[2L]], fixed = TRUE)
+  }
+})
+
+test_that("the trie measures the yes/no and the generated call answers the box", {
+  fmt <- judgments(mug = bounding_box("the coffee mug"), ageing = yes_no("Will it age?"))
+  generated <- as_json(json_object(id = "c", model = "m", choices = json_array(json_object(index = 0L, finish_reason = "stop",
+    message = json_object(role = "assistant", content = '{"mug": {"top": 0.2, "bottom": 0.6, "left": 0.55, "right": 0.85}, "ageing": false}'))),
+    usage = json_object(prompt_tokens = 1L, completion_tokens = 1L)))
+  transport <- trie_transport(list("20" = -0.05, "21" = -3.0, "99" = -0.01), chat = list(list(body = generated)))
+  lm <- new_lm("openai-chat", api_key = "k", base_url = "http://vllm:8001/v1", compat = "vllm", transport = transport)
+  r <- complete(lm, request("m", list(note), config = config(response_format = fmt, probabilities = "required")))
+  expect_identical(as_json(response_data(r)$mug), '{"top":0.2,"bottom":0.6,"left":0.55,"right":0.85}')
+  expect_true(response_data(r)$ageing)  # measured, overriding the generated pick
+  expect_identical(names(response_probabilities(r)), "ageing")
+  expect_identical(sum(attr(transport, "seen")$calls == "/completions"), 2L)
+})

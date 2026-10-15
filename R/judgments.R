@@ -3,7 +3,10 @@
 #
 # A judgment is a top-level property of a json_schema response_format that
 # declares its answer set: a boolean; a string enum or anyOf of consts; or an
-# ordered integer enum / anyOf of consts 0..n-1. This file reads that
+# ordered integer enum / anyOf of consts 0..n-1 -- or, since
+# changes/2026-10-15-bounding-box.md, a bounding box: an object of the four
+# numbers top, bottom, left, right (fractions of the image's height and
+# width). A box declares no keys, so it is answered, never scored. This file reads that
 # convention off a schema (section 1), rewrites judgment properties for the two
 # wires that need it (section 2), folds a model's JSON text into a data part
 # (section 3), and offers the helpers that emit the convention. Nothing here
@@ -11,6 +14,23 @@
 
 .max_ordered_levels <- 10L  # Jev's Score ceiling
 .max_choice_keys <- 255L    # Jev's Choice ceiling
+# A box's edges, in Jev's order (changes/2026-10-15-bounding-box.md D1):
+# fractions of the image from its top-left corner, top/bottom of its height,
+# left/right of its width.
+.box_edges <- c("top", "bottom", "left", "right")
+.box_edge_descriptions <- c(
+  top = "Top edge, as a fraction of the image's height from the top, from 0 to 1",
+  bottom = "Bottom edge, as a fraction of the image's height from the top, from 0 to 1",
+  left = "Left edge, as a fraction of the image's width from the left, from 0 to 1",
+  right = "Right edge, as a fraction of the image's width from the left, from 0 to 1")
+# An object whose properties are exactly the four edges, each a number
+# (D1). Other keywords are the caller's and travel verbatim.
+.is_box <- function(prop) {
+  if (!is.null(prop$type) && !identical(.json_str(prop$type), "object")) return(FALSE)
+  props <- prop$properties
+  .is_object(props) && length(props) == 4L && setequal(names(props), .box_edges) &&
+    all(vapply(.box_edges, function(e) .is_object(props[[e]]) && identical(.json_str(props[[e]]$type), "number"), logical(1)))
+}
 
 # A JSON string (not a number token), or NULL.
 .json_str <- function(x) if (is.character(x) && length(x) == 1L && !is.na(x) && !inherits(x, "lm15_json_number")) x else NULL
@@ -33,6 +53,7 @@
     structure(list(name = name, kind = kind, keys = keys, instruction = instruction,
       descriptions = setNames(lapply(keys, function(k) descriptions[[k]]), keys),
       titles = setNames(lapply(keys, function(k) titles[[k]]), keys)), class = "lm15_judgment")
+  if (.is_box(prop)) return(new("box", character()))
   if (identical(.json_str(prop$type), "boolean")) return(new("boolean", c("true", "false")))
   enum <- prop$enum; branches <- prop$anyOf
   const_branches <- .is_array(branches) && length(branches) && all(vapply(branches, function(b) .is_object(b) && "const" %in% names(b), logical(1)))
@@ -62,7 +83,8 @@
   NULL
 }
 print.lm15_judgment <- function(x, ...) {
-  cat("<lm15 judgment ", x$name, ": ", x$kind, " over ", paste(x$keys, collapse = ", "), ">\n", sep = "")
+  if (identical(x$kind, "box")) cat("<lm15 judgment ", x$name, ": a bounding box>\n", sep = "")
+  else cat("<lm15 judgment ", x$name, ": ", x$kind, " over ", paste(x$keys, collapse = ", "), ">\n", sep = "")
   invisible(x)
 }
 
@@ -84,6 +106,10 @@ request_judgments <- function(request, ...) {
   if (!.is_object(f) || !identical(f$type, "json_schema")) return(list())
   judgments_in_schema(f$schema)
 }
+# The judgments with declared keys: the ones a distribution can be measured
+# for (boxes are left out).
+.measurable_judgments <- function(found) Filter(function(j) !identical(j$kind, "box"), found)
+.request_measurable_judgments <- function(req) .measurable_judgments(request_judgments(req))
 .non_judgment_properties <- function(schema, found) {
   props <- if (.is_object(schema)) schema$properties else NULL
   if (!.is_object(props)) return(character())
@@ -91,10 +117,12 @@ request_judgments <- function(request, ...) {
 }
 
 # Section 3 on a wire that measures no distribution: "if_available" records
-# "dropped"; "required" refuses before the wire (MAP-13 condition b).
+# "dropped"; "required" refuses before the wire (MAP-13 condition b). A
+# request whose judgments are all boxes asked for nothing measurable: nothing
+# is recorded and nothing refused.
 .note_unmeasurable <- function(req, provider) {
   policy <- req$config$probabilities
-  if (is.null(policy) || policy == "off" || !length(request_judgments(req))) return(invisible(NULL))
+  if (is.null(policy) || policy == "off" || !length(.request_measurable_judgments(req))) return(invisible(NULL))
   if (policy == "required")
     stop(lm15_error(paste0(provider, ": config.probabilities='required' but this wire cannot measure a distribution over the declared keys (it returns a pick only); use 'if_available' or a provider that can (typesafe, or a vLLM server that honours logprob_token_ids)"), code = "unsupported_feature", provider = provider, feature = "config.probabilities"))
   .adapt("config.probabilities", "dropped", "this wire cannot measure a distribution over the declared keys; the answer carries the pick only", asked = policy)
@@ -123,7 +151,7 @@ request_judgments <- function(request, ...) {
   if (!length(found)) return(schema)
   for (name in names(found)) {
     j <- found[[name]]; prop <- schema$properties[[name]]
-    if (j$kind == "boolean" || is.null(prop$anyOf)) next
+    if (j$kind %in% c("boolean", "box") || is.null(prop$anyOf)) next
     prop <- .json_object(unclass(prop)[names(prop) != "anyOf"])
     prop$type <- if (j$kind == "ordered") "integer" else "string"
     prop$enum <- .json_array(if (j$kind == "ordered") lapply(j$keys, as.integer) else as.list(j$keys))
@@ -189,6 +217,13 @@ yes_no <- function(instruction, ...) {
   .check_dots(...); .string(instruction, "instruction")
   json_object(type = "boolean", description = instruction)
 }
+# Not box(): that would mask graphics::box() for everyone who attaches lm15.
+bounding_box <- function(instruction, ...) {
+  .check_dots(...); .string(instruction, "instruction")
+  edges <- .json_object(setNames(lapply(.box_edges, function(e) json_object(type = "number", description = .box_edge_descriptions[[e]])), .box_edges))
+  json_object(type = "object", description = instruction, properties = edges,
+    required = .json_array(as.list(.box_edges)), additionalProperties = FALSE)
+}
 score <- function(instruction, levels, ...) {
   .check_dots(...); .string(instruction, "instruction")
   descriptions <- as.list(unname(unlist(levels)))
@@ -240,11 +275,11 @@ response_expected <- function(response, field, ...) {
 # candidate-sequence likelihood; stream() and every other server answer with
 # generated JSON and say that no distribution was measured.
 .scores_named_tokens <- function(compat) identical(compat$token_scoring, "logprob_token_ids")
-.judgments_via_token_scoring <- function(compat, req) .scores_named_tokens(compat) && (req$config$probabilities %||% "off") %in% c("if_available", "required") && length(request_judgments(req)) > 0L
+.judgments_via_token_scoring <- function(compat, req) .scores_named_tokens(compat) && (req$config$probabilities %||% "off") %in% c("if_available", "required") && length(.request_measurable_judgments(req)) > 0L
 .chat_judgment_policy <- function(lm, req, streaming, compat) {
   scoring <- .scores_named_tokens(compat)
   if (streaming || !scoring) {
-    if (streaming && scoring && (req$config$probabilities %||% "off") %in% c("if_available", "required") && length(request_judgments(req))) {
+    if (streaming && scoring && (req$config$probabilities %||% "off") %in% c("if_available", "required") && length(.request_measurable_judgments(req))) {
       if (req$config$probabilities == "required")
         stop(lm15_error(paste0(lm$definition$id, ": candidate scoring produces a non-streamable DataPart; use complete() for required probabilities or a separate scoring request"), code = "unsupported_feature", provider = lm$definition$id, feature = "config.probabilities"))
       .adapt("config.probabilities", "dropped", "stream() uses generated JSON, not candidate scoring; the answer carries an unmeasured pick only; use complete() for scoring", asked = req$config$probabilities)

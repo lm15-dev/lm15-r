@@ -9,7 +9,9 @@
 # prompt or a conversation is refused before the wire, the native place
 # named. Images reach Jev as top-level `assets` named by a reference string
 # written where the image belongs in the state (changes/2026-10-14-jev-images.md);
-# audio, video and documents are refused (MAP-10).
+# audio, video and documents are refused (MAP-10). A bounding-box judgment is
+# Jev's Box question; its answer is the box verbatim, with no distribution
+# (changes/2026-10-15-bounding-box.md).
 
 # Config knobs with no home on the systemone wire: dropped with a record.
 .typesafe_dropped <- c("max_tokens", "temperature", "top_p", "top_k", "stop", "seed", "frequency_penalty",
@@ -17,8 +19,9 @@
 
 .typesafe_refuse <- function(feature, why) stop(lm15_error(paste0("typesafe: ", why), code = "unsupported_feature", provider = "typesafe", feature = feature))
 
-# Images are off unless each request that carries one sends this header
-# (live 400 without it, 2026-10-14).
+# Images and Box questions are off unless each request that carries one sends
+# this header (live 400 without it: 2026-10-14 for an image, 2026-10-15 for a
+# Box question with no image).
 .typesafe_images_header <- "typesafe-danger-zone-images"
 # The asset formats systemone reads: PNG and JPEG, nothing else.
 .typesafe_image_formats <- c("image/png" = "png", "image/jpeg" = "jpg", "image/jpg" = "jpg")
@@ -87,6 +90,8 @@
     }
     questions[[name]] <- switch(j$kind,
       boolean = json_object(type = "noul", instructions = instruction),
+      # Jev's Box takes no criteria (docs.typesafe.ai/primitives/box).
+      box = json_object(type = "box", instructions = instruction),
       choice = {
         if (length(j$keys) > .max_choice_keys) .typesafe_refuse(paste0("config.response_format.schema.properties.", name), paste0("a Jev choice takes at most ", .max_choice_keys, " keys, got ", length(j$keys)))
         json_object(type = "choice", instructions = instruction, criteria = .json_object(setNames(lapply(j$keys, function(k) j$descriptions[[k]]), j$keys)))
@@ -126,9 +131,10 @@
 .typesafe_build <- function(lm, req, stream) {
   if (stream) .typesafe_refuse("stream", "systemone answers in one piece; there is no stream to wrap")
   built <- .collecting(lm$adaptations %||% "note", lm$definition$id, function() .typesafe_payload(lm, req))
-  # The caller put an image in the request: that is the opt-in the header
-  # exists for (changes/2026-10-14-jev-images.md D3).
-  headers <- if (!is.null(built$value$assets)) setNames(list("true"), .typesafe_images_header) else list()
+  # The caller put an image or a box in the request: that is the opt-in the
+  # header exists for (changes/2026-10-14-jev-images.md D3; 2026-10-15 D2).
+  asks_box <- any(vapply(built$value$questions, function(q) identical(q$type, "box"), logical(1)))
+  headers <- if (!is.null(built$value$assets) || asks_box) setNames(list("true"), .typesafe_images_header) else list()
   wire <- .emit(lm, "POST", "/v1/systemone", built$value, headers = headers, model = req$model)
   wire$adaptations <- built$records
   wire
@@ -154,8 +160,17 @@
   for (name in names(found)) {
     j <- found[[name]]; answer <- answers[[name]]; path <- paste0("answers.", name)
     if (!.is_object(answer)) invalid(path, "expected an answer object")
-    expected <- c(boolean = "noul", choice = "choice", ordered = "score")[[j$kind]]
+    expected <- c(boolean = "noul", choice = "choice", ordered = "score", box = "box")[[j$kind]]
     if (!identical(answer$type, expected)) invalid(paste0(path, ".type"), paste0("expected '", expected, "'"))
+    if (j$kind == "box") {
+      # The four edges verbatim, in Jev's order; a box has no distribution,
+      # and its confidence stays in provider_data.
+      edges <- answer$box
+      if (!.is_object(edges) || length(edges) != 4L || !setequal(names(edges), .box_edges)) invalid(paste0(path, ".box"), "expected exactly top, bottom, left and right")
+      for (e in .box_edges) probability(edges[[e]], paste0(path, ".box.", e))  # a fraction: finite, in [0, 1]
+      value[[name]] <- .json_object(setNames(lapply(.box_edges, function(e) edges[[e]]), .box_edges))  # numbers as written
+      next
+    }
     if (j$kind == "boolean") {
       p <- probability(answer$noul, paste0(path, ".noul"))
       value[[name]] <- p >= 0.5

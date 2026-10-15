@@ -194,7 +194,7 @@ recorded, or refused, never silently dropped (see \code{\link{plan}()}).
     store = "Whether the provider may store the response (\\code{FALSE} opts out).",
     logprobs = "Ask for token log-probabilities: 0 for the chosen tokens, n for n alternatives too.",
     probabilities = "For judgment requests: \\code{\"off\"}, \\code{\"if_available\"} or \\code{\"required\"}; see \\code{\\link{judgments}}.",
-    effort = "One of \\code{\"off\"}, \\code{\"minimal\"}, \\code{\"low\"}, \\code{\"medium\"}, \\code{\"high\"}, \\code{\"xhigh\"}, \\code{\"max\"}.",
+    effort = "One of \\code{\"off\"}, \\code{\"minimal\"}, \\code{\"low\"}, \\code{\"medium\"}, \\code{\"high\"}, \\code{\"xhigh\"}, \\code{\"max\"}. May be omitted when \\code{thinking_budget} is given: it is then the highest level whose budget (1024, 2048, 8192, 16384, 24576, 32768) is at or below it, \\code{\"minimal\"} below 1024.",
     thinking_budget = "A reasoning token budget for providers that take one.",
     summary = "Show reasoning: \\code{\"auto\"}, \\code{\"concise\"} or \\code{\"detailed\"}.",
     mode = "For \\code{tool_choice()}: \\code{\"auto\"}, \\code{\"required\"} or \\code{\"none\"}; for \\code{cache_config()}: \\code{\"auto\"} or \\code{\"off\"}.",
@@ -402,16 +402,16 @@ response_text(materialize_response(events, request("m", list(message_user("hi"))
 )-"),
 
 page("judgments", "Judgments: declared answers with probabilities",
-  c("judgments", "choice", "yes_no", "score", "judgments_in_schema", "request_judgments", "response_data", "response_probabilities",
+  c("judgments", "choice", "yes_no", "score", "bounding_box", "judgments_in_schema", "request_judgments", "response_data", "response_probabilities",
     "response_method", "response_expected", "expected_level"),
   description = r"-(
 A judgment is a question whose answer is one of the keys you declare: yes or
-no, a choice among labels, or an ordered score. \code{judgments()} writes the
-JSON Schema response format; the answer comes back as a data part holding the
-model's JSON, and, where the provider can measure it, a probability for every
-key.
+no, a choice among labels, or an ordered score -- or a bounding box, which says
+where in the picture something is. \code{judgments()} writes the JSON Schema
+response format; the answer comes back as a data part holding the model's JSON,
+and, where the provider can measure it, a probability for every key.
 )-",
-  args = c("..." = "For \\code{judgments()}: the judgment properties, named (from \\code{yes_no()}, \\code{choice()}, \\code{score()} or written by hand). Elsewhere unused.",
+  args = c("..." = "For \\code{judgments()}: the judgment properties, named (from \\code{yes_no()}, \\code{choice()}, \\code{score()}, \\code{bounding_box()} or written by hand). Elsewhere unused.",
     name = "The response format's name.", strict = "Whether the provider must follow the schema strictly.",
     instruction = "The question, in words.",
     options = "The choices: a character vector of keys, or a named vector of descriptions (\\code{NA} for none).",
@@ -429,8 +429,20 @@ log-probabilities (one batched call); other providers return the pick only.
 structured-output reply); \code{response_expected()} is the probability-weighted
 level of an ordered judgment. No number the model wrote in prose is ever read
 as a probability.
+
+\code{bounding_box()} asks where in the request's image something is. The
+answer is a list of four numbers, \code{top}, \code{bottom}, \code{left} and
+\code{right}, each a fraction of the image measured from its top-left corner
+(of its height for \code{top} and \code{bottom}, of its width for the other
+two); multiply by the image's size in pixels to draw or crop. A box is always
+four edges, even when the thing is absent: ask a \code{yes_no()} beside it. A
+box has no probabilities. On TypeSafe it is Jev's Box question and needs Jev
+1.14 (\code{"jev-preview"} or \code{"jev-1.14.0"}); elsewhere the model writes
+the four numbers, and how close they are depends on the model. (It is not
+called \code{box()} so that attaching lm15 does not mask
+\code{graphics::box()}.)
 )-",
-  value = "\\code{judgments()} returns a response format; \\code{choice()}, \\code{yes_no()}, \\code{score()} a schema property; the readers return JSON values, a distribution, a method string or a number, or \\code{NULL}.",
+  value = "\\code{judgments()} returns a response format; \\code{choice()}, \\code{yes_no()}, \\code{score()}, \\code{bounding_box()} a schema property; the readers return JSON values, a distribution, a method string or a number, or \\code{NULL}.",
   examples = r"-(
 wine <- judgments(
   quality = score("How good is this wine?", c(poor = "Faulty", ok = "Sound", great = "Superb")),
@@ -439,6 +451,11 @@ wine <- judgments(
 req <- request("jev-latest", list(message_user("Ripe cassis, firm tannins, long finish.")),
                config = config(response_format = wine, probabilities = "if_available"))
 names(request_judgments(req))
+
+where <- judgments(mug = bounding_box("the coffee mug"),
+                   mug_visible = yes_no("Is there a coffee mug in the image?"))
+request_judgments(request("jev-preview", list(message_user("a kitchen")),
+                          config = config(response_format = where)))$mug
 )-"),
 
 page("errors", "Errors", c("lm15_error", "normalize_error", "retryable"),
