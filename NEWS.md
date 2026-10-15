@@ -1,3 +1,18 @@
+# lm15 1.4.0
+
+Implements the lm15 contract at commit `6dc1c5c`, the same commit as lm15 for
+Python 1.5.0, TypeScript and Rust 1.0.0-rc.11 and Go v1.1.0-rc.10, and passes
+all 1,921 of its checks.
+
+* Bounding boxes. `bounding_box("the coffee mug")` declares a judgment whose
+  answer is four numbers, `top`, `bottom`, `left` and `right`, each a fraction
+  of the picture from its top-left corner. On TypeSafe it is Jev 1.14's Box
+  question (`"jev-preview"` or `"jev-1.14.0"`; the opt-in header is sent for
+  you); on other providers it is ordinary structured output. A box has no
+  probabilities; pair it with `yes_no()` to ask whether the thing is there.
+  It is not called `box()`, so attaching lm15 never masks `graphics::box()`
+  (lm15-contract `changes/2026-10-15-bounding-box.md`).
+
 # lm15 1.3.1
 
 Implements the lm15 contract at commit `1cbdc12`, the same commit as lm15 for
