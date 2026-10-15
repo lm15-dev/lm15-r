@@ -122,6 +122,21 @@ test_that("a managed router never reads an ambient key, and logout keeps it bloc
   expect_identical(vapply(report$steps, function(s) s$state, ""), c("absent", "absent", "shadowed"))
 })
 
+test_that("a saved cloud recipe's settings build the managed route; an explicit entry refines them", {
+  auth <- memory_auth()
+  auth$configure("vertex-anthropic", "cloud", answers = list(named = "environment"), settings = list(project = "saved-project", location = "us-east5"))
+  env <- c(NO_GCE_CHECK = "1", GOOGLE_CLOUD_PROJECT = "env-project", HOME = tempdir())
+  built <- function(...) {
+    lm <- router_lm(new_router(auth = auth, env = env, ...), "vertex-anthropic:claude-test")
+    c(lm$settings$project, lm$settings$location)
+  }
+  expect_identical(built(), c("saved-project", "us-east5"))
+  expect_identical(built(settings = list(vertex_anthropic = list(project = "explicit-project"))), c("explicit-project", "us-east5"))
+  # An explicit key selects no connection: its settings do not apply.
+  expect_identical(built(api_keys = list(`vertex-anthropic` = "explicit-key"), settings = list(`vertex-anthropic` = list(location = "europe-west1"))),
+    c("env-project", "europe-west1"))
+})
+
 test_that("named cloud identities are checked before any walk", {
   expect_error(new_router(credentials = list(azure = "someone")), class = "NotConfiguredError")
   expect_error(new_router(credentials = list(openai = "cli")), class = "NotConfiguredError")

@@ -154,6 +154,13 @@
       report <- explain_auth(step$provider, env = if (length(env)) env else character(), api_keys = keys, auth = auth)
       json_object(configured = report$configured, steps = lapply(report$steps, function(s) json_object(kind = s$kind, state = s$state)))
     },
+    route = {
+      keys <- setNames(lapply(opt(step$api_keys), function(p) api_key(paste0(sentinel, "-explicit"))), unlist(opt(step$api_keys)))
+      given <- lapply(opt(step$settings), function(entry) as.list(unclass(entry)))
+      router <- new_router(api_keys = keys, settings = given, env = if (length(env)) env else character(), auth = auth)
+      lm <- router_lm(router, step$model)
+      json_object(settings = .json_object(lm$settings[.radix_sort(names(lm$settings))]))
+    },
     stop("unknown managed step", call. = FALSE))
 }
 

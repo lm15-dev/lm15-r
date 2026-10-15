@@ -285,6 +285,9 @@ router_lm <- function(router, model, ...) {
   credential <- if (is.null(source)) NULL else router$api_keys[[source]]
   named <- router$credentials[[p]] %||% router$credentials[[gsub("-", "_", p, fixed = TRUE)]]
   base_url <- exact(router$base_urls); account_id <- NULL; headers <- list()
+  # AUTH-15: a selected connection's saved settings (a cloud recipe's project,
+  # location, region...) are given values; the explicit entry refines them.
+  saved_settings <- list()
   if (is.null(credential) && is.null(named)) {
     saved <- tryCatch(auth$request_auth(p), AuthOperationError = function(e) e)
     if (inherits(saved, "AuthOperationError")) {
@@ -293,15 +296,20 @@ router_lm <- function(router, model, ...) {
         .abort_auth(paste0(p, ": no saved connection in this scope; the machine's cloud identity is not used under a managed Auth -- save a named identity (configure(auth, provider, 'cloud', answers = list(named = ...))) or pass credentials = explicitly."),
           reason = "login_required", stage = "resolution", recovery = "select_connection", provider = p)
       else stop(saved)
-    } else if (!is.null(saved$named)) named <- saved$named
-    else {
-      credential <- auth$credential_provider(p)
-      account_id <- saved$account_id; headers <- saved$headers
-      base_url <- base_url %||% saved$base_url
+    } else {
+      saved_settings <- auth$status(p)$connection$settings %||% list()
+      if (!is.null(saved$named)) named <- saved$named
+      else {
+        credential <- auth$credential_provider(p)
+        account_id <- saved$account_id; headers <- saved$headers
+        base_url <- base_url %||% saved$base_url
+      }
     }
   }
+  settings <- exact(router$settings) %||% list()
+  if (!is.null(definition$access$host)) for (k in setdiff(names(saved_settings), names(settings))) settings[[k]] <- saved_settings[[k]]
   environment <- router$env %||% Sys.getenv()
-  lm <- new_lm(.lm_target(router, p, definition), api_key = credential, credential = named, base_url = base_url, settings = exact(router$settings) %||% list(), env = environment,
+  lm <- new_lm(.lm_target(router, p, definition), api_key = credential, credential = named, base_url = base_url, settings = settings, env = environment,
     transport = router$transport, live_connect = router$live_connect, adaptations = router$adaptations %||% "note", account_id = account_id)
   if (length(headers)) {
     have <- tolower(vapply(lm$definition$access$headers, function(h) h[[1L]], ""))

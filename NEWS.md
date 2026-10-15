@@ -1,3 +1,12 @@
+# lm15 (development version)
+
+* A saved cloud connection's settings are used. A connection saved with
+  `configure(auth, "vertex-anthropic", "cloud", answers = list(named = ...),
+  settings = list(project = ..., location = ...))` now sends that project and
+  location; before, the router ignored them and fell back to the environment
+  and the defaults. A `settings` entry given to `new_router()` for the same
+  provider changes only the settings it names (lm15-contract `1cbdc12`).
+
 # lm15 1.3.0
 
 Implements the lm15 contract at commit `10645e5`, the same commit as lm15 for
