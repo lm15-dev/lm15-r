@@ -1,4 +1,8 @@
-# lm15 (development version)
+# lm15 1.3.1
+
+Implements the lm15 contract at commit `1cbdc12`, the same commit as lm15 for
+Python 1.4.1, TypeScript and Rust 1.0.0-rc.10 and Go v1.1.0-rc.9, and passes
+all 1,912 of its checks.
 
 * A saved cloud connection's settings are used. A connection saved with
   `configure(auth, "vertex-anthropic", "cloud", answers = list(named = ...),
