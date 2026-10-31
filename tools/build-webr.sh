@@ -23,14 +23,25 @@ if ! "$engine" image inspect "$image" >/dev/null 2>&1; then
 fi
 # Fetch (once) and verify every pinned dependency source; write the build order.
 python3 - "$root" "$out" <<'PY'
-import hashlib, json, pathlib, sys, urllib.request
+import hashlib, json, pathlib, sys, urllib.error, urllib.request
 root, out = map(pathlib.Path, sys.argv[1:])
+def fetch(name, source):
+    # CRAN moves a version to its Archive when a newer one is published, so a
+    # pinned src/contrib address stops working; the checksum below still
+    # guarantees the same bytes from either address.
+    archive = f"https://cran.r-project.org/src/contrib/Archive/{name}/{name}_{source['version']}.tar.gz"
+    try:
+        return urllib.request.urlopen(source['url'], timeout=60).read()
+    except urllib.error.HTTPError as error:
+        if error.code != 404 or '/src/contrib/' not in source['url']:
+            raise
+        return urllib.request.urlopen(archive, timeout=60).read()
 sources = {k: v for k, v in json.loads((root / 'tools/webr-sources.json').read_text()).items() if not k.startswith('_')}
 (out / 'sources').mkdir(parents=True, exist_ok=True)
 order = []
 for name, source in sources.items():
     path = out / 'sources' / f"{name}_{source['version']}.tar.gz"
-    data = path.read_bytes() if path.exists() else urllib.request.urlopen(source['url'], timeout=60).read()
+    data = path.read_bytes() if path.exists() else fetch(name, source)
     if hashlib.sha256(data).hexdigest() != source['sha256']:
         raise SystemExit(f'{name}: source checksum does not match the pinned source')
     if not path.exists():
