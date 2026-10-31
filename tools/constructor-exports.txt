@@ -72,7 +72,9 @@ live_server_turn_end_event
 live_server_usage_event
 live_server_error_event
 tool_call_info
+pricing_tier
 inference_pricing
+pricing_tier
 inference_model_info
 model_origin
 model_info

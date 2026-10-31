@@ -77,8 +77,9 @@
       fn <- .wire_object(tc[["function"]])
       delta(tool_call_delta(.wire_string(fn$arguments), part_index = index(tc$index), id = tc$id, name = fn$name))
     }
-    if (!is.null(chosen$finish_reason)) add(stream_end_event(finish_reason = .finish_wire(chosen$finish_reason, "chat"), usage = if (.is_object(p$usage)) .usage_wire(p$usage, "chat") else NULL, provider_data = p))
-    else if (.is_object(p$usage)) add(stream_end_event(usage = .usage_wire(p$usage, "chat"), provider_data = p))
+    reasoning_usage <- .compat(lm, req)$reasoning_usage %||% "in_completion"
+    if (!is.null(chosen$finish_reason)) add(stream_end_event(finish_reason = .finish_wire(chosen$finish_reason, "chat"), usage = if (.is_object(p$usage)) .usage_wire(p$usage, "chat", reasoning_usage) else NULL, provider_data = p))
+    else if (.is_object(p$usage)) add(stream_end_event(usage = .usage_wire(p$usage, "chat", reasoning_usage), provider_data = p))
   }
   if (dialect == "responses") {
     type <- p$type %||% ""

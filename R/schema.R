@@ -75,7 +75,8 @@
   LiveServerUsageEvent = c(usage = "Usage"),
   LiveServerErrorEvent = c(error = "ErrorDetail"),
   ToolCallInfo = c(id = "string", name = "string", input = "object"),
-  InferencePricing = c(input_per_million = "float_nonnegative?", output_per_million = "float_nonnegative?", cache_read_per_million = "float_nonnegative?", cache_write_per_million = "float_nonnegative?", currency = "string", dimensions = "object?"),
+  PricingTier = c(above_input_tokens = "positive", input_per_million = "float_nonnegative?", output_per_million = "float_nonnegative?", cache_read_per_million = "float_nonnegative?", cache_write_per_million = "float_nonnegative?"),
+  InferencePricing = c(input_per_million = "float_nonnegative?", output_per_million = "float_nonnegative?", cache_read_per_million = "float_nonnegative?", cache_write_per_million = "float_nonnegative?", currency = "string", dimensions = "object?", tiers = "PricingTier[]"),
   InferenceModelInfo = c(input_modalities = "string[]", output_modalities = "string[]", context_window = "positive?", max_output_tokens = "positive?", supports_reasoning = "bool", reasoning_efforts = "string[]", pricing = "InferencePricing?", extensions = "object?"),
   ModelOrigin = c(type = "string", id = "string?", base_model = "string?", provider_data = "object?"),
   ModelInfo = c(id = "string", provider = "string", api_family = "string", aliases = "string[]", origin = "ModelOrigin", inference = "InferenceModelInfo?", extensions = "object?")

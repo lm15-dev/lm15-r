@@ -13,7 +13,11 @@
 
 A response holds the assistant's message, the finish reason, token usage, and
 any adaptations made to the request. Usage counts the provider did not report
-are \code{NULL}, never zero.
+are \code{NULL}, never zero. Each count means the same thing on every
+provider: input is every token read, cached ones included; output every token
+written, reasoning included; the cache and audio counts are parts of input or
+output, and total is input plus output. The provider's own numbers are in
+\code{provider_data}.
 
 }
 \usage{
@@ -53,14 +57,14 @@ tool_call_info(id, name, ..., input = json_object())
 \item{logprobs_complete}{\code{FALSE} when local editing left text without its original scores.}
 \item{provider_data}{The provider's own reply fields, kept verbatim for inspection, or \code{NULL}.}
 \item{adaptations}{A list of \code{adaptation()} values.}
-\item{input_tokens}{Tokens read.}
-\item{output_tokens}{Tokens written.}
-\item{total_tokens}{The provider's total, or input plus output.}
-\item{cache_read_tokens}{Tokens read from cache.}
-\item{cache_write_tokens}{Tokens written to cache.}
-\item{reasoning_tokens}{Reasoning tokens, when counted separately.}
-\item{input_audio_tokens}{Audio tokens read.}
-\item{output_audio_tokens}{Audio tokens written.}
+\item{input_tokens}{Every token read, cached ones included.}
+\item{output_tokens}{Every token written, reasoning included.}
+\item{total_tokens}{Input plus output.}
+\item{cache_read_tokens}{The part of input read from cache.}
+\item{cache_write_tokens}{The part of input written to cache.}
+\item{reasoning_tokens}{The part of output spent reasoning, when counted.}
+\item{input_audio_tokens}{The part of input that is audio.}
+\item{output_audio_tokens}{The part of output that is audio.}
 \item{response}{A canonical response, as returned by \code{complete()}.}
 \item{token}{The token's text.}
 \item{logprob}{Its log-probability.}

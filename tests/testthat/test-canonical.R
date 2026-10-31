@@ -17,11 +17,15 @@ test_that("typed number declarations control their JSON form", {
   expect_error(from_json('{"top_k":9007199254740992.5}', "config"))
 })
 
-test_that("usage distinguishes unknown from zero and preserves reported totals", {
+test_that("usage distinguishes unknown from zero; an explicit total is input plus output", {
   expect_identical(as_json(usage()), '{}')
   expect_identical(as_json(usage(input_tokens = 0)), '{"input_tokens":0}')
   expect_identical(usage(input_tokens = 2, output_tokens = 3)$total_tokens, 5L)
-  expect_identical(usage(input_tokens = 2, output_tokens = 3, total_tokens = 99)$total_tokens, 99L)
+  # INV-029 (MAP-19): an explicit total is input + output; parts fit their wholes.
+  expect_error(usage(input_tokens = 2, output_tokens = 3, total_tokens = 99), "MAP-19")
+  expect_identical(usage(total_tokens = 99)$total_tokens, 99L)
+  expect_error(usage(input_tokens = 3, cache_write_tokens = 3275), "INV-029")
+  expect_error(usage(output_tokens = 48, reasoning_tokens = 155), "INV-029")
 })
 
 test_that("invalid assignments do not corrupt the original value", {

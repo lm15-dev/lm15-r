@@ -1,3 +1,36 @@
+# lm15 2.0.0
+
+Implements the lm15 contract at commit `cfc3edc`, the same commit as lm15 for
+Python 2.0.0, TypeScript 2.0.0, Rust 1.0.0-rc.12 and Go v1.1.0-rc.11, and
+passes all 1,968 of its checks. **Breaking** for code that reads usage counts
+or calls `estimate_cost()`.
+
+* A usage count means the same thing on every provider (MAP-19).
+  `input_tokens` is every token the model read, cached tokens included;
+  `output_tokens` every token it wrote, reasoning included; the cache,
+  reasoning and audio counts are parts of one of the two, and `total_tokens`
+  is their sum. Anthropic input (and DeepSeek, Meta and Moonshot on the
+  Anthropic wire) now includes the cache reads and writes; Gemini and Vertex
+  output includes the thinking and input the tokens Gemini's own tools added;
+  xAI output includes reasoning. The provider's own numbers stay in
+  `provider_data`. A count the provider did not fully report is `NULL`, and
+  numbers that do not add up the way the wire is documented to count make
+  input and output `NULL` rather than wrong.
+* `usage()` refuses a part larger than its whole and a total that is not
+  input plus output. A usage record saved by 1.x from Anthropic, Gemini or xAI
+  can fail to load for this reason; the message says so.
+* `estimate_cost()` returns the exact list price, or `NULL` when an unknown
+  count could change it, and for calls with audio tokens. In 1.x it charged
+  OpenAI's, Gemini's and xAI's cached tokens twice and missed their
+  reasoning. A cache count may be unknown only when the prices say those
+  tokens cost the same as plain input.
+* `pricing_tier()` and `inference_pricing(tiers = )`: higher prices for long
+  prompts, applied to the whole call (OpenAI above 272,000 input tokens,
+  Claude Haiku 5.5 above 100,000).
+* The `xai` preset counts reasoning beside the completion
+  (`reasoning_usage = "separate"`); lm15-contract
+  `changes/2026-10-31-usage-one-meaning.md`.
+
 # lm15 1.4.0
 
 Implements the lm15 contract at commit `6dc1c5c`, the same commit as lm15 for

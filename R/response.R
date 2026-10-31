@@ -4,19 +4,54 @@
   parsed <- tryCatch(.json_decode(value), error = function(e) json_object(partial_json = value))
   if (.is_object(parsed)) parsed else json_object(value = parsed)
 }
-.usage_wire <- function(value, dialect) {
+# MAP-19 rule 3: a part larger than its whole withholds the whole; a provider
+# total that is not input + output withholds both and keeps the total.
+.settled_usage <- function(fields) {
+  count <- function(name) if (is.null(fields[[name]])) NULL else .coerce_field(fields[[name]], "nonnegative", paste0("Usage$", name), TRUE)
+  for (name in names(fields)) fields[name] <- list(count(name))
+  part <- function(name) fields[[name]] %||% 0L
+  if (!is.null(fields$input_tokens) && (.int_gt(.integer_add(part("cache_read_tokens"), part("cache_write_tokens")), fields$input_tokens) || .int_gt(part("input_audio_tokens"), fields$input_tokens))) fields["input_tokens"] <- list(NULL)
+  if (!is.null(fields$output_tokens) && (.int_gt(part("reasoning_tokens"), fields$output_tokens) || .int_gt(part("output_audio_tokens"), fields$output_tokens))) fields["output_tokens"] <- list(NULL)
+  if (!is.null(fields$total_tokens) && !is.null(fields$input_tokens) && !is.null(fields$output_tokens) &&
+      .integer_compare(.integer_digits(fields$total_tokens), .integer_digits(.integer_add(fields$input_tokens, fields$output_tokens))) != 0L) {
+    fields["input_tokens"] <- list(NULL); fields["output_tokens"] <- list(NULL)
+  }
+  do.call(usage, Filter(Negate(is.null), fields))
+}
+.usage_wire <- function(value, dialect, reasoning_usage = "in_completion") {
   if (!.is_object(value) || !length(value)) return(usage())
   if (dialect %in% c("chat", "responses")) {
-    inp <- .wire_object(value[[if (dialect == "chat") "prompt_tokens_details" else "input_tokens_details"]])
-    out <- .wire_object(value[[if (dialect == "chat") "completion_tokens_details" else "output_tokens_details"]])
-    return(usage(input_tokens = value[[if (dialect == "chat") "prompt_tokens" else "input_tokens"]], output_tokens = value[[if (dialect == "chat") "completion_tokens" else "output_tokens"]], total_tokens = value$total_tokens, cache_read_tokens = if (dialect == "chat") inp$cached_tokens %||% value$cached_tokens else inp$cached_tokens, cache_write_tokens = inp$cache_write_tokens, reasoning_tokens = out$reasoning_tokens, input_audio_tokens = inp$audio_tokens, output_audio_tokens = out$audio_tokens))
+    # MAP-19 rules 4 and 7: the prompt/input count already includes the cache.
+    chat <- dialect == "chat"
+    inp <- .wire_object(value[[if (chat) "prompt_tokens_details" else "input_tokens_details"]])
+    out <- .wire_object(value[[if (chat) "completion_tokens_details" else "output_tokens_details"]])
+    prompt <- value[[if (chat) "prompt_tokens" else "input_tokens"]]
+    completion <- value[[if (chat) "completion_tokens" else "output_tokens"]]
+    output <- completion
+    if (chat && identical(reasoning_usage, "separate") && !is.null(completion)) {
+      # Reasoning beside completion_tokens (xAI); without a reasoning count,
+      # the total must rule reasoning out.
+      output <- if (!is.null(out$reasoning_tokens)) .integer_add(completion, out$reasoning_tokens)
+        else if (!is.null(value$total_tokens) && !is.null(prompt) && .integer_compare(.integer_digits(value$total_tokens), .integer_digits(.integer_add(prompt, completion))) == 0L) completion
+        else NULL
+    }
+    return(.settled_usage(list(input_tokens = prompt, output_tokens = output, total_tokens = value$total_tokens, cache_read_tokens = if (chat) inp$cached_tokens %||% value$cached_tokens else inp$cached_tokens, cache_write_tokens = inp$cache_write_tokens, reasoning_tokens = out$reasoning_tokens, input_audio_tokens = inp$audio_tokens, output_audio_tokens = out$audio_tokens)))
   }
-  if (dialect == "anthropic") return(usage(input_tokens = value$input_tokens, output_tokens = value$output_tokens, cache_read_tokens = value$cache_read_input_tokens, cache_write_tokens = value$cache_creation_input_tokens, reasoning_tokens = value$output_tokens_details$thinking_tokens))
+  if (dialect == "anthropic") {
+    # MAP-19 rule 5: the wire's input_tokens excludes the cache counters.
+    return(.settled_usage(list(input_tokens = .int_sum(value$input_tokens, value$cache_read_input_tokens, value$cache_creation_input_tokens), output_tokens = value$output_tokens, total_tokens = value$total_tokens, cache_read_tokens = value$cache_read_input_tokens, cache_write_tokens = value$cache_creation_input_tokens, reasoning_tokens = value$output_tokens_details$thinking_tokens)))
+  }
   modality <- function(entries) {
     counts <- lapply(Filter(function(e) .is_object(e) && identical(e$modality, "AUDIO"), .wire_array(entries)), function(e) .wire_int(e$tokenCount %||% 0L))
-    if (length(counts)) sum(unlist(counts)) else NULL
+    if (length(counts)) Reduce(.integer_add, counts, 0L) else NULL
   }
-  usage(input_tokens = value$promptTokenCount %||% 0L, output_tokens = value$candidatesTokenCount %||% value$responseTokenCount %||% 0L, total_tokens = value$totalTokenCount, cache_read_tokens = value$cachedContentTokenCount, reasoning_tokens = value$thoughtsTokenCount, input_audio_tokens = modality(value$promptTokensDetails), output_audio_tokens = modality(value$candidatesTokensDetails %||% value$responseTokensDetails))
+  # MAP-19 rule 6: prompt, tool use, answer and thoughts are counted side by
+  # side; absent counters inside usageMetadata are 0 (proto3).
+  n <- function(name) value[[name]] %||% 0L
+  thoughts <- n("thoughtsTokenCount")
+  answer <- value$candidatesTokenCount %||% value$responseTokenCount %||% 0L
+  audio_in <- list(modality(value$promptTokensDetails), modality(value$toolUsePromptTokensDetails))
+  .settled_usage(list(input_tokens = .integer_add(n("promptTokenCount"), n("toolUsePromptTokenCount")), output_tokens = .integer_add(answer, thoughts), total_tokens = value$totalTokenCount, cache_read_tokens = n("cachedContentTokenCount"), reasoning_tokens = thoughts, input_audio_tokens = if (all(vapply(audio_in, is.null, logical(1)))) NULL else Reduce(.integer_add, lapply(audio_in, function(a) a %||% 0L), 0L), output_audio_tokens = modality(value$candidatesTokensDetails %||% value$responseTokensDetails)))
 }
 .logprobs_wire <- function(entries, gemini = FALSE) {
   out <- list()
@@ -194,7 +229,8 @@ parse_response <- function(lm, request, body, ..., status = 200L, headers = list
   if (any(vapply(parts, function(p) p$type == "tool_call", logical(1)))) finish <- "tool_call"
   if (length(unmapped)) data$`_lm15_unmapped` <- unmapped
   parts <- .replace_text_with_data(parts, request_judgments(request))  # MAP-14 section 3
-  response(model, message_assistant(parts), finish, id = id, usage = .usage_wire(if (dialect == "gemini") data$usageMetadata else data$usage, dialect), logprobs = logs, provider_data = data)
+  usage <- .usage_wire(if (dialect == "gemini") data$usageMetadata else data$usage, dialect, .compat(lm, request)$reasoning_usage %||% "in_completion")
+  response(model, message_assistant(parts), finish, id = id, usage = usage, logprobs = logs, provider_data = data)
 }
 
 response_from_openai_chat <- function(body, ..., model = NULL, choice = NULL) {

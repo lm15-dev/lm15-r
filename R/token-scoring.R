@@ -140,7 +140,8 @@
   counts <- data$usage %||% json_object()
   if (!.is_object(counts)) .judgment_reply_error(lm, reply, "usage must be an object or null")
   for (name in c("prompt_tokens_details", "completion_tokens_details")) if (!is.null(counts[[name]]) && !.is_object(counts[[name]])) .judgment_reply_error(lm, reply, paste0(name, " must be an object or null"))
-  counts <- tryCatch(.usage_wire(counts, "chat"), error = function(e) .judgment_reply_error(lm, reply, paste0("invalid usage: ", conditionMessage(e))))
+  scoring_model <- if (is.character(data$model) && length(data$model) == 1L) data$model else ""
+  counts <- tryCatch(.usage_wire(counts, "chat", .compat(lm, list(model = scoring_model))$reasoning_usage %||% "in_completion"), error = function(e) .judgment_reply_error(lm, reply, paste0("invalid usage: ", conditionMessage(e))))
   model <- data$model
   if (!is.null(model) && is.null(.nonempty_string(.json_str(model)))) .judgment_reply_error(lm, reply, "model must be a non-empty string")
   list(scores = scores, usage = counts, model = model)

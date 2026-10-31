@@ -38,7 +38,7 @@
   if (!is.null(response$provider_data$`_lm15_unmapped`)) out$unmapped <- response$provider_data$`_lm15_unmapped`
   out
 }
-.vet_ops <- c("capabilities", "build_request", "parse_response", "replay_stream", "normalize_error", "serde_roundtrip", "validate", "surface_dump", "explain_auth", "resolve_model", "resolve_openai_chat_model", "build_models_request", "parse_models_response", "file_op_build", "file_op_parse", "cache_op_build", "cache_op_parse", "batch_op_build", "batch_op_parse", "video_op_build", "video_op_parse", "generation_build", "generation_parse", "ingest_openai_chat", "sigv4_sign", "replay_live", "token_exchange_build", "token_exchange_parse", "managed_run")
+.vet_ops <- c("capabilities", "build_request", "parse_response", "replay_stream", "normalize_error", "serde_roundtrip", "estimate_cost", "validate", "surface_dump", "explain_auth", "resolve_model", "resolve_openai_chat_model", "build_models_request", "parse_models_response", "file_op_build", "file_op_parse", "cache_op_build", "cache_op_parse", "batch_op_build", "batch_op_parse", "video_op_build", "video_op_parse", "generation_build", "generation_parse", "ingest_openai_chat", "sigv4_sign", "replay_live", "token_exchange_build", "token_exchange_parse", "managed_run")
 
 vet_handle <- function(line, ...) {
   .check_dots(...); id <- NULL; trace <- list()
@@ -50,6 +50,8 @@ vet_handle <- function(line, ...) {
     result <- switch(op,
       capabilities = json_object(language = "r", ops = as.list(.vet_ops), impl_version = "0.0.1.9000"),
       serde_roundtrip = json_object(value = as_dict(from_dict(msg$value, msg$kind))),
+      # PROTOCOL.md estimate_cost: estimate_cost(); null when unknown.
+      estimate_cost = json_object(cost = estimate_cost(.read_value(msg$pricing, "InferencePricing"), from_dict(msg$usage, "usage"))),
       validate = json_object(ok = TRUE, normalized = as_dict(from_dict(msg$value, msg$kind))),
       surface_dump = {
         dump <- surface_dump()

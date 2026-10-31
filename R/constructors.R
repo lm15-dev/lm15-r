@@ -381,9 +381,14 @@ tool_call_info <- function(id, name, ..., input = json_object()) {
   .new_value("ToolCallInfo", list(id = id, name = name, input = input))
 }
 
-inference_pricing <- function(..., input_per_million = NULL, output_per_million = NULL, cache_read_per_million = NULL, cache_write_per_million = NULL, currency = "USD", dimensions = NULL) {
+pricing_tier <- function(above_input_tokens, ..., input_per_million = NULL, output_per_million = NULL, cache_read_per_million = NULL, cache_write_per_million = NULL) {
   .check_dots(...)
-  .new_value("InferencePricing", list(input_per_million = input_per_million, output_per_million = output_per_million, cache_read_per_million = cache_read_per_million, cache_write_per_million = cache_write_per_million, currency = currency, dimensions = dimensions))
+  .new_value("PricingTier", list(above_input_tokens = above_input_tokens, input_per_million = input_per_million, output_per_million = output_per_million, cache_read_per_million = cache_read_per_million, cache_write_per_million = cache_write_per_million))
+}
+
+inference_pricing <- function(..., input_per_million = NULL, output_per_million = NULL, cache_read_per_million = NULL, cache_write_per_million = NULL, currency = "USD", dimensions = NULL, tiers = list()) {
+  .check_dots(...)
+  .new_value("InferencePricing", list(input_per_million = input_per_million, output_per_million = output_per_million, cache_read_per_million = cache_read_per_million, cache_write_per_million = cache_write_per_million, currency = currency, dimensions = dimensions, tiers = tiers))
 }
 
 inference_model_info <- function(..., input_modalities = list("text"), output_modalities = list("text"), context_window = NULL, max_output_tokens = NULL, supports_reasoning = FALSE, reasoning_efforts = list(), pricing = NULL, extensions = NULL) {

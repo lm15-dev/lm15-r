@@ -7,6 +7,7 @@
 \alias{model_origin}
 \alias{inference_model_info}
 \alias{inference_pricing}
+\alias{pricing_tier}
 \alias{new_model_registry}
 \alias{discover_model_registry}
 \alias{estimate_cost}
@@ -35,7 +36,11 @@ inference_model_info(..., input_modalities = list("text"),
 
 inference_pricing(..., input_per_million = NULL, output_per_million = NULL,
   cache_read_per_million = NULL, cache_write_per_million = NULL,
-  currency = "USD", dimensions = NULL)
+  currency = "USD", dimensions = NULL, tiers = list())
+
+pricing_tier(above_input_tokens, ..., input_per_million = NULL,
+  output_per_million = NULL, cache_read_per_million = NULL,
+  cache_write_per_million = NULL)
 
 new_model_registry(models = list(), ...)
 
@@ -70,14 +75,16 @@ estimate_cost(pricing, usage, ...)
 \item{cache_read_per_million}{Price per million cached tokens read.}
 \item{cache_write_per_million}{Price per million tokens written to cache.}
 \item{currency}{The currency code.}
-\item{dimensions}{Other price dimensions, as a JSON object.}
+\item{dimensions}{Other price dimensions, as a JSON object; \code{estimate_cost()} does not read them.}
+\item{tiers}{Higher prices for long prompts: a list of \code{pricing_tier()} values, in increasing threshold order.}
+\item{above_input_tokens}{The prompt length (input tokens) above which the tier's prices apply to the whole call.}
 \item{models}{A list of \code{model_info()} values.}
 \item{catalogs}{Files to read (JSON catalogs), or \code{NULL} to discover them in installed packages.}
 \item{libraries}{Library paths to search for packages that ship \code{lm15/model-catalog.json}.}
 \item{usage}{Token counts, from a response.}
 }
 \value{
-A list of ModelInfo values, a wire request, a ModelInfo/ModelOrigin/pricing value, a registry, or an estimated cost (a number, or \code{NULL} when unknown).
+A list of ModelInfo values, a wire request, a ModelInfo/ModelOrigin/pricing value, a registry, or a cost: \code{estimate_cost()} returns the list price of the reported tokens, or \code{NULL} when an unknown count could change it (it never returns a smaller guess). It does not know batch, flex or priority prices, regional multipliers or tool fees.
 }
 \examples{
 
@@ -85,7 +92,13 @@ gpt <- model_info("gpt-5-mini", "openai", "openai_responses",
   inference = inference_model_info(pricing = inference_pricing(input_per_million = 0.25,
                                                               output_per_million = 2)))
 registry <- new_model_registry(list(gpt))
-estimate_cost(gpt$inference$pricing, usage(input_tokens = 1000L, output_tokens = 500L))
+estimate_cost(gpt$inference$pricing, usage(input_tokens = 1000L, output_tokens = 500L,
+                                          cache_read_tokens = 0L, cache_write_tokens = 0L))
+sol <- inference_pricing(input_per_million = 2, output_per_million = 10, cache_read_per_million = 0.1,
+  cache_write_per_million = 2.5, tiers = list(pricing_tier(272000L, input_per_million = 4,
+  output_per_million = 15, cache_read_per_million = 0.2, cache_write_per_million = 5)))
+estimate_cost(sol, usage(input_tokens = 100000L, output_tokens = 1000L,
+                         cache_read_tokens = 90000L, cache_write_tokens = 0L))
 resolve(new_router(catalog = registry), "gpt-5-mini")
 
 }

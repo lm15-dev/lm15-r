@@ -263,7 +263,39 @@
   }
   if (type %in% c("LiveClientAudioEvent", "LiveServerAudioEvent") && !is.null(x$media_type) && !startsWith(x$media_type, "audio/")) fail("media_type must start with audio/")
   if (type == "LiveClientImageEvent" && !startsWith(x$media_type, "image/")) fail("media_type must start with image/")
+  if (type == "Usage") {
+    problem <- .usage_inconsistency(x)
+    if (!is.null(problem)) fail(paste0(problem, " (INV-029). Since lm15-contract MAP-19 (2026-10-31) input_tokens includes cached tokens and output_tokens includes reasoning, on every provider; an earlier record from Anthropic, Gemini or xAI must add them (changes/2026-10-31-usage-one-meaning.md)"))
+  }
+  if (type == "InferencePricing" && length(x$tiers) > 1L) {
+    for (i in 2:length(x$tiers)) if (!.int_gt(x$tiers[[i]]$above_input_tokens, x$tiers[[i - 1L]]$above_input_tokens)) fail("tiers must be in strictly ascending above_input_tokens order (INV-057)")
+  }
   invisible(NULL)
+}
+
+# Exact integer arithmetic over counters that may be lm15_integer.
+.int_gt <- function(a, b) .integer_compare(.integer_digits(a), .integer_digits(b)) > 0L
+.int_sum <- function(...) {
+  counts <- list(...)
+  if (any(vapply(counts, is.null, logical(1)))) return(NULL)
+  Reduce(.integer_add, counts, 0L)
+}
+.usage_inconsistency <- function(u) {
+  part <- function(name) u[[name]] %||% 0L
+  if (!is.null(u$input_tokens)) {
+    cached <- .integer_add(part("cache_read_tokens"), part("cache_write_tokens"))
+    if (.int_gt(cached, u$input_tokens)) return(sprintf("cache_read_tokens + cache_write_tokens (%s) exceed input_tokens (%s)", .integer_digits(cached), .integer_digits(u$input_tokens)))
+    if (.int_gt(part("input_audio_tokens"), u$input_tokens)) return(sprintf("input_audio_tokens (%s) exceed input_tokens (%s)", .integer_digits(u$input_audio_tokens), .integer_digits(u$input_tokens)))
+  }
+  if (!is.null(u$output_tokens)) {
+    if (.int_gt(part("reasoning_tokens"), u$output_tokens)) return(sprintf("reasoning_tokens (%s) exceed output_tokens (%s)", .integer_digits(u$reasoning_tokens), .integer_digits(u$output_tokens)))
+    if (.int_gt(part("output_audio_tokens"), u$output_tokens)) return(sprintf("output_audio_tokens (%s) exceed output_tokens (%s)", .integer_digits(u$output_audio_tokens), .integer_digits(u$output_tokens)))
+  }
+  if (!is.null(u$total_tokens) && !is.null(u$input_tokens) && !is.null(u$output_tokens)) {
+    sum <- .integer_add(u$input_tokens, u$output_tokens)
+    if (.integer_compare(.integer_digits(u$total_tokens), .integer_digits(sum)) != 0L) return(sprintf("total_tokens (%s) is not input_tokens + output_tokens (%s + %s)", .integer_digits(u$total_tokens), .integer_digits(u$input_tokens), .integer_digits(u$output_tokens)))
+  }
+  NULL
 }
 
 validate <- function(x, ...) {

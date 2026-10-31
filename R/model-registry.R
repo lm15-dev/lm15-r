@@ -78,15 +78,32 @@ discover_model_registry <- function(..., catalogs = NULL, libraries = .libPaths(
   registry
 }
 
+# The list-price cost of one call, or NULL when it is not known
+# (spec/types.md, InferencePricing "estimate"): uncached input, cache reads,
+# cache writes and output, each tokens * rate / 1e6, summed in that order, at
+# the base rates or the highest tier whose threshold input_tokens exceeds.
 estimate_cost <- function(pricing, usage, ...) {
   .check_dots(...); pricing <- validate(pricing); usage <- validate(usage)
   if (!inherits(pricing, "lm15_InferencePricing") || !inherits(usage, "lm15_Usage")) stop("Expected inference_pricing() and usage().", call. = FALSE)
+  if (is.null(usage$input_tokens) || is.null(usage$output_tokens)) return(NULL)
+  if (.int_gt(usage$input_audio_tokens %||% 0L, 0L) || .int_gt(usage$output_audio_tokens %||% 0L, 0L)) return(NULL)
+  rates <- pricing
+  for (tier in pricing$tiers) if (.int_gt(usage$input_tokens, tier$above_input_tokens)) rates <- tier
+  r_in <- rates$input_per_million
+  # An unknown cache count is harmless only when its tokens cost the same as
+  # plain input: then the split cannot change the price.
+  known <- function(count, rate) if (!is.null(count)) count else if (!is.null(rate) && !is.null(r_in) && rate == r_in) 0L else NULL
+  read <- known(usage$cache_read_tokens, rates$cache_read_per_million)
+  write <- known(usage$cache_write_tokens, rates$cache_write_per_million)
+  if (is.null(read) || is.null(write)) return(NULL)
+  uncached <- usage$input_tokens - read - write
+  buckets <- list(list(uncached, r_in), list(read, rates$cache_read_per_million), list(write, rates$cache_write_per_million), list(usage$output_tokens, rates$output_per_million))
   total <- 0
-  for (dimension in c("input", "output", "cache_read", "cache_write")) {
-    rate <- pricing[[paste0(dimension, "_per_million")]]
-    count <- usage[[paste0(dimension, "_tokens")]]
-    if (!is.null(rate) && !is.null(count)) total <- total + as.double(count) * rate / 1000000
+  for (bucket in buckets) {
+    tokens <- as.double(.integer_digits(bucket[[1L]]))
+    if (tokens == 0) next
+    if (is.null(bucket[[2L]])) return(NULL)
+    total <- total + tokens * bucket[[2L]] / 1000000
   }
-  # Unknown dimensions contribute nothing: this is a lower bound, not a bill.
   total
 }

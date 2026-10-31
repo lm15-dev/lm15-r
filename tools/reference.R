@@ -355,16 +355,20 @@ page("response", "Read a response",
   description = r"-(
 A response holds the assistant's message, the finish reason, token usage, and
 any adaptations made to the request. Usage counts the provider did not report
-are \code{NULL}, never zero.
+are \code{NULL}, never zero. Each count means the same thing on every
+provider: input is every token read, cached ones included; output every token
+written, reasoning included; the cache and audio counts are parts of input or
+output, and total is input plus output. The provider's own numbers are in
+\code{provider_data}.
 )-",
   args = c(message = "The assistant's message.",
     finish_reason = "Why generation stopped: \\code{\"stop\"}, \\code{\"length\"}, \\code{\"tool_call\"}, \\code{\"content_filter\"} or \\code{\"error\"}.",
     logprobs = "Token log-probabilities, a list of \\code{token_logprob()} values.",
     logprobs_complete = "\\code{FALSE} when local editing left text without its original scores.",
     adaptations = "A list of \\code{adaptation()} values.",
-    input_tokens = "Tokens read.", output_tokens = "Tokens written.", total_tokens = "The provider's total, or input plus output.",
-    cache_read_tokens = "Tokens read from cache.", cache_write_tokens = "Tokens written to cache.",
-    reasoning_tokens = "Reasoning tokens, when counted separately.", input_audio_tokens = "Audio tokens read.", output_audio_tokens = "Audio tokens written.",
+    input_tokens = "Every token read, cached ones included.", output_tokens = "Every token written, reasoning included.", total_tokens = "Input plus output.",
+    cache_read_tokens = "The part of input read from cache.", cache_write_tokens = "The part of input written to cache.",
+    reasoning_tokens = "The part of output spent reasoning, when counted.", input_audio_tokens = "The part of input that is audio.", output_audio_tokens = "The part of output that is audio.",
     token = "The token's text.", logprob = "Its log-probability.", bytes = "Its UTF-8 bytes, as a list of integers.",
     token_id = "The token's id, or \\code{NULL}.", top = "Alternatives, a list of \\code{top_logprob()} values.",
     id = "An id.", name = "The tool's name."),
@@ -545,7 +549,7 @@ openai_chat_model_string("groq/llama-3.3-70b-versatile")
 
 page("models", "Model listings and metadata",
   c("list_models", "build_models_request", "parse_models_response", "model_info", "model_origin", "inference_model_info", "inference_pricing",
-    "new_model_registry", "discover_model_registry", "estimate_cost"),
+    "pricing_tier", "new_model_registry", "discover_model_registry", "estimate_cost"),
   description = "List a provider's models, describe models with metadata, and collect metadata in a registry a router can use to route bare model names. Metadata is advisory: it never changes how a request is built.",
   args = c(provider = "The provider id.", api_family = "The wire family, such as \\code{\"openai_chat\"}.",
     aliases = "Other names for the model.", origin = "Where the model comes from, a \\code{model_origin()} value.",
@@ -557,18 +561,26 @@ page("models", "Model listings and metadata",
     reasoning_efforts = "The effort words it accepts.", pricing = "An \\code{inference_pricing()} value.",
     input_per_million = "Price per million input tokens.", output_per_million = "Price per million output tokens.",
     cache_read_per_million = "Price per million cached tokens read.", cache_write_per_million = "Price per million tokens written to cache.",
-    currency = "The currency code.", dimensions = "Other price dimensions, as a JSON object.",
+    currency = "The currency code.", dimensions = "Other price dimensions, as a JSON object; \\code{estimate_cost()} does not read them.",
+    tiers = "Higher prices for long prompts: a list of \\code{pricing_tier()} values, in increasing threshold order.",
+    above_input_tokens = "The prompt length (input tokens) above which the tier's prices apply to the whole call.",
     models = "A list of \\code{model_info()} values.",
     catalogs = "Files to read (JSON catalogs), or \\code{NULL} to discover them in installed packages.",
     libraries = "Library paths to search for packages that ship \\code{lm15/model-catalog.json}.",
     usage = "Token counts, from a response."),
-  value = "A list of ModelInfo values, a wire request, a ModelInfo/ModelOrigin/pricing value, a registry, or an estimated cost (a number, or \\code{NULL} when unknown).",
+  value = "A list of ModelInfo values, a wire request, a ModelInfo/ModelOrigin/pricing value, a registry, or a cost: \\code{estimate_cost()} returns the list price of the reported tokens, or \\code{NULL} when an unknown count could change it (it never returns a smaller guess). It does not know batch, flex or priority prices, regional multipliers or tool fees.",
   examples = r"-(
 gpt <- model_info("gpt-5-mini", "openai", "openai_responses",
   inference = inference_model_info(pricing = inference_pricing(input_per_million = 0.25,
                                                               output_per_million = 2)))
 registry <- new_model_registry(list(gpt))
-estimate_cost(gpt$inference$pricing, usage(input_tokens = 1000L, output_tokens = 500L))
+estimate_cost(gpt$inference$pricing, usage(input_tokens = 1000L, output_tokens = 500L,
+                                          cache_read_tokens = 0L, cache_write_tokens = 0L))
+sol <- inference_pricing(input_per_million = 2, output_per_million = 10, cache_read_per_million = 0.1,
+  cache_write_per_million = 2.5, tiers = list(pricing_tier(272000L, input_per_million = 4,
+  output_per_million = 15, cache_read_per_million = 0.2, cache_write_per_million = 5)))
+estimate_cost(sol, usage(input_tokens = 100000L, output_tokens = 1000L,
+                         cache_read_tokens = 90000L, cache_write_tokens = 0L))
 resolve(new_router(catalog = registry), "gpt-5-mini")
 )-"),
 
