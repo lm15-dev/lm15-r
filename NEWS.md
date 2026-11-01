@@ -1,7 +1,8 @@
 # lm15 2.0.0
 
 Implements the lm15 contract at commit `cfc3edc`, the same commit as lm15 for
-Python 2.0.0, TypeScript 2.0.0, Rust 1.0.0-rc.12 and Go v1.1.0-rc.11, and
+Python 2.0.0, TypeScript 2.0.0, Rust 2.0.0-rc.1, Go v2.0.0-rc.1 and Julia
+2.0.0 (every lm15 language shares its major version), and
 passes all 1,968 of its checks. **Breaking** for code that reads usage counts
 or calls `estimate_cost()`.
 
