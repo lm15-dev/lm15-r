@@ -98,7 +98,7 @@ the mechanics are R's. Where R differs:
 ## Status
 
 * **Contract:** pinned at [`cfc3edc`](https://github.com/lm15-dev/lm15-contract/commit/cfc3edc), the same commit as Python
-  2.0.0, TypeScript 2.0.0, Rust 2.0.0-rc.1, Go v2.0.0-rc.1 and Julia 2.0.0: **1,968 of 1,968**
+  2.0.0, TypeScript 2.0.0, Rust 2.0.0, Go v2.0.0 and Julia 2.0.0: **1,968 of 1,968**
   checks pass, including all 43 sign-in lifecycle runs. The credentials file has
   been shared with Python, TypeScript, Rust and Go processes in every order,
   and concurrent renewal spends a refresh token once in every language pair.
