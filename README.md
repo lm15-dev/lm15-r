@@ -22,6 +22,10 @@ install.packages(c("curl", "openssl"))  # networking; sign-in and request signin
 Live (WebSocket) sessions also need libcurl 7.86 or newer with WebSocket
 support when the package is installed. Everything else works without it.
 
+**2.0.0** is stable: within 2.x the core keeps working as documented (see
+[Stability](#stability)). lm15 is stable in Python, TypeScript, Rust, Go and
+R. Not on CRAN yet.
+
 ## Start
 
 ```r
@@ -94,6 +98,16 @@ the mechanics are R's. Where R differs:
 | `Auth.local().login(...)` | `login(provider, auth = local_auth())`, `status()`, `logout()`, ... | Functions over a scope; the local file is the default scope. |
 | Error classes by `except` | `tryCatch(..., RateLimitError = ...)` | Conditions carry the contract's class names and `code`. |
 | Loopback sign-in raced against a pasted return | the listener waits; interrupt (Esc or Ctrl-C) to paste the return instead | R runs one thread, so the two cannot be raced. |
+
+## Stability
+
+The chat core is stable within 2.x: requests, responses, streaming, tools,
+structured output and judgments, media inside messages, reasoning, errors,
+credentials and model listing, with the R forms listed under
+[Stated deviations](#stated-deviations-from-the-familys-api). These ship as
+**provisional** and may still change in 2.x, with a notice in the contract:
+files, batches, media generation, stored caches, live sessions, Chat
+Completions ingest and sign-in.
 
 ## Status
 
