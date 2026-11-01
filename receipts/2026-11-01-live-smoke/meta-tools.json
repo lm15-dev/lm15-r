@@ -1,0 +1,386 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "meta",
+  "model": "meta:muse-spark-1.3",
+  "check": "tools",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "answer: The weather in Paris on 2026-11-02 will be light rain with a high of 12°C."
+  ],
+  "seconds": 5.7,
+  "timestamp": "2026-11-01T07:26:01-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_output_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "name": "get_weather",
+              "description": "Get the weather forecast for a place on a date.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date as YYYY-MM-DD"
+                  }
+                },
+                "required": [
+                  "location",
+                  "date"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "ca0fec10-ef88-4572-bc36-db0830b0040b"
+      },
+      "body": {
+        "top_logprobs": 0,
+        "temperature": 1,
+        "top_p": 1,
+        "service_tier": "auto",
+        "model": "muse-spark-1.3",
+        "reasoning": {
+          "effort": "high"
+        },
+        "background": false,
+        "tools": [
+          {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get the weather forecast for a place on a date.",
+            "parameters": {
+              "required": [
+                "location",
+                "date"
+              ],
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "date": {
+                  "description": "Date as YYYY-MM-DD",
+                  "type": "string"
+                },
+                "location": {
+                  "description": "City name",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tool_choice": "auto",
+        "truncation": "disabled",
+        "id": "resp_6ae72fd589de619625734d9f",
+        "object": "response",
+        "status": "completed",
+        "created_at": 1793535957,
+        "completed_at": 1793535957,
+        "error": null,
+        "incomplete_details": null,
+        "output": [
+          {
+            "type": "reasoning",
+            "id": "rs_6ae72fd589de619625734d9f:rs_f8da4688-56eb-4dd8-90b7-cc2fff6e2040",
+            "summary": [],
+            "status": "completed"
+          },
+          {
+            "type": "message",
+            "id": "rs_5a64d6c2-3393-46e7-90db-2c8008363f96",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "I'll check the forecast for Paris on that date.",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "phase": "commentary",
+            "status": "completed"
+          },
+          {
+            "type": "function_call",
+            "id": "fc_14dff948-6851-40e6-a066-b11fdfab4e81",
+            "call_id": "call_14dff948-6851-40e6-a066-b11fdfab4e81",
+            "name": "get_weather",
+            "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+            "status": "completed"
+          }
+        ],
+        "instructions": null,
+        "usage": {
+          "input_tokens": 595,
+          "input_tokens_details": {
+            "cached_tokens": 113
+          },
+          "output_tokens": 149,
+          "output_tokens_details": {
+            "reasoning_tokens": 62
+          },
+          "total_tokens": 744
+        },
+        "parallel_tool_calls": true,
+        "store": true,
+        "max_output_tokens": 2000
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+                }
+              ]
+            }
+          ],
+          "stream": true,
+          "max_output_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "name": "get_weather",
+              "description": "Get the weather forecast for a place on a date.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date as YYYY-MM-DD"
+                  }
+                },
+                "required": [
+                  "location",
+                  "date"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream",
+        "x-request-id": "1b185a9a-89de-4e4a-9c4e-5350f6950e8e"
+      },
+      "body": "event: response.created\ndata: {\"response\":{\"background\":false,\"created_at\":1793535957.0,\"error\":null,\"id\":\"resp_6ae72fd56ac431427dc045e6\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"in_progress\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[{\"description\":\"Get the weather forecast for a place on a date.\",\"name\":\"get_weather\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"date\":{\"description\":\"Date as YYYY-MM-DD\",\"type\":\"string\"},\"location\":{\"description\":\"City name\",\"type\":\"string\"}},\"required\":[\"location\",\"date\"],\"type\":\"object\"},\"type\":\"function\"}],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\"},\"sequence_number\":0,\"type\":\"response.created\"}\n\nevent: response.in_progress\ndata: {\"response\":{\"background\":false,\"created_at\":1793535957.0,\"error\":null,\"id\":\"resp_6ae72fd56ac431427dc045e6\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"in_progress\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[{\"description\":\"Get the weather forecast for a place on a date.\",\"name\":\"get_weather\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"date\":{\"description\":\"Date as YYYY-MM-DD\",\"type\":\"string\"},\"location\":{\"description\":\"City name\",\"type\":\"string\"}},\"required\":[\"location\",\"date\"],\"type\":\"object\"},\"type\":\"function\"}],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\"},\"sequence_number\":1,\"type\":\"response.in_progress\"}\n\nevent: response.output_item.added\ndata: {\"item\":{\"id\":\"rs_6ae72fd56ac431427dc045e6:rs_01a19712dbb5770999d6f05a7ba93954\",\"status\":\"in_progress\",\"summary\":[],\"type\":\"reasoning\"},\"output_index\":0,\"sequence_number\":2,\"type\":\"response.output_item.added\"}\n\nevent: response.output_item.done\ndata: {\"item\":{\"id\":\"rs_6ae72fd56ac431427dc045e6:rs_01a19712dbb5770999d6f05a7ba93954\",\"status\":\"completed\",\"summary\":[],\"type\":\"reasoning\"},\"output_index\":0,\"sequence_number\":3,\"type\":\"response.output_item.done\"}\n\nevent: response.output_item.added\ndata: {\"item\":{\"content\":[],\"id\":\"rs_01a19712dc5972b18a8971750fa64914\",\"phase\":\"commentary\",\"role\":\"assistant\",\"status\":\"in_progress\",\"type\":\"message\"},\"output_index\":1,\"sequence_number\":4,\"type\":\"response.output_item.added\"}\n\nevent: response.content_part.added\ndata: {\"content_index\":0,\"item_id\":\"rs_01a19712dc5972b18a8971750fa64914\",\"output_index\":1,\"part\":{\"annotations\":[],\"logprobs\":[],\"text\":\"\",\"type\":\"output_text\"},\"sequence_number\":5,\"type\":\"response.content_part.added\"}\n\nevent: response.output_text.delta\ndata: {\"content_index\":0,\"delta\":\"I'll check the forecast for Paris on that date.\",\"item_id\":\"rs_01a19712dc5972b18a8971750fa64914\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":6,\"type\":\"response.output_text.delta\"}\n\nevent: response.output_text.done\ndata: {\"content_index\":0,\"item_id\":\"rs_01a19712dc5972b18a8971750fa64914\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":7,\"text\":\"I'll check the forecast for Paris on that date.\",\"type\":\"response.output_text.done\"}\n\nevent: response.content_part.done\ndata: {\"content_index\":0,\"item_id\":\"rs_01a19712dc5972b18a8971750fa64914\",\"output_index\":1,\"part\":{\"annotations\":[],\"logprobs\":[],\"text\":\"I'll check the forecast for Paris on that date.\",\"type\":\"output_text\"},\"sequence_number\":8,\"type\":\"response.content_part.done\"}\n\nevent: response.output_item.done\ndata: {\"item\":{\"content\":[{\"annotations\":[],\"logprobs\":[],\"text\":\"I'll check the forecast for Paris on that date.\",\"type\":\"output_text\"}],\"id\":\"rs_01a19712dc5972b18a8971750fa64914\",\"phase\":\"commentary\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"},\"output_index\":1,\"sequence_number\":9,\"type\":\"response.output_item.done\"}\n\nevent: response.output_item.added\ndata: {\"item\":{\"arguments\":\"\",\"call_id\":\"call_01a19712dc7e72b7a8d05bc6bceea046\",\"id\":\"fc_01a19712dc7e72b7a8d05bc6bceea046\",\"name\":\"get_weather\",\"status\":\"in_progress\",\"type\":\"function_call\"},\"output_index\":2,\"sequence_number\":10,\"type\":\"response.output_item.added\"}\n\nevent: response.function_call_arguments.delta\ndata: {\"delta\":\"{\\\"date\\\":\\\"2026-11-02\\\"\",\"item_id\":\"fc_01a19712dc7e72b7a8d05bc6bceea046\",\"output_index\":2,\"sequence_number\":11,\"type\":\"response.function_call_arguments.delta\"}\n\nevent: response.function_call_arguments.delta\ndata: {\"delta\":\",\\\"location\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_01a19712dc7e72b7a8d05bc6bceea046\",\"output_index\":2,\"sequence_number\":12,\"type\":\"response.function_call_arguments.delta\"}\n\nevent: response.function_call_arguments.done\ndata: {\"arguments\":\"{\\\"date\\\":\\\"2026-11-02\\\",\\\"location\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_01a19712dc7e72b7a8d05bc6bceea046\",\"name\":\"get_weather\",\"output_index\":2,\"sequence_number\":13,\"type\":\"response.function_call_arguments.done\"}\n\nevent: response.output_item.done\ndata: {\"item\":{\"arguments\":\"{\\\"date\\\":\\\"2026-11-02\\\",\\\"location\\\":\\\"Paris\\\"}\",\"call_id\":\"call_01a19712dc7e72b7a8d05bc6bceea046\",\"id\":\"fc_01a19712dc7e72b7a8d05bc6bceea046\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":2,\"sequence_number\":14,\"type\":\"response.output_item.done\"}\n\nevent: response.completed\ndata: {\"response\":{\"background\":false,\"completed_at\":1793535958.0,\"created_at\":1793535957.0,\"error\":null,\"id\":\"resp_6ae72fd56ac431427dc045e6\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[{\"id\":\"rs_6ae72fd56ac431427dc045e6:rs_01a19712dbb5770999d6f05a7ba93954\",\"status\":\"completed\",\"summary\":[],\"type\":\"reasoning\"},{\"content\":[{\"annotations\":[],\"logprobs\":[],\"text\":\"I'll check the forecast for Paris on that date.\",\"type\":\"output_text\"}],\"id\":\"rs_01a19712dc5972b18a8971750fa64914\",\"phase\":\"commentary\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"},{\"arguments\":\"{\\\"date\\\":\\\"2026-11-02\\\",\\\"location\\\":\\\"Paris\\\"}\",\"call_id\":\"call_01a19712dc7e72b7a8d05bc6bceea046\",\"id\":\"fc_01a19712dc7e72b7a8d05bc6bceea046\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"completed\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[{\"description\":\"Get the weather forecast for a place on a date.\",\"name\":\"get_weather\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"date\":{\"description\":\"Date as YYYY-MM-DD\",\"type\":\"string\"},\"location\":{\"description\":\"City name\",\"type\":\"string\"}},\"required\":[\"location\",\"date\"],\"type\":\"object\"},\"type\":\"function\"}],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":595,\"input_tokens_details\":{\"cached_tokens\":113},\"output_tokens\":143,\"output_tokens_details\":{\"reasoning_tokens\":56},\"total_tokens\":738}},\"sequence_number\":15,\"type\":\"response.completed\"}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+                }
+              ]
+            },
+            {
+              "type": "reasoning",
+              "summary": [],
+              "id": "rs_6ae72fd589de619625734d9f:rs_f8da4688-56eb-4dd8-90b7-cc2fff6e2040"
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "output_text",
+                  "text": "I'll check the forecast for Paris on that date."
+                }
+              ],
+              "phase": "commentary"
+            },
+            {
+              "type": "function_call",
+              "call_id": "call_14dff948-6851-40e6-a066-b11fdfab4e81",
+              "name": "get_weather",
+              "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}"
+            },
+            {
+              "type": "function_call_output",
+              "call_id": "call_14dff948-6851-40e6-a066-b11fdfab4e81",
+              "output": "{\"forecast\": \"light rain\", \"high_celsius\": 12}"
+            }
+          ],
+          "stream": false,
+          "max_output_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "name": "get_weather",
+              "description": "Get the weather forecast for a place on a date.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date as YYYY-MM-DD"
+                  }
+                },
+                "required": [
+                  "location",
+                  "date"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "018483ab-05e1-497d-b8e6-3668f1c21d1e"
+      },
+      "body": {
+        "top_logprobs": 0,
+        "temperature": 1,
+        "top_p": 1,
+        "service_tier": "auto",
+        "model": "muse-spark-1.3",
+        "reasoning": {
+          "effort": "high"
+        },
+        "background": false,
+        "tools": [
+          {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get the weather forecast for a place on a date.",
+            "parameters": {
+              "type": "object",
+              "required": [
+                "location",
+                "date"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "date": {
+                  "description": "Date as YYYY-MM-DD",
+                  "type": "string"
+                },
+                "location": {
+                  "description": "City name",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tool_choice": "auto",
+        "truncation": "disabled",
+        "id": "resp_6ae72fd989c90ab7b70d4fe2",
+        "object": "response",
+        "status": "completed",
+        "created_at": 1793535961,
+        "completed_at": 1793535961,
+        "error": null,
+        "incomplete_details": null,
+        "output": [
+          {
+            "type": "reasoning",
+            "id": "rs_6ae72fd989c90ab7b70d4fe2:rs_8fa80331-56fe-4e62-ac97-144adeb5542f",
+            "summary": [],
+            "status": "completed"
+          },
+          {
+            "type": "message",
+            "id": "msg_64feb6c7-38ae-4692-ae46-3020f4a0458b",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "The weather in Paris on 2026-11-02 will be light rain with a high of 12°C.",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "status": "completed"
+          }
+        ],
+        "instructions": null,
+        "usage": {
+          "input_tokens": 720,
+          "input_tokens_details": {
+            "cached_tokens": 113
+          },
+          "output_tokens": 101,
+          "output_tokens_details": {
+            "reasoning_tokens": 68
+          },
+          "total_tokens": 821
+        },
+        "parallel_tool_calls": true,
+        "store": true,
+        "max_output_tokens": 2000
+      }
+    }
+  ]
+}

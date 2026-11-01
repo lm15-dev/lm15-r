@@ -1,0 +1,109 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openrouter",
+  "model": "openrouter:openai/gpt-4.1-nano",
+  "check": "order",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "the model's keys, in the order written: reasoning, answer; answer 17 times 3 is 51."
+  ],
+  "seconds": 0.9,
+  "timestamp": "2026-11-01T07:25:10-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-4.1-nano",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_tokens": 1000,
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "id": "gen-1793535909-fBq88AMSuquhPBDouQbe",
+        "object": "chat.completion",
+        "created": 1793535909,
+        "model": "openai/gpt-4.1-nano",
+        "provider": "Azure",
+        "system_fingerprint": null,
+        "service_tier": "default",
+        "choices": [
+          {
+            "index": 0,
+            "logprobs": null,
+            "finish_reason": "stop",
+            "native_finish_reason": "completed",
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\":\"Multiplying 17 by 3 is straightforward. You can think of it as adding 17 three times: 17 + 17 + 17, which equals 51.\",\"answer\":\"17 times 3 is 51.\"}",
+              "refusal": null,
+              "reasoning": null
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 56,
+          "completion_tokens": 52,
+          "total_tokens": 108,
+          "cost": 0,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0,
+            "upstream_inference_prompt_cost": 5.6e-06,
+            "upstream_inference_completions_cost": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        }
+      }
+    }
+  ]
+}

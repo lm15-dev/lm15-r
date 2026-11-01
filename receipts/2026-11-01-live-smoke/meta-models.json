@@ -1,0 +1,68 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "meta",
+  "model": "meta:muse-spark-1.3",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "9 models; muse-spark-1.3 listed"
+  ],
+  "seconds": 0.4,
+  "timestamp": "2026-11-01T07:26:01-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.meta.ai/v1/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "0883d4f5-5cd8-4beb-920c-5e385174afaf"
+      },
+      "body": {
+        "object": "list",
+        "data": [
+          {
+            "id": "muse-wonder-1.0",
+            "object": "model",
+            "created": 0,
+            "owned_by": "meta"
+          },
+          {
+            "id": "sam-3.1",
+            "object": "model",
+            "created": 0,
+            "owned_by": "meta"
+          },
+          {
+            "id": "muse-spark-1.3-contributor",
+            "object": "model",
+            "created": 0,
+            "owned_by": "meta"
+          },
+          {
+            "id": "muse-voice-transcribe-1.0",
+            "object": "model",
+            "created": 0,
+            "owned_by": "meta"
+          },
+          {
+            "id": "muse-spark-1.3",
+            "object": "model",
+            "created": 0,
+            "owned_by": "meta"
+          },
+          "<4 more entries omitted from the receipt>"
+        ]
+      }
+    }
+  ]
+}

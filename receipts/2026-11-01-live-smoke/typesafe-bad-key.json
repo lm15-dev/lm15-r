@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "typesafe",
+  "model": "typesafe:jev-latest",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: Cannot authenticate with the server. Please check your API key and try again. (typesafe, HTTP 401, request req_01a19713ab2d7592826d3c37bd67398d)\nTo fix: export TYPESAFE_API_KEY=... (console.typesafe.ai/keys)"
+  ],
+  "seconds": 0.1,
+  "timestamp": "2026-11-01T07:26:51-0500",
+  "exchanges": []
+}

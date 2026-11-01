@@ -1,0 +1,173 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "groq",
+  "model": "groq:openai/gpt-oss-20b",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "12 models; openai/gpt-oss-20b listed"
+  ],
+  "seconds": 0.1,
+  "timestamp": "2026-11-01T07:25:08-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.groq.com/openai/v1/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "req_01m6bh466fedssgc39hn35fgpy"
+      },
+      "body": {
+        "object": "list",
+        "data": [
+          {
+            "id": "whisper-large-v3-turbo",
+            "object": "model",
+            "created": 1728413088,
+            "owned_by": "OpenAI",
+            "active": true,
+            "context_window": 448,
+            "public_apps": null,
+            "max_completion_tokens": 448,
+            "hugging_face_id": "openai/whisper-large-v3-turbo",
+            "name": "Whisper Large V3 Turbo",
+            "input_modalities": [
+              "audio"
+            ],
+            "output_modalities": [
+              "transcription"
+            ],
+            "context_length": 448,
+            "max_output_length": 448
+          },
+          {
+            "model_card": "https://huggingface.co/openai/whisper-large-v3",
+            "id": "whisper-large-v3",
+            "object": "model",
+            "created": 1693721698,
+            "owned_by": "OpenAI",
+            "active": true,
+            "context_window": 448,
+            "public_apps": null,
+            "max_completion_tokens": 448,
+            "hugging_face_id": "openai/whisper-large-v3",
+            "name": "Whisper",
+            "input_modalities": [
+              "audio"
+            ],
+            "output_modalities": [
+              "transcription"
+            ],
+            "context_length": 448,
+            "max_output_length": 448
+          },
+          {
+            "id": "canopylabs/orpheus-arabic-saudi",
+            "object": "model",
+            "created": 1765926439,
+            "owned_by": "Canopy Labs",
+            "active": true,
+            "context_window": 4000,
+            "public_apps": null,
+            "max_completion_tokens": 50000,
+            "name": "Canopy Labs Orpheus Arabic Saudi",
+            "input_modalities": [
+              "text"
+            ],
+            "output_modalities": [
+              "speech"
+            ],
+            "context_length": 4000,
+            "max_output_length": 50000,
+            "pricing": {
+              "prompt": "0.00004",
+              "image": "0",
+              "request": "0",
+              "input_cache_read": "0.00002"
+            }
+          },
+          {
+            "id": "allam-2-7b",
+            "object": "model",
+            "created": 1737672203,
+            "owned_by": "SDAIA",
+            "active": true,
+            "context_window": 4096,
+            "public_apps": null,
+            "max_completion_tokens": 4096,
+            "hugging_face_id": "ALLaM-AI/ALLaM-2.0-7B-Instruct",
+            "name": "ALLaM-2-7b",
+            "input_modalities": [
+              "text"
+            ],
+            "output_modalities": [
+              "text"
+            ],
+            "context_length": 4096,
+            "max_output_length": 4096,
+            "supported_sampling_parameters": [
+              "temperature",
+              "top_p",
+              "stop",
+              "seed",
+              "max_tokens"
+            ],
+            "supported_features": [
+              "json_mode"
+            ]
+          },
+          {
+            "id": "qwen/qwen3.8-27b",
+            "object": "model",
+            "created": 1786984846,
+            "owned_by": "Alibaba Cloud",
+            "active": true,
+            "context_window": 131072,
+            "public_apps": null,
+            "max_completion_tokens": 16384,
+            "name": "Qwen/Qwen3.8-27B",
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "output_modalities": [
+              "text"
+            ],
+            "context_length": 131072,
+            "max_output_length": 16384,
+            "pricing": {
+              "prompt": "0.0000008",
+              "completion": "0.000004",
+              "image": "0",
+              "request": "0",
+              "input_cache_read": "0.0000004"
+            },
+            "supported_sampling_parameters": [
+              "temperature",
+              "top_p",
+              "stop",
+              "seed",
+              "max_tokens"
+            ],
+            "supported_features": [
+              "tools",
+              "json_mode",
+              "reasoning"
+            ]
+          },
+          "<7 more entries omitted from the receipt>"
+        ]
+      }
+    }
+  ]
+}

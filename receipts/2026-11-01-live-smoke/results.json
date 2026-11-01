@@ -1,0 +1,1234 @@
+[
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: invalid x-api-key (anthropic, HTTP 401, request req_011CgcCm2sMNc67y6czgYz7L)"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "cache",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "first usage: input=11299 output=14 total=11313 cache_read=11280 cache_write=0 reasoning=-",
+      "second usage: input=11300 output=18 total=11318 cache_read=11280 cache_write=0 reasoning=-",
+      "provider's own usage on the second call: {\"input_tokens\":20,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":11280,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":18,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"}",
+      "estimate_cost: $0.001238 (by hand $0.001238)"
+    ],
+    "seconds": 4
+  },
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=16 output=5 total=21 cache_read=0 cache_write=0 reasoning=-)",
+      "stream: hello world (stop; usage: input=16 output=5 total=21 cache_read=0 cache_write=0 reasoning=-)"
+    ],
+    "seconds": 0.8
+  },
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "image",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model did not say badger (a model answer, not an lm15 check)",
+      "answer: # Pepette (Porcupine)\n\nThe animal in this camera-trap photo is a **porcupine**, as indicated by the \"PEPETTE\" label visible at the bottom of the image. The distinctive quills and body shape are characteristic of a porcupine captured at night.",
+      "usage: input=1222 output=68 total=1290 cache_read=0 cache_write=0 reasoning=-"
+    ],
+    "seconds": 1.3
+  },
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "14 models; claude-haiku-4-5 not listed"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 51"
+    ],
+    "seconds": 1.7
+  },
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "reasoning",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "answer: No.\n\n221 = 13 × 17, so it is composite.",
+      "usage: input=54 output=292 total=346 cache_read=0 cache_write=0 reasoning=268",
+      "1 thinking part(s)"
+    ],
+    "seconds": 2.6
+  },
+  {
+    "binding": "anthropic",
+    "model": "anthropic:claude-haiku-4-5",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "answer: On November 2, 2026, Paris will experience light rain with a high temperature of 12°C."
+    ],
+    "seconds": 2.3
+  },
+  {
+    "binding": "claude-code-account",
+    "model": "claude-code:claude-haiku-4-5",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=30 output=5 total=35 cache_read=0 cache_write=0 reasoning=-)",
+      "stream: hello world (stop; usage: input=30 output=5 total=35 cache_read=0 cache_write=0 reasoning=-)"
+    ],
+    "seconds": 1.1
+  },
+  {
+    "binding": "claude-code-account",
+    "model": "claude-code:claude-haiku-4-5",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "14 models; claude-haiku-4-5 not listed"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "claude-code-account",
+    "model": "claude-code:claude-haiku-4-5",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 51"
+    ],
+    "seconds": 2.9
+  },
+  {
+    "binding": "claude-code-account",
+    "model": "claude-code:claude-haiku-4-5",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "answer: On November 2nd, 2026, Paris will experience light rain with a high temperature of 12°C."
+    ],
+    "seconds": 2.3
+  },
+  {
+    "binding": "deepinfra",
+    "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: User is not authorized to access this resource (deepinfra, HTTP 401)"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "deepinfra",
+    "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+    "check": "hello",
+    "verdict": "error",
+    "problems": [
+      "BillingError/ProviderError: You need positive balance to do inference. Please add balance manually or setup top-up (deepinfra, HTTP 402, request RmK87DP7qX4eHRLEHsaWofDG)"
+    ],
+    "notes": [],
+    "seconds": 0.3
+  },
+  {
+    "binding": "deepinfra",
+    "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "173 models; deepseek-ai/DeepSeek-V4.1-Flash listed"
+    ],
+    "seconds": 0.5
+  },
+  {
+    "binding": "deepinfra",
+    "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+    "check": "order",
+    "verdict": "error",
+    "problems": [
+      "BillingError/ProviderError: You need positive balance to do inference. Please add balance manually or setup top-up (deepinfra, HTTP 402, request RTdJu9mAUj7oa5r9kUCjFaiA)"
+    ],
+    "notes": [],
+    "seconds": 0.2
+  },
+  {
+    "binding": "deepinfra",
+    "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+    "check": "tools",
+    "verdict": "error",
+    "problems": [
+      "BillingError/ProviderError: You need positive balance to do inference. Please add balance manually or setup top-up (deepinfra, HTTP 402, request R1beZZv2cqUFCxyBco0G7fXT)"
+    ],
+    "notes": [],
+    "seconds": 0.2
+  },
+  {
+    "binding": "deepseek",
+    "model": "deepseek:deepseek-v4-flash",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Authentication Fails, Your api key: ****6789 is invalid (request_id: 5fc151a7-2c89-4b55-ad94-a35798ff0268) (deepseek, HTTP 401)"
+    ],
+    "seconds": 0.4
+  },
+  {
+    "binding": "deepseek",
+    "model": "deepseek:deepseek-v4-flash",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=39 output=18 total=57 cache_read=0 cache_write=- reasoning=15)",
+      "stream: hello world (stop; usage: input=39 output=15 total=54 cache_read=0 cache_write=- reasoning=12)"
+    ],
+    "seconds": 1.5
+  },
+  {
+    "binding": "deepseek",
+    "model": "deepseek:deepseek-v4-flash",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "2 models; deepseek-v4-flash not listed"
+    ],
+    "seconds": 0.4
+  },
+  {
+    "binding": "deepseek",
+    "model": "deepseek:deepseek-v4-flash",
+    "check": "order",
+    "verdict": "error",
+    "problems": [
+      "InvalidRequestError/ProviderError: This response_format type is unavailable now (request_id: 9e56223c-2a94-4407-865f-cb3acae44681) (deepseek, HTTP 400)"
+    ],
+    "notes": [],
+    "seconds": 0.4
+  },
+  {
+    "binding": "deepseek",
+    "model": "deepseek:deepseek-v4-flash",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "answer: The forecast for Paris on 2026-11-02 is light rain with a high of 12°C."
+    ],
+    "seconds": 3.5
+  },
+  {
+    "binding": "fireworks",
+    "model": "fireworks:accounts/fireworks/models/deepseek-v4p1-flash",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: The API key you provided is invalid. (fireworks, HTTP 401, request chatcmpl-6198dff72d1049a9bac2ad1069ddc035)"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "fireworks",
+    "model": "fireworks:accounts/fireworks/models/deepseek-v4p1-flash",
+    "check": "hello",
+    "verdict": "error",
+    "problems": [
+      "ProviderError/LM15Error: Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information. (fireworks, HTTP 412, request chatcmpl-c94dd22ed46e45f5bb734f3bece5a4e7)"
+    ],
+    "notes": [],
+    "seconds": 0.1
+  },
+  {
+    "binding": "fireworks",
+    "model": "fireworks:accounts/fireworks/models/deepseek-v4p1-flash",
+    "check": "models",
+    "verdict": "error",
+    "problems": [
+      "ProviderError/LM15Error: Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information. (fireworks, HTTP 412, request 3d1876d4-cb80-4db3-b1a9-ce9721c592a0)"
+    ],
+    "notes": [],
+    "seconds": 0.1
+  },
+  {
+    "binding": "fireworks",
+    "model": "fireworks:accounts/fireworks/models/deepseek-v4p1-flash",
+    "check": "order",
+    "verdict": "error",
+    "problems": [
+      "ProviderError/LM15Error: Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information. (fireworks, HTTP 412, request chatcmpl-d1d783aa2d4a46d599131a531437b708)"
+    ],
+    "notes": [],
+    "seconds": 0.1
+  },
+  {
+    "binding": "fireworks",
+    "model": "fireworks:accounts/fireworks/models/deepseek-v4p1-flash",
+    "check": "tools",
+    "verdict": "error",
+    "problems": [
+      "ProviderError/LM15Error: Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information. (fireworks, HTTP 412, request chatcmpl-ec79007c86d044749f6f5fc28bc27f32)"
+    ],
+    "notes": [],
+    "seconds": 0.1
+  },
+  {
+    "binding": "gemini",
+    "model": "gemini:gemini-2.5-flash",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: API key not valid. Please pass a valid API key. (gemini, HTTP 400)"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "gemini",
+    "model": "gemini:gemini-2.5-flash",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=10 output=16 total=26 cache_read=0 cache_write=- reasoning=14)",
+      "stream: hello world (stop; usage: input=10 output=19 total=29 cache_read=0 cache_write=- reasoning=17)"
+    ],
+    "seconds": 1.3
+  },
+  {
+    "binding": "gemini",
+    "model": "gemini:gemini-2.5-flash",
+    "check": "image",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "answer: Badger",
+      "usage: input=275 output=603 total=878 cache_read=0 cache_write=- reasoning=601"
+    ],
+    "seconds": 4.1
+  },
+  {
+    "binding": "gemini",
+    "model": "gemini:gemini-2.5-flash",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "60 models; gemini-2.5-flash listed"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "gemini",
+    "model": "gemini:gemini-2.5-flash",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 51"
+    ],
+    "seconds": 1.1
+  },
+  {
+    "binding": "gemini",
+    "model": "gemini:gemini-2.5-flash",
+    "check": "reasoning",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "answer: No.\n\nBecause 221 can be divided by 13 (since $13 \\times 17 = 221$).",
+      "usage: input=20 output=724 total=744 cache_read=0 cache_write=- reasoning=693",
+      "0 thinking part(s)"
+    ],
+    "seconds": 4.1
+  },
+  {
+    "binding": "gemini",
+    "model": "gemini:gemini-2.5-flash",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "answer: The weather in Paris on 2026-11-02 will be light rain with a high of 12 degrees Celsius."
+    ],
+    "seconds": 2.5
+  },
+  {
+    "binding": "github-copilot-account",
+    "model": "github-copilot:gpt-4.1",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=16 output=2 total=18 cache_read=0 cache_write=- reasoning=-)",
+      "stream: hello world (stop; usage: input=16 output=2 total=18 cache_read=0 cache_write=- reasoning=-)"
+    ],
+    "seconds": 2.5
+  },
+  {
+    "binding": "github-copilot-account",
+    "model": "github-copilot:gpt-4.1",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "51 models; gpt-4.1 listed"
+    ],
+    "seconds": 0.3
+  },
+  {
+    "binding": "github-copilot-account",
+    "model": "github-copilot:gpt-4.1",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: answer, reasoning; answer 51"
+    ],
+    "seconds": 1.1
+  },
+  {
+    "binding": "github-copilot-account",
+    "model": "github-copilot:gpt-4.1",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "answer: The weather in Paris on 2026-11-02 is expected to be light rain with a high of 12°C."
+    ],
+    "seconds": 8.2
+  },
+  {
+    "binding": "groq",
+    "model": "groq:openai/gpt-oss-20b",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Invalid API Key (groq, HTTP 401, request req_01m6bh46ade7w84a1xx1w7cjq9)"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "groq",
+    "model": "groq:openai/gpt-oss-20b",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=80 output=64 total=144 cache_read=- cache_write=- reasoning=53)",
+      "stream: hello world (stop; usage: input=80 output=47 total=127 cache_read=- cache_write=- reasoning=36)"
+    ],
+    "seconds": 0.3
+  },
+  {
+    "binding": "groq",
+    "model": "groq:openai/gpt-oss-20b",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "12 models; openai/gpt-oss-20b listed"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "groq",
+    "model": "groq:openai/gpt-oss-20b",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: answer, reasoning; answer 51"
+    ],
+    "seconds": 0.3
+  },
+  {
+    "binding": "groq",
+    "model": "groq:openai/gpt-oss-20b",
+    "check": "reasoning",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "answer: No, because 221 = 13 × 17.",
+      "usage: input=88 output=41 total=129 cache_read=- cache_write=- reasoning=19",
+      "1 thinking part(s)"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "groq",
+    "model": "groq:openai/gpt-oss-20b",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "answer: On 2026‑11‑02 in Paris it will be light rain with a high of about 12 °C."
+    ],
+    "seconds": 0.5
+  },
+  {
+    "binding": "meta-account",
+    "model": "meta:muse-spark-1.3",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=17 output=254 total=271 cache_read=0 cache_write=- reasoning=243)",
+      "stream: hello world (stop; usage: input=17 output=435 total=452 cache_read=0 cache_write=- reasoning=424)"
+    ],
+    "seconds": 5
+  },
+  {
+    "binding": "meta-account",
+    "model": "meta:muse-spark-1.3",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "12 models; muse-spark-1.3 listed"
+    ],
+    "seconds": 0.5
+  },
+  {
+    "binding": "meta-account",
+    "model": "meta:muse-spark-1.3",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: answer, reasoning; answer 51"
+    ],
+    "seconds": 3.2
+  },
+  {
+    "binding": "meta-account",
+    "model": "meta:muse-spark-1.3",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "answer: The weather in Paris on 2026-11-02 will be light rain with a high of 12°C."
+    ],
+    "seconds": 9.2
+  },
+  {
+    "binding": "meta",
+    "model": "meta:muse-spark-1.3",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Unauthorized (meta, HTTP 401, request 103cc844-75b1-496c-be31-68ce6324d192)"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "meta",
+    "model": "meta:muse-spark-1.3",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=17 output=481 total=498 cache_read=0 cache_write=- reasoning=470)",
+      "stream: hello world (stop; usage: input=17 output=620 total=637 cache_read=0 cache_write=- reasoning=609)"
+    ],
+    "seconds": 6.1
+  },
+  {
+    "binding": "meta",
+    "model": "meta:muse-spark-1.3",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "9 models; muse-spark-1.3 listed"
+    ],
+    "seconds": 0.4
+  },
+  {
+    "binding": "meta",
+    "model": "meta:muse-spark-1.3",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: answer, reasoning; answer 51"
+    ],
+    "seconds": 2.9
+  },
+  {
+    "binding": "meta",
+    "model": "meta:muse-spark-1.3",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "answer: The weather in Paris on 2026-11-02 will be light rain with a high of 12°C."
+    ],
+    "seconds": 5.7
+  },
+  {
+    "binding": "moonshotai",
+    "model": "moonshotai:kimi-k3",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Invalid Authentication (moonshotai, HTTP 401)"
+    ],
+    "seconds": 0.3
+  },
+  {
+    "binding": "moonshotai",
+    "model": "moonshotai:kimi-k3",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=94 output=53 total=147 cache_read=- cache_write=0 reasoning=36)",
+      "stream: hello world (stop; usage: input=94 output=57 total=151 cache_read=- cache_write=0 reasoning=40)"
+    ],
+    "seconds": 7.6
+  },
+  {
+    "binding": "moonshotai",
+    "model": "moonshotai:kimi-k3",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "6 models; kimi-k3 listed"
+    ],
+    "seconds": 0.3
+  },
+  {
+    "binding": "moonshotai",
+    "model": "moonshotai:kimi-k3",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 51"
+    ],
+    "seconds": 6
+  },
+  {
+    "binding": "moonshotai",
+    "model": "moonshotai:kimi-k3",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "answer: On November 2, 2026, Paris is expected to have light rain with a high of 12°C."
+    ],
+    "seconds": 21.2
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Incorrect API key provided: lm15-liv**************************6789. You can find your API key at https://platform.openai.com/account/api-keys. (openai, HTTP 401, request req_d8c446cfae314e26951b9d876041a496)"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "cache",
+    "verdict": "error",
+    "problems": [
+      "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_bcbeb5cedb7644e382b72a308961b2fd)"
+    ],
+    "notes": [],
+    "seconds": 0.8
+  },
+  {
+    "binding": "openai-codex-account",
+    "model": "openai-codex:gpt-5.6-sol",
+    "check": "cache",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "first usage: input=10823 output=16 total=10839 cache_read=0 cache_write=0 reasoning=0",
+      "second usage: input=10824 output=12 total=10836 cache_read=0 cache_write=0 reasoning=0",
+      "provider's own usage on the second call: {\"input_tokens\":10824,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":12,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":10836,\"attribution\":{\"items\":{\"msg_08a770297e50f484016ae73112b108819795bee06e5d9ba463\":{\"input_tokens\":18,\"cached_tokens\":0,\"cache_write_tokens\":0,\"output_tokens\":0,\"content\":[{\"input_tokens\":18,\"cached_tokens\":0,\"cache_write_tokens\":0,\"output_tokens\":0}]},\"msg_08a770297e50f484016ae7311370fc8197abbe5f602a6d66b8\":{\"input_tokens\":2,\"cached_tokens\":0,\"cache_write_tokens\":0,\"output_tokens\":12,\"content\":[{\"input_tokens\":2,\"cached_tokens\":0,\"cache_write_tokens\":0,\"output_tokens\":12}]}},\"request_fields\":{\"instructions\":{\"input_tokens\":10804,\"cached_tokens\":0,\"cache_write_tokens\":0,\"output_tokens\":0}}}}",
+      "the second call read no cache (the provider decides)",
+      "estimate_cost: $0.002730 (by hand $0.002730)"
+    ],
+    "seconds": 6
+  },
+  {
+    "binding": "openai-codex-account",
+    "model": "openai-codex:gpt-5.6-sol",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=25 output=6 total=31 cache_read=0 cache_write=0 reasoning=0)",
+      "stream: hello world (stop; usage: input=25 output=6 total=31 cache_read=0 cache_write=0 reasoning=0)"
+    ],
+    "seconds": 4.7
+  },
+  {
+    "binding": "openai-codex-account",
+    "model": "openai-codex:gpt-5.6-sol",
+    "check": "image",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "answer: European badger.",
+      "usage: input=1137 output=43 total=1180 cache_read=0 cache_write=0 reasoning=33"
+    ],
+    "seconds": 2.6
+  },
+  {
+    "binding": "openai-codex-account",
+    "model": "openai-codex:gpt-5.6-sol",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "5 models; gpt-5.6-sol listed"
+    ],
+    "seconds": 0.6
+  },
+  {
+    "binding": "openai-codex-account",
+    "model": "openai-codex:gpt-5.6-sol",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 51"
+    ],
+    "seconds": 1.7
+  },
+  {
+    "binding": "openai-codex-account",
+    "model": "openai-codex:gpt-5.6-sol",
+    "check": "reasoning",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "answer: No. 221 is divisible by 13: \\(221 = 13 \\times 17\\).",
+      "usage: input=33 output=25 total=58 cache_read=0 cache_write=0 reasoning=0",
+      "0 thinking part(s)"
+    ],
+    "seconds": 2.4
+  },
+  {
+    "binding": "openai-codex-account",
+    "model": "openai-codex:gpt-5.6-sol",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "answer: Paris will have light rain with a high of 12°C on November 2, 2026."
+    ],
+    "seconds": 4.8
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "hello",
+    "verdict": "error",
+    "problems": [
+      "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_6af654fcbcf0448eb287073842694b74)"
+    ],
+    "notes": [],
+    "seconds": 1.6
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "image",
+    "verdict": "error",
+    "problems": [
+      "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_b26b1344d5184b118038427504af7848)"
+    ],
+    "notes": [],
+    "seconds": 0.9
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "142 models; gpt-5-mini listed"
+    ],
+    "seconds": 1
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "order",
+    "verdict": "error",
+    "problems": [
+      "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_ee7cee52e10e42b0ba84f04ca14d3372)"
+    ],
+    "notes": [],
+    "seconds": 0.5
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "reasoning",
+    "verdict": "error",
+    "problems": [
+      "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_5a38c95e02554893abb39d65c9957e06)"
+    ],
+    "notes": [],
+    "seconds": 0.5
+  },
+  {
+    "binding": "openai",
+    "model": "openai:gpt-5-mini",
+    "check": "tools",
+    "verdict": "error",
+    "problems": [
+      "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_3662143dae994836bc0051bd9a267bcd)"
+    ],
+    "notes": [],
+    "seconds": 0.9
+  },
+  {
+    "binding": "openrouter-account",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=16 output=3 total=19 cache_read=0 cache_write=0 reasoning=0)",
+      "stream: hello world (stop; usage: input=16 output=3 total=19 cache_read=0 cache_write=0 reasoning=0)"
+    ],
+    "seconds": 1.9
+  },
+  {
+    "binding": "openrouter-account",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "420 models; openai/gpt-4.1-nano listed"
+    ],
+    "seconds": 1.3
+  },
+  {
+    "binding": "openrouter-account",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 51"
+    ],
+    "seconds": 1.6
+  },
+  {
+    "binding": "openrouter-account",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "answer: The weather in Paris on November 2, 2026, is expected to be light rain with a high of 12°C."
+    ],
+    "seconds": 2.6
+  },
+  {
+    "binding": "openrouter",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Missing Authentication header (openrouter, HTTP 401)"
+    ],
+    "seconds": 0.7
+  },
+  {
+    "binding": "openrouter",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=16 output=3 total=19 cache_read=0 cache_write=0 reasoning=0)",
+      "stream: hello world (stop; usage: input=16 output=3 total=19 cache_read=0 cache_write=0 reasoning=0)"
+    ],
+    "seconds": 1.4
+  },
+  {
+    "binding": "openrouter",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "image",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model did not say badger (a model answer, not an lm15 check)",
+      "answer: Opossum",
+      "usage: input=2287 output=4 total=2291 cache_read=0 cache_write=0 reasoning=0"
+    ],
+    "seconds": 2.2
+  },
+  {
+    "binding": "openrouter",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "420 models; openai/gpt-4.1-nano listed"
+    ],
+    "seconds": 1.2
+  },
+  {
+    "binding": "openrouter",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 17 times 3 is 51."
+    ],
+    "seconds": 0.9
+  },
+  {
+    "binding": "openrouter",
+    "model": "openrouter:openai/gpt-4.1-nano",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "answer: The weather in Paris on November 2, 2026, is expected to be light rain with a high of 12°C."
+    ],
+    "seconds": 2.3
+  },
+  {
+    "binding": "parasail",
+    "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Provider returned HTTP 401 (parasail, HTTP 401, request 77eaa272ca29aae1afa479a6e6f39ed8)"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "parasail",
+    "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=44 output=3 total=47 cache_read=0 cache_write=- reasoning=-)",
+      "stream: hello world (stop; usage: input=44 output=3 total=47 cache_read=16 cache_write=- reasoning=-)"
+    ],
+    "seconds": 1.4
+  },
+  {
+    "binding": "parasail",
+    "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "97 models; meta-llama/Llama-3.3-70B-Instruct listed"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "parasail",
+    "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "the model's keys, in the order written: reasoning, answer; answer 17 * 3 = 51"
+    ],
+    "seconds": 2.3
+  },
+  {
+    "binding": "parasail",
+    "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+      "answer: The weather in Paris on 2026-11-02 will be light rain with a high of 12 degrees Celsius."
+    ],
+    "seconds": 2.2
+  },
+  {
+    "binding": "together",
+    "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Invalid API key provided. You can find your API key at https://api.together.ai/settings/api-keys. (together, HTTP 401, request p7Zdq5X-2kFHot-a53ae3b6d82da315)"
+    ],
+    "seconds": 0.2
+  },
+  {
+    "binding": "together",
+    "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "check": "hello",
+    "verdict": "error",
+    "problems": [
+      "BillingError/ProviderError: Credit limit exceeded, please [add credits](https://api.together.ai/settings/billing). If you've already made a payment, please wait up to 5 minutes for balances to update and try again. (together, HTTP 402, request p7ZdoiC-2kFHot-a53ae39a5ca2efb9)"
+    ],
+    "notes": [],
+    "seconds": 3.5
+  },
+  {
+    "binding": "together",
+    "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "269 models; meta-llama/Llama-3.3-70B-Instruct-Turbo listed"
+    ],
+    "seconds": 0.5
+  },
+  {
+    "binding": "together",
+    "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "check": "order",
+    "verdict": "error",
+    "problems": [
+      "BillingError/ProviderError: Credit limit exceeded, please [add credits](https://api.together.ai/settings/billing). If you've already made a payment, please wait up to 5 minutes for balances to update and try again. (together, HTTP 402, request p7ZdpiW-2kFHot-a53ae3afd86ba25d)"
+    ],
+    "notes": [],
+    "seconds": 0.1
+  },
+  {
+    "binding": "together",
+    "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "check": "tools",
+    "verdict": "error",
+    "problems": [
+      "BillingError/ProviderError: Credit limit exceeded, please [add credits](https://api.together.ai/settings/billing). If you've already made a payment, please wait up to 5 minutes for balances to update and try again. (together, HTTP 402, request p7Zdpm4-2kFHot-a53ae3b0bb4728bf)"
+    ],
+    "notes": [],
+    "seconds": 0.2
+  },
+  {
+    "binding": "typesafe",
+    "model": "typesafe:jev-latest",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: Cannot authenticate with the server. Please check your API key and try again. (typesafe, HTTP 401, request req_01a19713ab2d7592826d3c37bd67398d)\nTo fix: export TYPESAFE_API_KEY=... (console.typesafe.ai/keys)"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "typesafe",
+    "model": "typesafe:jev-latest",
+    "check": "judgments",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "ageing TRUE, style fruit; probabilities {\"ageing\":{\"true\":0.97,\"false\":0.03},\"style\":{\"fruit\":0.9,\"oak\":0.07,\"other\":0.03}}",
+      "method: provider_classification",
+      "bounding box: ServerError/ProviderError: Image processing is unavailable. (typesafe, HTTP 503, request req_01a19713aa927bc698dd4a4a3ad95791)"
+    ],
+    "seconds": 0.3
+  },
+  {
+    "binding": "typesafe",
+    "model": "typesafe:jev-latest",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "2 models; jev-latest listed"
+    ],
+    "seconds": 0.1
+  },
+  {
+    "binding": "xai-account",
+    "model": "xai:grok-4.7",
+    "check": "hello",
+    "verdict": "error",
+    "problems": [
+      "AuthOperationError/LM15Error: xai: renewal failed (xAI rejected the refresh token (HTTP 400)); sign in again. (xai, HTTP 400)"
+    ],
+    "notes": [],
+    "seconds": 0.2
+  },
+  {
+    "binding": "xai-account",
+    "model": "xai:grok-4.7",
+    "check": "models",
+    "verdict": "error",
+    "problems": [
+      "AuthOperationError/LM15Error: xai: no saved connection in this scope; sign in with login() or connect(). (xai)"
+    ],
+    "notes": [],
+    "seconds": 0
+  },
+  {
+    "binding": "xai-account",
+    "model": "xai:grok-4.7",
+    "check": "order",
+    "verdict": "error",
+    "problems": [
+      "AuthOperationError/LM15Error: xai: no saved connection in this scope; sign in with login() or connect(). (xai)"
+    ],
+    "notes": [],
+    "seconds": 0
+  },
+  {
+    "binding": "xai-account",
+    "model": "xai:grok-4.7",
+    "check": "reasoning",
+    "verdict": "error",
+    "problems": [
+      "AuthOperationError/LM15Error: xai: no saved connection in this scope; sign in with login() or connect(). (xai)"
+    ],
+    "notes": [],
+    "seconds": 0
+  },
+  {
+    "binding": "xai-account",
+    "model": "xai:grok-4.7",
+    "check": "tools",
+    "verdict": "error",
+    "problems": [
+      "AuthOperationError/LM15Error: xai: no saved connection in this scope; sign in with login() or connect(). (xai)"
+    ],
+    "notes": [],
+    "seconds": 0
+  },
+  {
+    "binding": "zai",
+    "model": "zai:glm-5.3-flash",
+    "check": "bad-key",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "AuthError/ProviderError: token expired or incorrect (zai, HTTP 401)"
+    ],
+    "seconds": 0.4
+  },
+  {
+    "binding": "zai",
+    "model": "zai:glm-5.3-flash",
+    "check": "hello",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete: hello world (stop; usage: input=21 output=36 total=57 cache_read=0 cache_write=- reasoning=32)",
+      "stream: hello world (stop; usage: input=21 output=46 total=67 cache_read=0 cache_write=- reasoning=42)"
+    ],
+    "seconds": 4.4
+  },
+  {
+    "binding": "zai",
+    "model": "zai:glm-5.3-flash",
+    "check": "models",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "11 models; glm-5.3-flash listed"
+    ],
+    "seconds": 0.4
+  },
+  {
+    "binding": "zai",
+    "model": "zai:glm-5.3-flash",
+    "check": "order",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "adapted, as the contract says: this server accepts response_format type 'json_schema' and does not apply it; use {'type': 'json_object'} and describe the shape in the prompt",
+      "answer: Breaking it down: 17 × 3 can be split into (10 × 3) + (7 × 3) = 30 + 21 = 51.\n\n**The answer is 51.**"
+    ],
+    "seconds": 3.3
+  },
+  {
+    "binding": "zai",
+    "model": "zai:glm-5.3-flash",
+    "check": "tools",
+    "verdict": "ok",
+    "problems": [],
+    "notes": [
+      "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+      "answer: On 2026-11-02, Paris is forecast to have light rain with a high of 12°C."
+    ],
+    "seconds": 15
+  }
+]

@@ -95,8 +95,12 @@ paste the return (R cannot race the listener against a prompt on one thread).
    WebAssembly OpenSSL and libcurl libraries). In Chromium 152, webR installs
    lm15 1.0.0 and its imports from that repository and passes all 18 browser
    assertions with zero external requests.
-3. **Paid providers.** No paid provider has been called from R. The other
-   SDKs' live smoke covered the same wire shapes; R's are pinned by the corpus.
+3. **Paid providers** (2026-11-01, R 2.0.0). `tools/live-smoke.R --managed`
+   called fourteen API-key bindings and six saved connections: 84 of 106
+   checks ok, the other 22 stopped by the accounts (no credit, a suspended
+   account, an expired xAI login) or by DeepSeek's refusal of `json_schema`,
+   which Python and Go meet too; no R defect. Receipts and the full account in
+   [receipts/2026-11-01-live-smoke](receipts/2026-11-01-live-smoke/SUMMARY.md).
 
 ## Reproduce
 

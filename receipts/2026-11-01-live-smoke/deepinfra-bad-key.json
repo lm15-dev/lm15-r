@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "deepinfra",
+  "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: User is not authorized to access this resource (deepinfra, HTTP 401)"
+  ],
+  "seconds": 0.2,
+  "timestamp": "2026-11-01T07:26:38-0500",
+  "exchanges": []
+}

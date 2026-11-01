@@ -1,0 +1,163 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "anthropic",
+  "model": "anthropic:claude-haiku-4-5",
+  "check": "cache",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "first usage: input=11299 output=14 total=11313 cache_read=11280 cache_write=0 reasoning=-",
+    "second usage: input=11300 output=18 total=11318 cache_read=11280 cache_write=0 reasoning=-",
+    "provider's own usage on the second call: {\"input_tokens\":20,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":11280,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":18,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"}",
+    "estimate_cost: $0.001238 (by hand $0.001238)"
+  ],
+  "seconds": 4,
+  "timestamp": "2026-11-01T07:24:52-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+          "x-api-key": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In one sentence: what must be logged at each camera visit?"
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_tokens": 1000,
+          "system": [
+            {
+              "type": "text",
+              "text": "Field station rule 1 : record the date, the place, the species and the count of every animal seen; photograph tracks beside a scale bar; never handle a live animal; log the camera battery level at each visit.\nField station rule 2 : record the date, the place, the species and the count of every animal seen; photograph tracks beside a scale bar; never handle a live animal; log the camera battery level at each visit.\nField station rule 3 : record the date, the place, the species and the count of every animal seen; photograph tracks beside a scale bar; never handle a live animal; log the camera ba... <49745 more characters omitted from the receipt>",
+              "cache_control": {
+                "type": "ephemeral"
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "request-id": "req_011CgcCkisNJVqZJWpZ8YnbL",
+        "anthropic-organization-id": "705202b1-79ca-4ef0-9604-08f21cdd602f"
+      },
+      "body": {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgcCkiypeB3CXB2sa6BaR",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "The camera battery level must be logged at each visit."
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 19,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 11280,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 14,
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+          "x-api-key": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In one sentence: what must never be done with a live animal?"
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_tokens": 1000,
+          "system": [
+            {
+              "type": "text",
+              "text": "Field station rule 1 : record the date, the place, the species and the count of every animal seen; photograph tracks beside a scale bar; never handle a live animal; log the camera battery level at each visit.\nField station rule 2 : record the date, the place, the species and the count of every animal seen; photograph tracks beside a scale bar; never handle a live animal; log the camera battery level at each visit.\nField station rule 3 : record the date, the place, the species and the count of every animal seen; photograph tracks beside a scale bar; never handle a live animal; log the camera ba... <49745 more characters omitted from the receipt>",
+              "cache_control": {
+                "type": "ephemeral"
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "request-id": "req_011CgcCkyr3AKL1EKHLsBXP3",
+        "anthropic-organization-id": "705202b1-79ca-4ef0-9604-08f21cdd602f"
+      },
+      "body": {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgcCkyzDe9yN4LvaQ142s",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "According to the field station rules, a live animal must never be handled."
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 20,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 11280,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 18,
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "gemini",
+  "model": "gemini:gemini-2.5-flash",
+  "check": "hello",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete: hello world (stop; usage: input=10 output=16 total=26 cache_read=0 cache_write=- reasoning=14)",
+    "stream: hello world (stop; usage: input=10 output=19 total=29 cache_read=0 cache_write=- reasoning=17)"
+  ],
+  "seconds": 1.3,
+  "timestamp": "2026-11-01T07:24:54-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "headers": {
+          "content-type": "application/json",
+          "x-goog-api-key": "<redacted>"
+        },
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "maxOutputTokens": 4000
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "candidates": [
+          {
+            "content": {
+              "parts": [
+                {
+                  "text": "hello world"
+                }
+              ],
+              "role": "model"
+            },
+            "finishReason": "STOP",
+            "index": 0
+          }
+        ],
+        "usageMetadata": {
+          "promptTokenCount": 10,
+          "candidatesTokenCount": 2,
+          "totalTokenCount": 26,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 10
+            }
+          ],
+          "thoughtsTokenCount": 14,
+          "serviceTier": "standard"
+        },
+        "modelVersion": "gemini-2.5-flash",
+        "responseId": "lS_naoWqGIWH1sgPjP_94AU"
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=<redacted>",
+        "headers": {
+          "content-type": "application/json",
+          "x-goog-api-key": "<redacted>"
+        },
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "maxOutputTokens": 4000
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream"
+      },
+      "body": "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"hello world\"}],\"role\": \"model\"},\"finishReason\": \"STOP\",\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 10,\"candidatesTokenCount\": 2,\"totalTokenCount\": 29,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 10}],\"thoughtsTokenCount\": 17,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.5-flash\",\"responseId\": \"li_navrhA7G9xdIP2Zrc-A8\"}\r\n\r\n"
+    }
+  ]
+}

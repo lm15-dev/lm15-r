@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "zai",
+  "model": "zai:glm-5.3-flash",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: token expired or incorrect (zai, HTTP 401)"
+  ],
+  "seconds": 0.4,
+  "timestamp": "2026-11-01T07:30:15-0500",
+  "exchanges": []
+}

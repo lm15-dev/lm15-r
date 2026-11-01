@@ -1,0 +1,79 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openai",
+  "model": "openai:gpt-5-mini",
+  "check": "order",
+  "managed": false,
+  "verdict": "error",
+  "problems": [
+    "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_ee7cee52e10e42b0ba84f04ca14d3372)"
+  ],
+  "notes": [],
+  "seconds": 0.5,
+  "timestamp": "2026-11-01T07:24:35-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "gpt-5-mini",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "What is 17 times 3? Think it through briefly, then give the answer."
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_output_tokens": 4000,
+          "text": {
+            "format": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true,
+              "type": "json_schema"
+            }
+          }
+        }
+      },
+      "status": 429,
+      "response_headers": {
+        "content-type": "application/json",
+        "openai-processing-ms": "288",
+        "x-request-id": "req_ee7cee52e10e42b0ba84f04ca14d3372"
+      },
+      "body": {
+        "error": {
+          "message": "You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.",
+          "type": "insufficient_quota",
+          "param": null,
+          "code": "credit_balance_exhausted"
+        }
+      }
+    }
+  ]
+}

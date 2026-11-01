@@ -1,0 +1,264 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "zai",
+  "model": "zai:glm-5.3-flash",
+  "check": "tools",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "answer: On 2026-11-02, Paris is forecast to have light rain with a high of 12°C."
+  ],
+  "seconds": 15,
+  "timestamp": "2026-11-01T07:30:14-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "glm-5.3-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "max_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "message": {
+              "content": "",
+              "reasoning_content": "The user wants to know the weather in Paris on 2026-11-02. I should call the get_weather tool with location \"Paris\" and date \"2026-11-02\", then answer in one sentence.",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+                    "name": "get_weather"
+                  },
+                  "id": "call_-7120239286305153279",
+                  "index": 0,
+                  "type": "function"
+                }
+              ]
+            }
+          }
+        ],
+        "created": 1793536204,
+        "id": "20261101203000bb0c4006db6d414b",
+        "model": "glm-5.3-flash",
+        "object": "chat.completion",
+        "request_id": "20261101203000bb0c4006db6d414b",
+        "usage": {
+          "completion_tokens": 69,
+          "completion_tokens_details": {
+            "reasoning_tokens": 46
+          },
+          "prompt_tokens": 219,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 288
+        }
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "glm-5.3-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "max_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream;charset=UTF-8"
+      },
+      "body": "data: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"The\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" user\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" wants\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" the\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" weather\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" in\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" Paris\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" on\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" \"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"202\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"6\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"-\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"11\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"-\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"02\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\".\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" I\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"'ll\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" call\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" the\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" get\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"_weather\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" tool\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" with\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" location\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" \\\"\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"Paris\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"\\\"\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" and\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" date\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" \\\"\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"202\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"6\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"-\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"11\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"-\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"02\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"\\\",\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" then\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" answer\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" in\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" one\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" sentence\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\".\"}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"id\":\"call_8f11f7d536184fa4b05d26bc\",\"index\":0,\"type\":\"function\",\"function\":{\"name\":\"get_weather\",\"arguments\":\"{\\\"date\\\":\\\"2026-11-02\\\",\\\"location\\\":\\\"Paris\\\"}\"}}]}}]}\n\ndata: {\"id\":\"2026110120300591bcdf3cc67c4fd9\",\"created\":1793536205,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"finish_reason\":\"tool_calls\",\"delta\":{\"role\":\"assistant\",\"content\":\"\"}}],\"usage\":{\"prompt_tokens\":219,\"completion_tokens\":67,\"total_tokens\":286,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":44}}}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "glm-5.3-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call_-7120239286305153279",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}"
+                  }
+                }
+              ],
+              "reasoning_content": "The user wants to know the weather in Paris on 2026-11-02. I should call the get_weather tool with location \"Paris\" and date \"2026-11-02\", then answer in one sentence."
+            },
+            {
+              "role": "tool",
+              "tool_call_id": "call_-7120239286305153279",
+              "content": "{\"forecast\": \"light rain\", \"high_celsius\": 12}"
+            }
+          ],
+          "max_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "On 2026-11-02, Paris is forecast to have light rain with a high of 12°C.",
+              "role": "assistant"
+            }
+          }
+        ],
+        "created": 1793536214,
+        "id": "20261101203010c1306287cd3843e3",
+        "model": "glm-5.3-flash",
+        "object": "chat.completion",
+        "request_id": "20261101203010c1306287cd3843e3",
+        "usage": {
+          "completion_tokens": 26,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 307,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 333
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "anthropic",
+  "model": "anthropic:claude-haiku-4-5",
+  "check": "hello",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete: hello world (stop; usage: input=16 output=5 total=21 cache_read=0 cache_write=0 reasoning=-)",
+    "stream: hello world (stop; usage: input=16 output=5 total=21 cache_read=0 cache_write=0 reasoning=-)"
+  ],
+  "seconds": 0.8,
+  "timestamp": "2026-11-01T07:24:40-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+          "x-api-key": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_tokens": 1000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "request-id": "req_011CgcCk5hj2ezdZXTinQWCB",
+        "anthropic-organization-id": "705202b1-79ca-4ef0-9604-08f21cdd602f"
+      },
+      "body": {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgcCk5pvf5QLfXLkkMqgX",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "hello world"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 16,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 5,
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+          "x-api-key": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "stream": true,
+          "max_tokens": 1000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream; charset=utf-8",
+        "request-id": "req_011CgcCk7MhGUJtVNByj1dpK",
+        "anthropic-organization-id": "705202b1-79ca-4ef0-9604-08f21cdd602f"
+      },
+      "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CgcCk7UdjU3kRVL6r6TcT\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":16,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}      }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"hello\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" world\"}        }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0    }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":16,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":5}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"           }\n\n"
+    }
+  ]
+}

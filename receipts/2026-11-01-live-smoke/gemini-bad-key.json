@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "gemini",
+  "model": "gemini:gemini-2.5-flash",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: API key not valid. Please pass a valid API key. (gemini, HTTP 400)"
+  ],
+  "seconds": 0.1,
+  "timestamp": "2026-11-01T07:25:06-0500",
+  "exchanges": []
+}

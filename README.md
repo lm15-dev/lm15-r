@@ -102,10 +102,14 @@ the mechanics are R's. Where R differs:
   checks pass, including all 43 sign-in lifecycle runs. The credentials file has
   been shared with Python, TypeScript, Rust and Go processes in every order,
   and concurrent renewal spends a refresh token once in every language pair.
-* **Live:** checked against a real vLLM server (chat, streaming, model
-  listing, errors, the judgment fallback), and one paid call so far: a
-  streamed `openai:gpt-4.1-mini` reply through a router with a 74 KB system
-  prompt (2026-10-06).
+* **Live** (2026-11-01, `tools/live-smoke.R`): real calls to Anthropic,
+  Gemini, Groq, OpenRouter, Z.AI, Meta, Moonshot, Parasail, DeepSeek and
+  TypeSafe with API keys, and to Claude, ChatGPT (Codex), OpenRouter, GitHub
+  Copilot and Meta through saved sign-ins: chat, streaming, structured output,
+  tool calls, pictures, reasoning, prompt caching with exact token counts and
+  cost, model lists and wrong-key errors. No R defect; details in
+  [receipts/2026-11-01-live-smoke](https://github.com/lm15-dev/lm15-r/blob/main/receipts/2026-11-01-live-smoke/SUMMARY.md).
+  Also checked against a real vLLM server.
 * **Platforms:** `R CMD check` passes on Linux, Windows and macOS (CI), and
   the package runs in the browser through webR (tested in Chromium).
 

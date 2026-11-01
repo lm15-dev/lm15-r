@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openrouter",
+  "model": "openrouter:openai/gpt-4.1-nano",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: Missing Authentication header (openrouter, HTTP 401)"
+  ],
+  "seconds": 0.7,
+  "timestamp": "2026-11-01T07:25:17-0500",
+  "exchanges": []
+}

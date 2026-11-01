@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "moonshotai",
+  "model": "moonshotai:kimi-k3",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: Invalid Authentication (moonshotai, HTTP 401)"
+  ],
+  "seconds": 0.3,
+  "timestamp": "2026-11-01T07:26:37-0500",
+  "exchanges": []
+}

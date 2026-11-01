@@ -1,0 +1,81 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "gemini",
+  "model": "gemini:gemini-2.5-flash",
+  "check": "reasoning",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "answer: No.\n\nBecause 221 can be divided by 13 (since $13 \\times 17 = 221$).",
+    "usage: input=20 output=724 total=744 cache_read=0 cache_write=- reasoning=693",
+    "0 thinking part(s)"
+  ],
+  "seconds": 4.1,
+  "timestamp": "2026-11-01T07:25:06-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "headers": {
+          "content-type": "application/json",
+          "x-goog-api-key": "<redacted>"
+        },
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "Is 221 prime? Answer yes or no, then the reason in one sentence."
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "maxOutputTokens": 4000,
+            "thinkingConfig": {
+              "thinkingBudget": 2048
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "candidates": [
+          {
+            "content": {
+              "parts": [
+                {
+                  "text": "No.\n\nBecause 221 can be divided by 13 (since $13 \\times 17 = 221$)."
+                }
+              ],
+              "role": "model"
+            },
+            "finishReason": "STOP",
+            "index": 0
+          }
+        ],
+        "usageMetadata": {
+          "promptTokenCount": 20,
+          "candidatesTokenCount": 31,
+          "totalTokenCount": 744,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 20
+            }
+          ],
+          "thoughtsTokenCount": 693,
+          "serviceTier": "standard"
+        },
+        "modelVersion": "gemini-2.5-flash",
+        "responseId": "ni_nasaEGbik5NoPkdyvoAs"
+      }
+    }
+  ]
+}

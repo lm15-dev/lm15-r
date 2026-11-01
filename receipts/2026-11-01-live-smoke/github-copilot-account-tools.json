@@ -1,0 +1,425 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "github-copilot-account",
+  "model": "github-copilot:gpt-4.1",
+  "check": "tools",
+  "managed": true,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "answer: The weather in Paris on 2026-11-02 is expected to be light rain with a high of 12°C."
+  ],
+  "seconds": 8.2,
+  "timestamp": "2026-11-01T07:27:18-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.individual.githubcopilot.com/chat/completions",
+        "headers": {
+          "user-agent": "GitHubCopilotChat/0.35.0",
+          "editor-version": "vscode/1.107.0",
+          "editor-plugin-version": "<redacted>",
+          "copilot-integration-id": "vscode-chat",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "gpt-4.1",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "max_completion_tokens": 1000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "677e1b18-4279-94ff-bd0a-31f6670d2157"
+      },
+      "body": {
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "self_harm": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "sexual": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "violence": {
+                "filtered": false,
+                "severity": "safe"
+              }
+            },
+            "message": {
+              "padding": "abcdefghijklmnopqrstuvwxyz",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+                    "name": "get_weather"
+                  },
+                  "id": "call_91x8w5VN3AvWVLYisUzL2Uzl",
+                  "type": "function"
+                }
+              ]
+            }
+          }
+        ],
+        "id": "chatcmpl-EfOwUoCRoP7gx6XbWrRMXinf0CdaC",
+        "usage": {
+          "completion_tokens": 23,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "prompt_tokens": 88,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 111
+        },
+        "model": "gpt-4.1-2025-04-14",
+        "prompt_filter_results": [
+          {
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "self_harm": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "sexual": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "violence": {
+                "filtered": false,
+                "severity": "safe"
+              }
+            },
+            "prompt_index": 0
+          }
+        ],
+        "service_tier": "default",
+        "system_fingerprint": "fp_8c4c3e6d7a",
+        "copilot_usage": {
+          "token_details": [
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 88,
+              "token_type": "input"
+            },
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 0,
+              "token_type": "cache_read"
+            },
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 0,
+              "token_type": "cache_write"
+            },
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 23,
+              "token_type": "output"
+            }
+          ],
+          "total_nano_aiu": 0
+        }
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.individual.githubcopilot.com/chat/completions",
+        "headers": {
+          "user-agent": "GitHubCopilotChat/0.35.0",
+          "editor-version": "vscode/1.107.0",
+          "editor-plugin-version": "<redacted>",
+          "copilot-integration-id": "vscode-chat",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "gpt-4.1",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "max_completion_tokens": 1000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream",
+        "x-request-id": "7393319a-382e-9f40-bd6a-dc51dbbcd91a"
+      },
+      "body": "data: {\"choices\":[],\"created\":0,\"id\":\"\",\"model\":\"gpt-4.1-2025-04-14\",\"prompt_filter_results\":[{\"content_filter_results\":{\"hate\":{\"filtered\":false,\"severity\":\"safe\"},\"self_harm\":{\"filtered\":false,\"severity\":\"safe\"},\"sexual\":{\"filtered\":false,\"severity\":\"safe\"},\"violence\":{\"filtered\":false,\"severity\":\"safe\"}},\"prompt_index\":0}]}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"arguments\":\"\",\"name\":\"get_weather\"},\"id\":\"call_EOCrD5IPlFLwXxsHdnANOnRO\",\"index\":0,\"type\":\"function\"}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"{\\\"\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"date\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"\\\":\\\"\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"202\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"6\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"-\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"11\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"-\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"02\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"\\\",\\\"\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"location\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"\\\":\\\"\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"Paris\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null,\"tool_calls\":[{\"function\":{\"arguments\":\"\\\"}\"},\"index\":0}]}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"content_filter_results\":{},\"delta\":{\"content\":null}}],\"created\":1793536035,\"id\":\"chatcmpl-EfOwV8tC2Uze0aF1F4VInyZs8DERt\",\"usage\":{\"completion_tokens\":23,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0},\"prompt_tokens\":88,\"prompt_tokens_details\":{\"cached_tokens\":0},\"total_tokens\":111},\"model\":\"gpt-4.1-2025-04-14\",\"system_fingerprint\":\"fp_8c4c3e6d7a\",\"copilot_usage\":{\"token_details\":[{\"batch_size\":1000000,\"cost_per_batch\":0,\"model\":\"gpt-4.1\",\"token_count\":88,\"token_type\":\"input\"},{\"batch_size\":1000000,\"cost_per_batch\":0,\"model\":\"gpt-4.1\",\"token_count\":0,\"token_type\":\"cache_read\"},{\"batch_size\":1000000,\"cost_per_batch\":0,\"model\":\"gpt-4.1\",\"token_count\":0,\"token_type\":\"cache_write\"},{\"batch_size\":1000000,\"cost_per_batch\":0,\"model\":\"gpt-4.1\",\"token_count\":23,\"token_type\":\"output\"}],\"total_nano_aiu\":0}}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.individual.githubcopilot.com/chat/completions",
+        "headers": {
+          "user-agent": "GitHubCopilotChat/0.35.0",
+          "editor-version": "vscode/1.107.0",
+          "editor-plugin-version": "<redacted>",
+          "copilot-integration-id": "vscode-chat",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "gpt-4.1",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call_91x8w5VN3AvWVLYisUzL2Uzl",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "tool_call_id": "call_91x8w5VN3AvWVLYisUzL2Uzl",
+              "content": "{\"forecast\": \"light rain\", \"high_celsius\": 12}"
+            }
+          ],
+          "max_completion_tokens": 1000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "9e670ad5-5c83-9afa-9310-cd351081af4b"
+      },
+      "body": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "self_harm": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "sexual": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "violence": {
+                "filtered": false,
+                "severity": "safe"
+              }
+            },
+            "message": {
+              "content": "The weather in Paris on 2026-11-02 is expected to be light rain with a high of 12°C.",
+              "padding": "abcdefghijklmnop",
+              "role": "assistant"
+            }
+          }
+        ],
+        "id": "chatcmpl-EfOwXTGr3t7FgoepQmhXbn12TSug6",
+        "usage": {
+          "completion_tokens": 27,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "prompt_tokens": 134,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 161
+        },
+        "model": "gpt-4.1-2025-04-14",
+        "prompt_filter_results": [
+          {
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "self_harm": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "sexual": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "violence": {
+                "filtered": false,
+                "severity": "safe"
+              }
+            },
+            "prompt_index": 0
+          }
+        ],
+        "service_tier": "default",
+        "system_fingerprint": "fp_8c4c3e6d7a",
+        "copilot_usage": {
+          "token_details": [
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 134,
+              "token_type": "input"
+            },
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 0,
+              "token_type": "cache_read"
+            },
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 0,
+              "token_type": "cache_write"
+            },
+            {
+              "batch_size": 1000000,
+              "cost_per_batch": 0,
+              "model": "gpt-4.1",
+              "token_count": 27,
+              "token_type": "output"
+            }
+          ],
+          "total_nano_aiu": 0
+        }
+      }
+    }
+  ]
+}

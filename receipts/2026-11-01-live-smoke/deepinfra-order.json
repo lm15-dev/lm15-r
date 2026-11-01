@@ -1,0 +1,72 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "deepinfra",
+  "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+  "check": "order",
+  "managed": false,
+  "verdict": "error",
+  "problems": [
+    "BillingError/ProviderError: You need positive balance to do inference. Please add balance manually or setup top-up (deepinfra, HTTP 402, request RTdJu9mAUj7oa5r9kUCjFaiA)"
+  ],
+  "notes": [],
+  "seconds": 0.2,
+  "timestamp": "2026-11-01T07:26:37-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.deepinfra.com/v1/openai/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "deepseek-ai/DeepSeek-V4.1-Flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_completion_tokens": 2000,
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true
+            }
+          }
+        }
+      },
+      "status": 402,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "RTdJu9mAUj7oa5r9kUCjFaiA"
+      },
+      "body": {
+        "error": {
+          "message": "You need positive balance to do inference. Please add balance manually or setup top-up",
+          "type": "invalid_request_error",
+          "param": null,
+          "code": null
+        }
+      }
+    }
+  ]
+}

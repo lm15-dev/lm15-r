@@ -1,0 +1,51 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "together",
+  "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "check": "hello",
+  "managed": false,
+  "verdict": "error",
+  "problems": [
+    "BillingError/ProviderError: Credit limit exceeded, please [add credits](https://api.together.ai/settings/billing). If you've already made a payment, please wait up to 5 minutes for balances to update and try again. (together, HTTP 402, request p7ZdoiC-2kFHot-a53ae39a5ca2efb9)"
+  ],
+  "notes": [],
+  "seconds": 3.5,
+  "timestamp": "2026-11-01T07:26:42-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.together.ai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with exactly the two words: hello world"
+            }
+          ],
+          "max_completion_tokens": 1000
+        }
+      },
+      "status": 402,
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8",
+        "request-id": "p7ZdoiC-2kFHot-a53ae39a5ca2efb9",
+        "x-request-id": "p7ZdoiC-2kFHot-a53ae39a5ca2efb9"
+      },
+      "body": {
+        "id": "p7ZdoiC-2kFHot-a53ae39a5ca2efb9",
+        "error": {
+          "message": "Credit limit exceeded, please [add credits](https://api.together.ai/settings/billing). If you've already made a payment, please wait up to 5 minutes for balances to update and try again.",
+          "type": "credit_limit",
+          "param": null,
+          "code": null
+        }
+      }
+    }
+  ]
+}

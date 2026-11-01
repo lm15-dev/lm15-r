@@ -1,0 +1,171 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "deepinfra",
+  "model": "deepinfra:deepseek-ai/DeepSeek-V4.1-Flash",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "173 models; deepseek-ai/DeepSeek-V4.1-Flash listed"
+  ],
+  "seconds": 0.5,
+  "timestamp": "2026-11-01T07:26:38-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.deepinfra.com/v1/openai/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "object": "list",
+        "data": [
+          {
+            "id": "google/gemma-3-27b-it",
+            "object": "model",
+            "created": 0,
+            "owned_by": "deepinfra",
+            "root": "google/gemma-3-27b-it",
+            "parent": null,
+            "metadata": {
+              "description": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs. It handles context windows up to 128k tokens, understands over 140 languages, and offers improved math, reasoning, and chat capabilities, including structured outputs and function calling. Gemma 3 27B is Google's latest open source model, successor to Gemma 2",
+              "context_length": 131072,
+              "max_tokens": 131072,
+              "pricing": {
+                "input_tokens": 0.08,
+                "output_tokens": 0.16
+              },
+              "discount": null,
+              "tags": [
+                "chat",
+                "vlm",
+                "vision"
+              ],
+              "default_width": null,
+              "default_height": null,
+              "default_iterations": null
+            }
+          },
+          {
+            "id": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+            "object": "model",
+            "created": 0,
+            "owned_by": "deepinfra",
+            "root": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+            "parent": null,
+            "metadata": {
+              "description": "NVIDIA Nemotron 3 Super is a hybrid Mixture-of-Experts (MoE) model engineered for highest compute efficiency and accuracy in multi-agent applications and specialized agentic systems. It is optimized to run many collaborating agents per application on a single GPU, delivering high accuracy for reasoning, tool use, and instruction following.",
+              "context_length": 262144,
+              "max_tokens": 262144,
+              "pricing": {
+                "input_tokens": 0.085,
+                "output_tokens": 0.4
+              },
+              "discount": null,
+              "tags": [
+                "chat",
+                "reasoning"
+              ],
+              "default_width": null,
+              "default_height": null,
+              "default_iterations": null
+            }
+          },
+          {
+            "id": "google/gemini-2.5-pro",
+            "object": "model",
+            "created": 0,
+            "owned_by": "deepinfra",
+            "root": "google/gemini-2.5-pro",
+            "parent": null,
+            "metadata": {
+              "description": "Gemini 2.5 Pro is Google's the most advanced thinking model, designed to tackle increasingly complex problems. Gemini 2.5 Pro leads common benchmarks by meaningful margins and showcases strong reasoning and code capabilities. Gemini 2.5 models are thinking models, capable of reasoning through their thoughts before responding, resulting in enhanced performance and improved accuracy. The Gemini 2.5 Pro model is now available on DeepInfra.",
+              "context_length": 1000000,
+              "max_tokens": 1000000,
+              "pricing": {
+                "input_tokens": 1.25,
+                "output_tokens": 10
+              },
+              "discount": null,
+              "tags": [
+                "chat",
+                "vlm",
+                "vision",
+                "reasoning_effort",
+                "reasoning"
+              ],
+              "default_width": null,
+              "default_height": null,
+              "default_iterations": null
+            }
+          },
+          {
+            "id": "Qwen/Qwen3.8-Flash",
+            "object": "model",
+            "created": 0,
+            "owned_by": "deepinfra",
+            "root": "Qwen/Qwen3.8-Flash",
+            "parent": null,
+            "metadata": {
+              "description": "Qwen's fast, low-cost model with a one-million-token context window, billed at a flat rate across the entire window.",
+              "context_length": 1000000,
+              "max_tokens": 1000000,
+              "pricing": {
+                "input_tokens": 0.113,
+                "output_tokens": 0.382,
+                "cache_read_tokens": 0.0141
+              },
+              "discount": null,
+              "tags": [
+                "chat",
+                "prompt_cache",
+                "reasoning_effort"
+              ],
+              "default_width": null,
+              "default_height": null,
+              "default_iterations": null
+            }
+          },
+          {
+            "id": "anthropic/claude-sonnet-5",
+            "object": "model",
+            "created": 0,
+            "owned_by": "deepinfra",
+            "root": "anthropic/claude-sonnet-5",
+            "parent": null,
+            "metadata": {
+              "description": "Claude Sonnet 5 is Anthropic's most capable Sonnet model yet, built for coding, agents, and professional work at scale. It brings near-Opus intelligence to the model teams run at scale every day, with the same balance of capability, cost, and speed teams already rely on Sonnet for.",
+              "context_length": 1000000,
+              "max_tokens": 1000000,
+              "pricing": {
+                "input_tokens": 3,
+                "output_tokens": 15
+              },
+              "discount": null,
+              "tags": [
+                "chat",
+                "vlm",
+                "vision",
+                "reasoning_effort",
+                "reasoning"
+              ],
+              "default_width": null,
+              "default_height": null,
+              "default_iterations": null
+            }
+          },
+          "<168 more entries omitted from the receipt>"
+        ]
+      }
+    }
+  ]
+}

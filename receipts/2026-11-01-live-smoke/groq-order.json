@@ -1,0 +1,101 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "groq",
+  "model": "groq:openai/gpt-oss-20b",
+  "check": "order",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "the model's keys, in the order written: answer, reasoning; answer 51"
+  ],
+  "seconds": 0.3,
+  "timestamp": "2026-11-01T07:25:07-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-oss-20b",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_tokens": 2000,
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "req_01m6bh458we8dafsjrake94mg0"
+      },
+      "body": {
+        "id": "chatcmpl-ff23eb1f-4f9c-4ce1-a7b9-8ed3ad3cd447",
+        "object": "chat.completion",
+        "created": 1793535907,
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"answer\":\"51\",\"reasoning\":\"Multiplying 17 by 3 gives 51 because 10×3=30, 7×3=21, and 30+21=51.\"}",
+              "reasoning": "We need to produce JSON that conforms to the schema: fields: \"answer\" string and \"reasoning\" string. We must output only the JSON. Must be compact, no newlines? \"Compact JSON formatting\" means no unnecessary spaces, but we can produce single-line JSON. Provide answer and reasoning. So answer: 51. Provide reasoning: 17*3 = 51. Let's output."
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "queue_time": 0.063,
+          "prompt_tokens": 183,
+          "prompt_time": 0.0089,
+          "completion_tokens": 138,
+          "completion_time": 0.1427,
+          "total_tokens": 321,
+          "total_time": 0.1516,
+          "completion_tokens_details": {
+            "reasoning_tokens": 83
+          }
+        },
+        "usage_breakdown": null,
+        "system_fingerprint": "fp_84bb35977d",
+        "x_groq": {
+          "id": "req_01m6bh458we8dafsjrake94mg0",
+          "seed": 1381311050
+        },
+        "service_tier": "on_demand"
+      }
+    }
+  ]
+}

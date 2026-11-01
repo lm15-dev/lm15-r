@@ -1,0 +1,115 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "typesafe",
+  "model": "typesafe:jev-latest",
+  "check": "judgments",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "ageing TRUE, style fruit; probabilities {\"ageing\":{\"true\":0.97,\"false\":0.03},\"style\":{\"fruit\":0.9,\"oak\":0.07,\"other\":0.03}}",
+    "method: provider_classification",
+    "bounding box: ServerError/ProviderError: Image processing is unavailable. (typesafe, HTTP 503, request req_01a19713aa927bc698dd4a4a3ad95791)"
+  ],
+  "seconds": 0.3,
+  "timestamp": "2026-11-01T07:26:50-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.typesafe.ai/v1/systemone",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "jev-latest",
+          "state": "Ripe blackberry and cassis, toasty oak; will reward a decade in the cellar.",
+          "questions": {
+            "ageing": {
+              "type": "noul",
+              "instructions": "Does the note say the wine will improve with age?"
+            },
+            "style": {
+              "type": "choice",
+              "instructions": "Which style dominates?",
+              "criteria": {
+                "fruit": "Fruit-forward",
+                "oak": "Oak-driven",
+                "other": null
+              }
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "ageing": {
+            "type": "noul",
+            "noul": 0.97
+          },
+          "style": {
+            "type": "choice",
+            "choice": "fruit",
+            "confidence": 0.85,
+            "probabilities": {
+              "fruit": 0.9,
+              "oak": 0.07,
+              "other": 0.03
+            }
+          }
+        },
+        "usage": {
+          "input_tokens": 354,
+          "output_tokens": 55
+        }
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.typesafe.ai/v1/systemone",
+        "headers": {
+          "content-type": "application/json",
+          "typesafe-danger-zone-images": "<redacted>",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "jev-1.14.0",
+          "state": [
+            "Where is the animal?",
+            "<lm15-image-1>"
+          ],
+          "assets": {
+            "<lm15-image-1>": {
+              "type": "image",
+              "format": "jpg",
+              "data_base64": "<338720 base64 characters, sha256 ceb1c9e9e00fa22d>"
+            }
+          },
+          "questions": {
+            "animal": {
+              "type": "box",
+              "instructions": "the animal"
+            }
+          }
+        }
+      },
+      "status": 503,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "detail": {
+          "error_type": "api_usage_error",
+          "message": "Image processing is unavailable."
+        }
+      }
+    }
+  ]
+}

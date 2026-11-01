@@ -1,0 +1,81 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openai",
+  "model": "openai:gpt-5-mini",
+  "check": "tools",
+  "managed": false,
+  "verdict": "error",
+  "problems": [
+    "RateLimitError/ProviderError: You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/. (openai, HTTP 429, request req_3662143dae994836bc0051bd9a267bcd)"
+  ],
+  "notes": [],
+  "seconds": 0.9,
+  "timestamp": "2026-11-01T07:24:36-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "gpt-5-mini",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_output_tokens": 4000,
+          "tools": [
+            {
+              "type": "function",
+              "name": "get_weather",
+              "description": "Get the weather forecast for a place on a date.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date as YYYY-MM-DD"
+                  }
+                },
+                "required": [
+                  "location",
+                  "date"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      },
+      "status": 429,
+      "response_headers": {
+        "content-type": "application/json",
+        "openai-processing-ms": "705",
+        "x-request-id": "req_3662143dae994836bc0051bd9a267bcd"
+      },
+      "body": {
+        "error": {
+          "message": "You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.",
+          "type": "insufficient_quota",
+          "param": null,
+          "code": "credit_balance_exhausted"
+        }
+      }
+    }
+  ]
+}

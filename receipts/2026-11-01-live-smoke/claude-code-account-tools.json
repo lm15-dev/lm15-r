@@ -1,0 +1,312 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "claude-code-account",
+  "model": "claude-code:claude-haiku-4-5",
+  "check": "tools",
+  "managed": true,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+    "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+    "answer: On November 2nd, 2026, Paris will experience light rain with a high temperature of 12°C."
+  ],
+  "seconds": 2.3,
+  "timestamp": "2026-11-01T07:26:57-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "<redacted>",
+          "anthropic-beta": "claude-code-20250219,oauth-2025-04-20",
+          "x-app": "<redacted>",
+          "user-agent": "claude-cli/2.1.285",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_tokens": 1000,
+          "tools": [
+            {
+              "name": "get_weather",
+              "description": "Get the weather forecast for a place on a date.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date as YYYY-MM-DD"
+                  }
+                },
+                "required": [
+                  "location",
+                  "date"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ],
+          "system": [
+            {
+              "type": "text",
+              "text": "You are Claude Code, Anthropic's official CLI for Claude."
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "request-id": "req_011CgcCv3VZCwNHjquXMJsTp",
+        "anthropic-organization-id": "b297974b-dfbd-4b37-a97a-c235ad00f1ba"
+      },
+      "body": {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgcCv3hwrEfQpBivWBvNt",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01Ft3bEimhy5RYzr1oaYfG9D",
+            "name": "get_weather",
+            "input": {
+              "location": "Paris",
+              "date": "2026-11-02"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "container": null,
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 642,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 76,
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "<redacted>",
+          "anthropic-beta": "claude-code-20250219,oauth-2025-04-20",
+          "x-app": "<redacted>",
+          "user-agent": "claude-cli/2.1.285",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+                }
+              ]
+            }
+          ],
+          "stream": true,
+          "max_tokens": 1000,
+          "tools": [
+            {
+              "name": "get_weather",
+              "description": "Get the weather forecast for a place on a date.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date as YYYY-MM-DD"
+                  }
+                },
+                "required": [
+                  "location",
+                  "date"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ],
+          "system": [
+            {
+              "type": "text",
+              "text": "You are Claude Code, Anthropic's official CLI for Claude."
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream; charset=utf-8",
+        "request-id": "req_011CgcCv75c9MUTeNepCyssH",
+        "anthropic-organization-id": "b297974b-dfbd-4b37-a97a-c235ad00f1ba"
+      },
+      "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CgcCv7HW7vzafrAmPf3gh\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":642,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":26,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01PqxFtgHemfySZ4wZPWoZZq\",\"name\":\"get_weather\",\"input\":{},\"caller\":{\"type\":\"direct\"}}        }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"locat\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"ion\\\": \\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"Paris\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\", \\\"date\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\": \\\"202\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"6-11-02\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}     }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0   }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":642,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":76}         }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"      }\n\n"
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "<redacted>",
+          "anthropic-beta": "claude-code-20250219,oauth-2025-04-20",
+          "x-app": "<redacted>",
+          "user-agent": "claude-cli/2.1.285",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "tool_use",
+                  "id": "toolu_01Ft3bEimhy5RYzr1oaYfG9D",
+                  "name": "get_weather",
+                  "input": {
+                    "location": "Paris",
+                    "date": "2026-11-02"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "tool_result",
+                  "tool_use_id": "toolu_01Ft3bEimhy5RYzr1oaYfG9D",
+                  "content": "{\"forecast\": \"light rain\", \"high_celsius\": 12}"
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_tokens": 1000,
+          "tools": [
+            {
+              "name": "get_weather",
+              "description": "Get the weather forecast for a place on a date.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date as YYYY-MM-DD"
+                  }
+                },
+                "required": [
+                  "location",
+                  "date"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ],
+          "system": [
+            {
+              "type": "text",
+              "text": "You are Claude Code, Anthropic's official CLI for Claude."
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "request-id": "req_011CgcCvAh9R5vWiQZB9kYsM",
+        "anthropic-organization-id": "b297974b-dfbd-4b37-a97a-c235ad00f1ba"
+      },
+      "body": {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgcCvAwHYKoLYhdvG5VQn",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "On November 2nd, 2026, Paris will experience light rain with a high temperature of 12°C."
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 744,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 28,
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    }
+  ]
+}

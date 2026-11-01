@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "xai-account",
+  "model": "xai:grok-4.7",
+  "check": "order",
+  "managed": true,
+  "verdict": "error",
+  "problems": [
+    "AuthOperationError/LM15Error: xai: no saved connection in this scope; sign in with login() or connect(). (xai)"
+  ],
+  "notes": [],
+  "seconds": 0,
+  "timestamp": "2026-11-01T07:26:51-0500",
+  "exchanges": []
+}

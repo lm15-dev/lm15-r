@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "together",
+  "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: Invalid API key provided. You can find your API key at https://api.together.ai/settings/api-keys. (together, HTTP 401, request p7Zdq5X-2kFHot-a53ae3b6d82da315)"
+  ],
+  "seconds": 0.2,
+  "timestamp": "2026-11-01T07:26:43-0500",
+  "exchanges": []
+}

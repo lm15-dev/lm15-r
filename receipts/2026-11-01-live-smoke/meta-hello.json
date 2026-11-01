@@ -1,0 +1,138 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "meta",
+  "model": "meta:muse-spark-1.3",
+  "check": "hello",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete: hello world (stop; usage: input=17 output=481 total=498 cache_read=0 cache_write=- reasoning=470)",
+    "stream: hello world (stop; usage: input=17 output=620 total=637 cache_read=0 cache_write=- reasoning=609)"
+  ],
+  "seconds": 6.1,
+  "timestamp": "2026-11-01T07:25:52-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_output_tokens": 2000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "e877c149-74ef-4e6c-966e-652142e25fc3"
+      },
+      "body": {
+        "top_logprobs": 0,
+        "temperature": 1,
+        "top_p": 1,
+        "service_tier": "auto",
+        "model": "muse-spark-1.3",
+        "reasoning": {
+          "effort": "high"
+        },
+        "background": false,
+        "tools": [],
+        "tool_choice": "auto",
+        "truncation": "disabled",
+        "id": "resp_6ae72fcd78b168ca5f06427f",
+        "object": "response",
+        "status": "completed",
+        "created_at": 1793535949,
+        "completed_at": 1793535949,
+        "error": null,
+        "incomplete_details": null,
+        "output": [
+          {
+            "type": "reasoning",
+            "id": "rs_6ae72fcd78b168ca5f06427f:rs_6f29d5ad-f18f-47d8-b75f-7d769d3ed8ce",
+            "summary": [],
+            "status": "completed"
+          },
+          {
+            "type": "message",
+            "id": "msg_7a99fa03-107e-4712-807c-67ed1068e72c",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "hello world",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "status": "completed"
+          }
+        ],
+        "instructions": null,
+        "usage": {
+          "input_tokens": 17,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 481,
+          "output_tokens_details": {
+            "reasoning_tokens": 470
+          },
+          "total_tokens": 498
+        },
+        "parallel_tool_calls": true,
+        "store": true,
+        "max_output_tokens": 2000
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "stream": true,
+          "max_output_tokens": 2000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream",
+        "x-request-id": "698d2363-c059-45e0-8939-bade12467627"
+      },
+      "body": "event: response.created\ndata: {\"response\":{\"background\":false,\"created_at\":1793535950.0,\"error\":null,\"id\":\"resp_6ae72fcec86d3665c0824186\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"in_progress\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\"},\"sequence_number\":0,\"type\":\"response.created\"}\n\nevent: response.in_progress\ndata: {\"response\":{\"background\":false,\"created_at\":1793535950.0,\"error\":null,\"id\":\"resp_6ae72fcec86d3665c0824186\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"in_progress\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\"},\"sequence_number\":1,\"type\":\"response.in_progress\"}\n\nevent: response.output_item.added\ndata: {\"item\":{\"id\":\"rs_6ae72fcec86d3665c0824186:rs_01a19712bfc47784a90ace99a17d66bf\",\"status\":\"in_progress\",\"summary\":[],\"type\":\"reasoning\"},\"output_index\":0,\"sequence_number\":2,\"type\":\"response.output_item.added\"}\n\nevent: response.output_item.done\ndata: {\"item\":{\"id\":\"rs_6ae72fcec86d3665c0824186:rs_01a19712bfc47784a90ace99a17d66bf\",\"status\":\"completed\",\"summary\":[],\"type\":\"reasoning\"},\"output_index\":0,\"sequence_number\":3,\"type\":\"response.output_item.done\"}\n\nevent: response.output_item.added\ndata: {\"item\":{\"content\":[],\"id\":\"msg_01a19712c7ab712c93a5791642c785a8\",\"role\":\"assistant\",\"status\":\"in_progress\",\"type\":\"message\"},\"output_index\":1,\"sequence_number\":4,\"type\":\"response.output_item.added\"}\n\nevent: response.content_part.added\ndata: {\"content_index\":0,\"item_id\":\"msg_01a19712c7ab712c93a5791642c785a8\",\"output_index\":1,\"part\":{\"annotations\":[],\"logprobs\":[],\"text\":\"\",\"type\":\"output_text\"},\"sequence_number\":5,\"type\":\"response.content_part.added\"}\n\nevent: response.output_text.delta\ndata: {\"content_index\":0,\"delta\":\"hello world\",\"item_id\":\"msg_01a19712c7ab712c93a5791642c785a8\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":6,\"type\":\"response.output_text.delta\"}\n\nevent: response.output_text.done\ndata: {\"content_index\":0,\"item_id\":\"msg_01a19712c7ab712c93a5791642c785a8\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":7,\"text\":\"hello world\",\"type\":\"response.output_text.done\"}\n\nevent: response.content_part.done\ndata: {\"content_index\":0,\"item_id\":\"msg_01a19712c7ab712c93a5791642c785a8\",\"output_index\":1,\"part\":{\"annotations\":[],\"logprobs\":[],\"text\":\"hello world\",\"type\":\"output_text\"},\"sequence_number\":8,\"type\":\"response.content_part.done\"}\n\nevent: response.output_item.done\ndata: {\"item\":{\"content\":[{\"annotations\":[],\"logprobs\":[],\"text\":\"hello world\",\"type\":\"output_text\"}],\"id\":\"msg_01a19712c7ab712c93a5791642c785a8\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"},\"output_index\":1,\"sequence_number\":9,\"type\":\"response.output_item.done\"}\n\nevent: response.completed\ndata: {\"response\":{\"background\":false,\"completed_at\":1793535952.0,\"created_at\":1793535950.0,\"error\":null,\"id\":\"resp_6ae72fcec86d3665c0824186\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[{\"id\":\"rs_6ae72fcec86d3665c0824186:rs_01a19712bfc47784a90ace99a17d66bf\",\"status\":\"completed\",\"summary\":[],\"type\":\"reasoning\"},{\"content\":[{\"annotations\":[],\"logprobs\":[],\"text\":\"hello world\",\"type\":\"output_text\"}],\"id\":\"msg_01a19712c7ab712c93a5791642c785a8\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"completed\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":17,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":620,\"output_tokens_details\":{\"reasoning_tokens\":609},\"total_tokens\":637}},\"sequence_number\":10,\"type\":\"response.completed\"}\n\ndata: [DONE]\n\n"
+    }
+  ]
+}

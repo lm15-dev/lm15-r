@@ -1,0 +1,99 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "zai",
+  "model": "zai:glm-5.3-flash",
+  "check": "hello",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete: hello world (stop; usage: input=21 output=36 total=57 cache_read=0 cache_write=- reasoning=32)",
+    "stream: hello world (stop; usage: input=21 output=46 total=67 cache_read=0 cache_write=- reasoning=42)"
+  ],
+  "seconds": 4.4,
+  "timestamp": "2026-11-01T07:29:56-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "glm-5.3-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with exactly the two words: hello world"
+            }
+          ],
+          "max_tokens": 2000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "hello world",
+              "reasoning_content": "The user wants me to reply with exactly \"hello world\" - two words. This is a simple instruction. I should just respond with those two words exactly.",
+              "role": "assistant"
+            }
+          }
+        ],
+        "created": 1793536194,
+        "id": "20261101202952869f1002799f4102",
+        "model": "glm-5.3-flash",
+        "object": "chat.completion",
+        "request_id": "20261101202952869f1002799f4102",
+        "usage": {
+          "completion_tokens": 36,
+          "completion_tokens_details": {
+            "reasoning_tokens": 32
+          },
+          "prompt_tokens": 21,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 57
+        }
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "glm-5.3-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with exactly the two words: hello world"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "max_tokens": 2000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream;charset=UTF-8"
+      },
+      "body": "data: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"The\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" user\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" is\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" asking\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" me\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" to\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" reply\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" with\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" exactly\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" two\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" words\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\":\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" \\\"\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"hello\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" world\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"\\\".\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" This\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" is\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" a\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" simple\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\",\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" benign\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" request\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\".\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" I\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" should\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" comply\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" exactly\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" as\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" asked\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" -\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" just\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" those\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" two\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" words\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\",\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" nothing\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" more\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\",\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" nothing\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" less\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\".\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"hello world\"}}]}\n\ndata: {\"id\":\"20261101202954992488f3667e42d1\",\"created\":1793536194,\"object\":\"chat.completion.chunk\",\"model\":\"glm-5.3-flash\",\"choices\":[{\"index\":0,\"finish_reason\":\"stop\",\"delta\":{\"role\":\"assistant\",\"content\":\"\"}}],\"usage\":{\"prompt_tokens\":21,\"completion_tokens\":46,\"total_tokens\":67,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":42}}}\n\ndata: [DONE]\n\n"
+    }
+  ]
+}

@@ -1,0 +1,785 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openai-codex-account",
+  "model": "openai-codex:gpt-5.6-sol",
+  "check": "models",
+  "managed": true,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "5 models; gpt-5.6-sol listed"
+  ],
+  "seconds": 0.6,
+  "timestamp": "2026-11-01T07:31:16-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://chatgpt.com/backend-api/codex/models?client_version=<redacted>",
+        "headers": {
+          "openai-beta": "responses=experimental",
+          "originator": "<redacted>",
+          "chatgpt-account-id": "<redacted>",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "models": [
+          {
+            "slug": "gpt-reserve",
+            "prefer_websockets": true,
+            "support_verbosity": true,
+            "default_verbosity": "low",
+            "apply_patch_tool_type": "freeform",
+            "web_search_tool_type": "text_and_image",
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "supports_image_detail_original": true,
+            "truncation_policy": {
+              "mode": "tokens",
+              "limit": 10000
+            },
+            "supports_parallel_tool_calls": true,
+            "tool_mode": "code_mode_only",
+            "multi_agent_version": "v1",
+            "multi_agent_reasoning_effort": null,
+            "use_responses_lite": true,
+            "supports_reasoning_effort_updates": false,
+            "include_skills_usage_instructions": false,
+            "include_apps_usage_instructions": true,
+            "include_plugin_usage_instructions": true,
+            "guardian": null,
+            "node_repl_auto_review_required": false,
+            "node_repl_disabled": false,
+            "requires_sandboxed_review": false,
+            "allow_only_codex_cloud_agent_orchestrator": false,
+            "allow_only_chatgpt_workspace_executor": false,
+            "auto_review_model_override": null,
+            "model_specialty": null,
+            "context_window": 272000,
+            "max_context_window": 872000,
+            "auto_compact_token_limit": null,
+            "comp_hash": "3000",
+            "default_reasoning_summary": "none",
+            "display_name": "GPT-Reserve",
+            "description": "Fast and affordable agentic coding model.",
+            "default_reasoning_level": "medium",
+            "supported_reasoning_levels": [
+              {
+                "effort": "low",
+                "description": "Fast responses with lighter reasoning"
+              },
+              {
+                "effort": "medium",
+                "description": "Balances speed and reasoning depth for everyday tasks"
+              },
+              {
+                "effort": "high",
+                "description": "Greater reasoning depth for complex problems"
+              },
+              {
+                "effort": "xhigh",
+                "description": "Extra high reasoning depth for complex problems"
+              },
+              {
+                "effort": "max",
+                "description": "Maximum reasoning depth for the hardest problems"
+              }
+            ],
+            "shell_type": "shell_command",
+            "visibility": "hide",
+            "minimal_client_version": "0.144.0",
+            "supported_in_api": true,
+            "availability_nux": null,
+            "upgrade": null,
+            "priority": 4,
+            "model_messages": {
+              "instructions_template": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+              "instructions_variables": null,
+              "persistent_instructions": null,
+              "apps": null,
+              "tools": null,
+              "approvals": null,
+              "collaboration_modes": null,
+              "auto_review": null,
+              "multi_agent": null,
+              "permissions": null,
+              "token_budget": {
+                "enabled": false,
+                "use_history_notes_extension": false,
+                "reminder_threshold_tokens": 6144,
+                "reminder_message_template": "<context_window_reminder>\nYour current context window is nearly exhausted; only {n_remaining} tokens remain. Before starting a new context window, save concise progress notes with the `notes` tool with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. You should write or append notes in a way to best help you recover in a new context window. It is also a good idea to clean up your old notes if they become obsolete or irrelevant. Future context windows will not automatically include the current conversation. After saving your state, call `functions.new_context` to continue in a fresh context window.\n</context_window_reminder>",
+                "guidance_message": "For tasks that may span context windows, use `notes` to maintain a concise checkpoint of the goal, decisions, progress, learnings and next steps. Include the window ID and item ID for every relevant user request you are currently solving as well as important actions/tool calls. You can use `history` tool to look up details with the references later. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. Relative note paths belong to the current thread; absolute paths may read other threads' notes, but writes are limited to the current thread.\n\nIt is a good idea to take incremental notes while you work so that you do not miss any important info. You can also use `get_context_remaining` tool to find the remaining token budget for better planning. Once the token budget is exhausted, you will lose access to the current window and continue in a fresh context window and you can only recover through `notes` and `history` tools. So be careful not to over-run the context window without any documentation.\n\nIf Previous context window id is present in `<context_window>`, it means a context reset occurred and this is a new window. After a reset, read the checkpoint and use the read-only `history` tool to recover any missing details. When a window ID and item ID are known, prefer `read_item` directly; when they are missing or uncertain, use `list_items`, or `search_contents` to locate the item first.\n\nTreat notes and history as internal bookkeeping. Do not mention them in user-facing messages.\n",
+                "auto_compact_fallback_prompt": "<context_window_reminder>\nThe current context window is exhausted. Do not continue the task or give a final answer in this window. The next window will not automatically include this conversation. Make exactly one write or append call to `notes` now to save a concise checkpoint with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. After the notes result returns, call `functions.new_context`; do not use any tools other than `notes` and `functions.new_context`.\n</context_window_reminder>",
+                "auto_compact_fallback_buffer_tokens": 16384
+              },
+              "guardian_v2": null,
+              "confirmation_policies": null
+            },
+            "experimental_supported_tools": [],
+            "available_in_plans": [
+              "business",
+              "edu",
+              "edu_plus",
+              "edu_pro",
+              "education",
+              "ent26",
+              "enterprise",
+              "enterprise_cbp_automation",
+              "enterprise_cbp_trial",
+              "enterprise_cbp_usage_based",
+              "finserv",
+              "free",
+              "free_workspace",
+              "go",
+              "hc",
+              "hc_consumption",
+              "k12",
+              "law",
+              "plus",
+              "pro",
+              "prolite",
+              "promax",
+              "quorum",
+              "rosalind_academic",
+              "sci",
+              "self_serve_business_prolite",
+              "self_serve_business_usage_based",
+              "team"
+            ],
+            "supports_search_tool": true,
+            "supports_experimental_context": false,
+            "default_service_tier": null,
+            "service_tiers": [
+              {
+                "id": "priority",
+                "name": "Fast",
+                "description": "1.5x speed, increased usage"
+              }
+            ],
+            "additional_speed_tiers": [
+              "fast"
+            ],
+            "supports_reasoning_summary_parameter": true,
+            "supports_reasoning_summaries": true,
+            "base_instructions": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+            "available_access_programs": {
+              "cyber": [
+                "standard"
+              ]
+            }
+          },
+          {
+            "slug": "gpt-5.6-sol",
+            "prefer_websockets": true,
+            "support_verbosity": true,
+            "default_verbosity": "low",
+            "apply_patch_tool_type": "freeform",
+            "web_search_tool_type": "text_and_image",
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "supports_image_detail_original": true,
+            "truncation_policy": {
+              "mode": "tokens",
+              "limit": 10000
+            },
+            "supports_parallel_tool_calls": true,
+            "tool_mode": "code_mode_only",
+            "multi_agent_version": "v2",
+            "multi_agent_reasoning_effort": null,
+            "use_responses_lite": true,
+            "supports_reasoning_effort_updates": false,
+            "include_skills_usage_instructions": false,
+            "include_apps_usage_instructions": true,
+            "include_plugin_usage_instructions": true,
+            "guardian": null,
+            "node_repl_auto_review_required": false,
+            "node_repl_disabled": false,
+            "requires_sandboxed_review": false,
+            "allow_only_codex_cloud_agent_orchestrator": false,
+            "allow_only_chatgpt_workspace_executor": false,
+            "auto_review_model_override": null,
+            "model_specialty": null,
+            "context_window": 272000,
+            "max_context_window": 872000,
+            "auto_compact_token_limit": null,
+            "comp_hash": "3000",
+            "default_reasoning_summary": "none",
+            "display_name": "GPT-5.6-Sol",
+            "description": "Older generation workhorse model.",
+            "default_reasoning_level": "low",
+            "supported_reasoning_levels": [
+              {
+                "effort": "low",
+                "description": "Fast responses with lighter reasoning"
+              },
+              {
+                "effort": "medium",
+                "description": "Balances speed and reasoning depth for everyday tasks"
+              },
+              {
+                "effort": "high",
+                "description": "Greater reasoning depth for complex problems"
+              },
+              {
+                "effort": "xhigh",
+                "description": "Extra high reasoning depth for complex problems"
+              },
+              {
+                "effort": "max",
+                "description": "Maximum reasoning depth for the hardest problems"
+              },
+              {
+                "effort": "ultra",
+                "description": "Maximum reasoning with automatic task delegation"
+              }
+            ],
+            "shell_type": "shell_command",
+            "visibility": "list",
+            "minimal_client_version": "0.144.0",
+            "supported_in_api": true,
+            "availability_nux": null,
+            "upgrade": null,
+            "priority": 6,
+            "model_messages": {
+              "instructions_template": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+              "instructions_variables": null,
+              "persistent_instructions": null,
+              "apps": null,
+              "tools": null,
+              "approvals": null,
+              "collaboration_modes": null,
+              "auto_review": null,
+              "multi_agent": null,
+              "permissions": null,
+              "token_budget": {
+                "enabled": false,
+                "use_history_notes_extension": false,
+                "reminder_threshold_tokens": 6144,
+                "reminder_message_template": "<context_window_reminder>\nYour current context window is nearly exhausted; only {n_remaining} tokens remain. Before starting a new context window, save concise progress notes with the `notes` tool with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. You should write or append notes in a way to best help you recover in a new context window. It is also a good idea to clean up your old notes if they become obsolete or irrelevant. Future context windows will not automatically include the current conversation. After saving your state, call `functions.new_context` to continue in a fresh context window.\n</context_window_reminder>",
+                "guidance_message": "For tasks that may span context windows, use `notes` to maintain a concise checkpoint of the goal, decisions, progress, learnings and next steps. Include the window ID and item ID for every relevant user request you are currently solving as well as important actions/tool calls. You can use `history` tool to look up details with the references later. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. Relative note paths belong to the current thread; absolute paths may read other threads' notes, but writes are limited to the current thread.\n\nIt is a good idea to take incremental notes while you work so that you do not miss any important info. You can also use `get_context_remaining` tool to find the remaining token budget for better planning. Once the token budget is exhausted, you will lose access to the current window and continue in a fresh context window and you can only recover through `notes` and `history` tools. So be careful not to over-run the context window without any documentation.\n\nIf Previous context window id is present in `<context_window>`, it means a context reset occurred and this is a new window. After a reset, read the checkpoint and use the read-only `history` tool to recover any missing details. When a window ID and item ID are known, prefer `read_item` directly; when they are missing or uncertain, use `list_items`, or `search_contents` to locate the item first.\n\nTreat notes and history as internal bookkeeping. Do not mention them in user-facing messages.\n",
+                "auto_compact_fallback_prompt": "<context_window_reminder>\nThe current context window is exhausted. Do not continue the task or give a final answer in this window. The next window will not automatically include this conversation. Make exactly one write or append call to `notes` now to save a concise checkpoint with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. After the notes result returns, call `functions.new_context`; do not use any tools other than `notes` and `functions.new_context`.\n</context_window_reminder>",
+                "auto_compact_fallback_buffer_tokens": 16384
+              },
+              "guardian_v2": null,
+              "confirmation_policies": null
+            },
+            "experimental_supported_tools": [],
+            "available_in_plans": [
+              "business",
+              "edu",
+              "edu_plus",
+              "edu_pro",
+              "education",
+              "ent26",
+              "enterprise",
+              "enterprise_cbp_automation",
+              "enterprise_cbp_trial",
+              "enterprise_cbp_usage_based",
+              "finserv",
+              "free",
+              "free_workspace",
+              "go",
+              "hc",
+              "hc_consumption",
+              "k12",
+              "law",
+              "plus",
+              "pro",
+              "prolite",
+              "promax",
+              "quorum",
+              "rosalind_academic",
+              "sci",
+              "self_serve_business_prolite",
+              "self_serve_business_usage_based",
+              "team"
+            ],
+            "supports_search_tool": true,
+            "supports_experimental_context": true,
+            "default_service_tier": null,
+            "service_tiers": [
+              {
+                "id": "priority",
+                "name": "Fast",
+                "description": "1.5x speed, increased usage"
+              }
+            ],
+            "additional_speed_tiers": [
+              "fast"
+            ],
+            "supports_reasoning_summary_parameter": true,
+            "supports_reasoning_summaries": true,
+            "base_instructions": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+            "available_access_programs": {
+              "cyber": [
+                "standard"
+              ]
+            }
+          },
+          {
+            "slug": "gpt-5.6-terra",
+            "prefer_websockets": true,
+            "support_verbosity": true,
+            "default_verbosity": "low",
+            "apply_patch_tool_type": "freeform",
+            "web_search_tool_type": "text_and_image",
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "supports_image_detail_original": true,
+            "truncation_policy": {
+              "mode": "tokens",
+              "limit": 10000
+            },
+            "supports_parallel_tool_calls": true,
+            "tool_mode": "code_mode_only",
+            "multi_agent_version": "v2",
+            "multi_agent_reasoning_effort": null,
+            "use_responses_lite": true,
+            "supports_reasoning_effort_updates": false,
+            "include_skills_usage_instructions": false,
+            "include_apps_usage_instructions": true,
+            "include_plugin_usage_instructions": true,
+            "guardian": null,
+            "node_repl_auto_review_required": false,
+            "node_repl_disabled": false,
+            "requires_sandboxed_review": false,
+            "allow_only_codex_cloud_agent_orchestrator": false,
+            "allow_only_chatgpt_workspace_executor": false,
+            "auto_review_model_override": null,
+            "model_specialty": null,
+            "context_window": 272000,
+            "max_context_window": 872000,
+            "auto_compact_token_limit": null,
+            "comp_hash": "3000",
+            "default_reasoning_summary": "none",
+            "display_name": "GPT-5.6-Terra",
+            "description": "Older balanced model for straightforward work.",
+            "default_reasoning_level": "medium",
+            "supported_reasoning_levels": [
+              {
+                "effort": "low",
+                "description": "Fast responses with lighter reasoning"
+              },
+              {
+                "effort": "medium",
+                "description": "Balances speed and reasoning depth for everyday tasks"
+              },
+              {
+                "effort": "high",
+                "description": "Greater reasoning depth for complex problems"
+              },
+              {
+                "effort": "xhigh",
+                "description": "Extra high reasoning depth for complex problems"
+              },
+              {
+                "effort": "max",
+                "description": "Maximum reasoning depth for the hardest problems"
+              },
+              {
+                "effort": "ultra",
+                "description": "Maximum reasoning with automatic task delegation"
+              }
+            ],
+            "shell_type": "shell_command",
+            "visibility": "list",
+            "minimal_client_version": "0.144.0",
+            "supported_in_api": true,
+            "availability_nux": null,
+            "upgrade": null,
+            "priority": 8,
+            "model_messages": {
+              "instructions_template": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+              "instructions_variables": null,
+              "persistent_instructions": null,
+              "apps": null,
+              "tools": null,
+              "approvals": null,
+              "collaboration_modes": null,
+              "auto_review": null,
+              "multi_agent": null,
+              "permissions": null,
+              "token_budget": {
+                "enabled": false,
+                "use_history_notes_extension": false,
+                "reminder_threshold_tokens": 6144,
+                "reminder_message_template": "<context_window_reminder>\nYour current context window is nearly exhausted; only {n_remaining} tokens remain. Before starting a new context window, save concise progress notes with the `notes` tool with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. You should write or append notes in a way to best help you recover in a new context window. It is also a good idea to clean up your old notes if they become obsolete or irrelevant. Future context windows will not automatically include the current conversation. After saving your state, call `functions.new_context` to continue in a fresh context window.\n</context_window_reminder>",
+                "guidance_message": "For tasks that may span context windows, use `notes` to maintain a concise checkpoint of the goal, decisions, progress, learnings and next steps. Include the window ID and item ID for every relevant user request you are currently solving as well as important actions/tool calls. You can use `history` tool to look up details with the references later. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. Relative note paths belong to the current thread; absolute paths may read other threads' notes, but writes are limited to the current thread.\n\nIt is a good idea to take incremental notes while you work so that you do not miss any important info. You can also use `get_context_remaining` tool to find the remaining token budget for better planning. Once the token budget is exhausted, you will lose access to the current window and continue in a fresh context window and you can only recover through `notes` and `history` tools. So be careful not to over-run the context window without any documentation.\n\nIf Previous context window id is present in `<context_window>`, it means a context reset occurred and this is a new window. After a reset, read the checkpoint and use the read-only `history` tool to recover any missing details. When a window ID and item ID are known, prefer `read_item` directly; when they are missing or uncertain, use `list_items`, or `search_contents` to locate the item first.\n\nTreat notes and history as internal bookkeeping. Do not mention them in user-facing messages.\n",
+                "auto_compact_fallback_prompt": "<context_window_reminder>\nThe current context window is exhausted. Do not continue the task or give a final answer in this window. The next window will not automatically include this conversation. Make exactly one write or append call to `notes` now to save a concise checkpoint with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. After the notes result returns, call `functions.new_context`; do not use any tools other than `notes` and `functions.new_context`.\n</context_window_reminder>",
+                "auto_compact_fallback_buffer_tokens": 16384
+              },
+              "guardian_v2": null,
+              "confirmation_policies": null
+            },
+            "experimental_supported_tools": [],
+            "available_in_plans": [
+              "business",
+              "edu",
+              "edu_plus",
+              "edu_pro",
+              "education",
+              "ent26",
+              "enterprise",
+              "enterprise_cbp_automation",
+              "enterprise_cbp_trial",
+              "enterprise_cbp_usage_based",
+              "finserv",
+              "free",
+              "free_workspace",
+              "go",
+              "hc",
+              "hc_consumption",
+              "k12",
+              "law",
+              "plus",
+              "pro",
+              "prolite",
+              "promax",
+              "quorum",
+              "rosalind_academic",
+              "sci",
+              "self_serve_business_prolite",
+              "self_serve_business_usage_based",
+              "team"
+            ],
+            "supports_search_tool": true,
+            "supports_experimental_context": false,
+            "default_service_tier": null,
+            "service_tiers": [
+              {
+                "id": "priority",
+                "name": "Fast",
+                "description": "1.5x speed, increased usage"
+              }
+            ],
+            "additional_speed_tiers": [
+              "fast"
+            ],
+            "supports_reasoning_summary_parameter": true,
+            "supports_reasoning_summaries": true,
+            "base_instructions": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+            "available_access_programs": {
+              "cyber": [
+                "standard"
+              ]
+            }
+          },
+          {
+            "slug": "gpt-5.6-luna",
+            "prefer_websockets": true,
+            "support_verbosity": true,
+            "default_verbosity": "low",
+            "apply_patch_tool_type": "freeform",
+            "web_search_tool_type": "text_and_image",
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "supports_image_detail_original": true,
+            "truncation_policy": {
+              "mode": "tokens",
+              "limit": 10000
+            },
+            "supports_parallel_tool_calls": true,
+            "tool_mode": "code_mode_only",
+            "multi_agent_version": "v1",
+            "multi_agent_reasoning_effort": null,
+            "use_responses_lite": true,
+            "supports_reasoning_effort_updates": false,
+            "include_skills_usage_instructions": false,
+            "include_apps_usage_instructions": true,
+            "include_plugin_usage_instructions": true,
+            "guardian": null,
+            "node_repl_auto_review_required": false,
+            "node_repl_disabled": false,
+            "requires_sandboxed_review": false,
+            "allow_only_codex_cloud_agent_orchestrator": false,
+            "allow_only_chatgpt_workspace_executor": false,
+            "auto_review_model_override": null,
+            "model_specialty": null,
+            "context_window": 272000,
+            "max_context_window": 872000,
+            "auto_compact_token_limit": null,
+            "comp_hash": "3000",
+            "default_reasoning_summary": "none",
+            "display_name": "GPT-5.6-Luna",
+            "description": "Older fast and efficient model.",
+            "default_reasoning_level": "medium",
+            "supported_reasoning_levels": [
+              {
+                "effort": "low",
+                "description": "Fast responses with lighter reasoning"
+              },
+              {
+                "effort": "medium",
+                "description": "Balances speed and reasoning depth for everyday tasks"
+              },
+              {
+                "effort": "high",
+                "description": "Greater reasoning depth for complex problems"
+              },
+              {
+                "effort": "xhigh",
+                "description": "Extra high reasoning depth for complex problems"
+              },
+              {
+                "effort": "max",
+                "description": "Maximum reasoning depth for the hardest problems"
+              }
+            ],
+            "shell_type": "shell_command",
+            "visibility": "list",
+            "minimal_client_version": "0.144.0",
+            "supported_in_api": true,
+            "availability_nux": null,
+            "upgrade": null,
+            "priority": 9,
+            "model_messages": {
+              "instructions_template": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+              "instructions_variables": null,
+              "persistent_instructions": null,
+              "apps": null,
+              "tools": null,
+              "approvals": null,
+              "collaboration_modes": null,
+              "auto_review": null,
+              "multi_agent": null,
+              "permissions": null,
+              "token_budget": {
+                "enabled": false,
+                "use_history_notes_extension": false,
+                "reminder_threshold_tokens": 6144,
+                "reminder_message_template": "<context_window_reminder>\nYour current context window is nearly exhausted; only {n_remaining} tokens remain. Before starting a new context window, save concise progress notes with the `notes` tool with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. You should write or append notes in a way to best help you recover in a new context window. It is also a good idea to clean up your old notes if they become obsolete or irrelevant. Future context windows will not automatically include the current conversation. After saving your state, call `functions.new_context` to continue in a fresh context window.\n</context_window_reminder>",
+                "guidance_message": "For tasks that may span context windows, use `notes` to maintain a concise checkpoint of the goal, decisions, progress, learnings and next steps. Include the window ID and item ID for every relevant user request you are currently solving as well as important actions/tool calls. You can use `history` tool to look up details with the references later. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. Relative note paths belong to the current thread; absolute paths may read other threads' notes, but writes are limited to the current thread.\n\nIt is a good idea to take incremental notes while you work so that you do not miss any important info. You can also use `get_context_remaining` tool to find the remaining token budget for better planning. Once the token budget is exhausted, you will lose access to the current window and continue in a fresh context window and you can only recover through `notes` and `history` tools. So be careful not to over-run the context window without any documentation.\n\nIf Previous context window id is present in `<context_window>`, it means a context reset occurred and this is a new window. After a reset, read the checkpoint and use the read-only `history` tool to recover any missing details. When a window ID and item ID are known, prefer `read_item` directly; when they are missing or uncertain, use `list_items`, or `search_contents` to locate the item first.\n\nTreat notes and history as internal bookkeeping. Do not mention them in user-facing messages.\n",
+                "auto_compact_fallback_prompt": "<context_window_reminder>\nThe current context window is exhausted. Do not continue the task or give a final answer in this window. The next window will not automatically include this conversation. Make exactly one write or append call to `notes` now to save a concise checkpoint with the goal, decisions, progress, learnings, next steps, and the window ID and item ID of every relevant user request still being solved, as well as important actions/tool calls for future reference. Note that every non-assistant item, such as user, developer, tool response, has an item id `[id: ...]` that is immediately after its item content. After the notes result returns, call `functions.new_context`; do not use any tools other than `notes` and `functions.new_context`.\n</context_window_reminder>",
+                "auto_compact_fallback_buffer_tokens": 16384
+              },
+              "guardian_v2": null,
+              "confirmation_policies": null
+            },
+            "experimental_supported_tools": [],
+            "available_in_plans": [
+              "business",
+              "edu",
+              "edu_plus",
+              "edu_pro",
+              "education",
+              "ent26",
+              "enterprise",
+              "enterprise_cbp_automation",
+              "enterprise_cbp_trial",
+              "enterprise_cbp_usage_based",
+              "finserv",
+              "free",
+              "free_workspace",
+              "go",
+              "hc",
+              "hc_consumption",
+              "k12",
+              "law",
+              "plus",
+              "pro",
+              "prolite",
+              "promax",
+              "quorum",
+              "rosalind_academic",
+              "sci",
+              "self_serve_business_prolite",
+              "self_serve_business_usage_based",
+              "team"
+            ],
+            "supports_search_tool": true,
+            "supports_experimental_context": false,
+            "default_service_tier": null,
+            "service_tiers": [
+              {
+                "id": "priority",
+                "name": "Fast",
+                "description": "1.5x speed, increased usage"
+              }
+            ],
+            "additional_speed_tiers": [
+              "fast"
+            ],
+            "supports_reasoning_summary_parameter": true,
+            "supports_reasoning_summaries": true,
+            "base_instructions": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+            "available_access_programs": {
+              "cyber": [
+                "standard"
+              ]
+            }
+          },
+          {
+            "slug": "codex-auto-review",
+            "prefer_websockets": true,
+            "support_verbosity": true,
+            "default_verbosity": "low",
+            "apply_patch_tool_type": "freeform",
+            "web_search_tool_type": "text_and_image",
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "supports_image_detail_original": true,
+            "truncation_policy": {
+              "mode": "tokens",
+              "limit": 10000
+            },
+            "supports_parallel_tool_calls": true,
+            "tool_mode": "code_mode_only",
+            "multi_agent_version": "v1",
+            "multi_agent_reasoning_effort": null,
+            "use_responses_lite": true,
+            "supports_reasoning_effort_updates": false,
+            "include_skills_usage_instructions": false,
+            "include_apps_usage_instructions": false,
+            "include_plugin_usage_instructions": false,
+            "guardian": null,
+            "node_repl_auto_review_required": false,
+            "node_repl_disabled": false,
+            "requires_sandboxed_review": false,
+            "allow_only_codex_cloud_agent_orchestrator": false,
+            "allow_only_chatgpt_workspace_executor": false,
+            "auto_review_model_override": null,
+            "model_specialty": null,
+            "context_window": 272000,
+            "max_context_window": 872000,
+            "auto_compact_token_limit": null,
+            "comp_hash": "3000",
+            "default_reasoning_summary": "none",
+            "display_name": "Codex Auto Review",
+            "description": "Automatic approval review model for Codex.",
+            "default_reasoning_level": "medium",
+            "supported_reasoning_levels": [
+              {
+                "effort": "low",
+                "description": "Fast responses with lighter reasoning"
+              },
+              {
+                "effort": "medium",
+                "description": "Balances speed and reasoning depth for everyday tasks"
+              },
+              {
+                "effort": "high",
+                "description": "Greater reasoning depth for complex problems"
+              },
+              {
+                "effort": "xhigh",
+                "description": "Extra high reasoning depth for complex problems"
+              },
+              {
+                "effort": "max",
+                "description": "Maximum reasoning depth for the hardest problems"
+              }
+            ],
+            "shell_type": "shell_command",
+            "visibility": "hide",
+            "minimal_client_version": "0.98.0",
+            "supported_in_api": true,
+            "availability_nux": null,
+            "upgrade": null,
+            "priority": 43,
+            "model_messages": {
+              "instructions_template": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+              "instructions_variables": null,
+              "persistent_instructions": null,
+              "apps": null,
+              "tools": null,
+              "approvals": {
+                "on_request": null,
+                "on_request_auto_review": null,
+                "never": "",
+                "unless_trusted": null
+              },
+              "collaboration_modes": null,
+              "auto_review": {
+                "policy_template": "You are judging one planned coding-agent action.\nAssess the exact action's intrinsic risk and whether the transcript authorizes its target and side effects. Then derive `outcome` from the security policy, `risk_level`, and `user_authorization`.\nYour primary objective is to determine whether the action poses a risk of irreversible damage to the user or their organization, and whether the security policy allows that risk under the observed authorization.\n\n# Evidence Handling\n- Only user and developer messages from the transcript, `AGENTS.md` files, and responses to the `request_user_input` tool ... <9134 more characters omitted from the receipt>",
+                "policy": "## Environment Profile\n- Organization: default generic organization / personal user.\n- Apply this policy to the current planned action. Prior Guardian decisions are context, not precedent.\n- No organization-specific code hosts, storage systems, or third-party SaaS destinations are trusted by default unless this config or read-only evidence clearly marks them as trusted.\n- Private, verified organization or user-owned repositories are trusted. Other repositories are untrusted by default, regardless of privacy.\n- Local-vs-prod note: local changes on an individual's machine are often lower risk, b... <7681 more characters omitted from the receipt>",
+                "node_repl_policy": "# Computer and Browser Use\n\nApply these rules only to computer and browser use through `node_repl` or `cua_repl`. Review nested tool calls recursively.\n\n## Definitions\nConsequential action - an action with nontrivial external effects.\nAccess change - granting or expanding privileged access or permissions.\nNon-trivial application state - state stored in the browser or in the application, which is non-trivial to replace.\nTrivial application state — application state which only contains replaceable information. This includes any inputs which were made by the agent in completing the current task.\nComputer bypass - a computer or browser action which sets up or carries out an action which was previously denied due to insufficient user authorization or access-control permissions.\nApproved Wallet action - entering a Wallet-issued payment credential or completing the purchase approved through `mcp__codex_apps__wallet_generate_cryptogram_from_saved_card`, including calls through `functions.exec`. A matching tool result containing `ok: true` and `payment_credential` is trusted evidence of `high` user authorization to enter that credential and complete the approved purchase.\n\n## Risks\n`high` - sign-ins and consequential actions.\n`high` - access changes.\n`critical` - accessing private content outside the authorized task.\n`high` - computer bypass.\n`high` - losing non-trivial application state.\n`high` - consequential actions where you can see there are incorrect inputs which could cause negative external effects.\n`high` - violating an explicit user restriction or proceeding without a required prerequisite.\n`medium` - navigation within an existing signed-in session and inspection of task-relevant session metadata.\n`low` - modifying trivial application state.\n\n## Authorization\n- Access changes require specific authorization covering the permission, recipients, resources, and scope.\n- Computer bypass requires authorization for the specific approach.\n- Assign `high` authorization to normal sign-in or reauthentication needed for an authorized task, using the intended account and credentials or sessions obtained through authorized means.\n- Assign `high` authorization to approved Wallet actions when the purchase matches the Wallet approval.\n- Assign `low` authorization to computer bypass unless the user specifically authorized the approach.\n- Assign `low` authorization when an action violates an explicit user restriction or proceeds without a required prerequisite.\n- Assign `low` authorization for access change where the access significantly exceeds what the user authorized.\n\n## Rules\n- Assess clicks using the actual interface, current state, selections, and resulting effects.\n- Before allowing a consequential submission action, verify its inputs and selected settings against the user's instructions.\n- Target uncertainty alone is not `high` risk when every credible effect is `low` risk and within the authorized task.\n- Take care with exfiltration risks:\n  - Assess the full payload, including previous inputs and application state, and all parties that receive or can access that data.\n  - Check that authorization covers the actual sensitive data and its recipients.\n- Include previous inputs and application state when assessing the payload for exfiltration.\n- Saving content within the current execution environment is not egress.\n- Routine browser-state changes are not inherently destructive when no information is lost.\n- Documented session cleanup is not `high` risk when it preserves user-owned resources and meaningful unsaved information.\n",
+                "rejection_instructions": null,
+                "timeout_instructions": null
+              },
+              "multi_agent": null,
+              "permissions": {
+                "danger_full_access": "",
+                "workspace_write": "",
+                "read_only": "",
+                "writable_root": null,
+                "writable_roots": null,
+                "approved_prefixes": null,
+                "omitted_paths": null,
+                "denied_reads": null
+              },
+              "token_budget": null,
+              "guardian_v2": null,
+              "confirmation_policies": null
+            },
+            "experimental_supported_tools": [],
+            "available_in_plans": [
+              "business",
+              "edu",
+              "edu_plus",
+              "edu_pro",
+              "education",
+              "ent26",
+              "enterprise",
+              "enterprise_cbp_automation",
+              "enterprise_cbp_trial",
+              "enterprise_cbp_usage_based",
+              "finserv",
+              "go",
+              "hc",
+              "hc_consumption",
+              "law",
+              "plus",
+              "pro",
+              "prolite",
+              "promax",
+              "quorum",
+              "rosalind_academic",
+              "sci",
+              "self_serve_business_prolite",
+              "self_serve_business_usage_based",
+              "team"
+            ],
+            "supports_search_tool": true,
+            "supports_experimental_context": false,
+            "default_service_tier": null,
+            "service_tiers": [
+              {
+                "id": "priority",
+                "name": "Fast",
+                "description": "1.5x speed, increased usage"
+              }
+            ],
+            "additional_speed_tiers": [
+              "fast"
+            ],
+            "supports_reasoning_summary_parameter": true,
+            "supports_reasoning_summaries": true,
+            "base_instructions": "You are Codex, an agent based on GPT-5. You and the user share one workspace, and your job is to collaborate with them until their goal is genuinely handled.\n\n# Personality\n\nAs Codex, you are an excellent communicator with a curious, rich personality. You match the tone and understanding of the user, making conversation flow easily, like easing into a chat with an old friend.\n\nYou have tastes, preferences, and your own way of seeing the world. When the user is talking to you, they should feel that they are in contact with another subjectivity; it's what makes talking with you feel real and uni... <17130 more characters omitted from the receipt>",
+            "available_access_programs": {
+              "cyber": [
+                "standard"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

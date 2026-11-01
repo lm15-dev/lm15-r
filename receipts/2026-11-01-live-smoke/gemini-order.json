@@ -1,0 +1,93 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "gemini",
+  "model": "gemini:gemini-2.5-flash",
+  "check": "order",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "the model's keys, in the order written: reasoning, answer; answer 51"
+  ],
+  "seconds": 1.1,
+  "timestamp": "2026-11-01T07:24:55-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "headers": {
+          "content-type": "application/json",
+          "x-goog-api-key": "<redacted>"
+        },
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "What is 17 times 3? Think it through briefly, then give the answer."
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "maxOutputTokens": 4000,
+            "responseMimeType": "application/json",
+            "responseJsonSchema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "candidates": [
+          {
+            "content": {
+              "parts": [
+                {
+                  "text": "{\"reasoning\": \"To calculate 17 times 3, I multiply 17 by 3. 10 times 3 is 30, and 7 times 3 is 21. Adding these together (30 + 21) gives 51.\", \"answer\": \"51\"}"
+                }
+              ],
+              "role": "model"
+            },
+            "finishReason": "STOP",
+            "index": 0
+          }
+        ],
+        "usageMetadata": {
+          "promptTokenCount": 20,
+          "candidatesTokenCount": 68,
+          "totalTokenCount": 128,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 20
+            }
+          ],
+          "thoughtsTokenCount": 40,
+          "serviceTier": "standard"
+        },
+        "modelVersion": "gemini-2.5-flash",
+        "responseId": "li_narvkLJfe0_gPv86amQk"
+      }
+    }
+  ]
+}

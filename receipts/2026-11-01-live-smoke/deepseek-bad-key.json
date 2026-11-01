@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "deepseek",
+  "model": "deepseek:deepseek-v4-flash",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: Authentication Fails, Your api key: ****6789 is invalid (request_id: 5fc151a7-2c89-4b55-ad94-a35798ff0268) (deepseek, HTTP 401)"
+  ],
+  "seconds": 0.4,
+  "timestamp": "2026-11-01T07:25:23-0500",
+  "exchanges": []
+}

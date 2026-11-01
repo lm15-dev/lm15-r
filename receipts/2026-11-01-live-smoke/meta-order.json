@@ -1,0 +1,151 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "meta",
+  "model": "meta:muse-spark-1.3",
+  "check": "order",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "the model's keys, in the order written: answer, reasoning; answer 51"
+  ],
+  "seconds": 2.9,
+  "timestamp": "2026-11-01T07:25:55-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "What is 17 times 3? Think it through briefly, then give the answer."
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_output_tokens": 2000,
+          "text": {
+            "format": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true,
+              "type": "json_schema"
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "fbbf8046-db98-4d13-b122-167286e0ccea"
+      },
+      "body": {
+        "top_logprobs": 0,
+        "temperature": 1,
+        "top_p": 1,
+        "service_tier": "auto",
+        "model": "muse-spark-1.3",
+        "reasoning": {
+          "effort": "high"
+        },
+        "background": false,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "worked_answer",
+            "schema": {
+              "properties": {
+                "answer": {
+                  "type": "string"
+                },
+                "reasoning": {
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "reasoning",
+                "answer"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "tools": [],
+        "tool_choice": "auto",
+        "truncation": "disabled",
+        "id": "resp_6ae72fd38d9152a3f9cc45fd",
+        "object": "response",
+        "status": "completed",
+        "created_at": 1793535955,
+        "completed_at": 1793535955,
+        "error": null,
+        "incomplete_details": null,
+        "output": [
+          {
+            "type": "reasoning",
+            "id": "rs_6ae72fd38d9152a3f9cc45fd:rs_be496bb5-ba66-4c5e-8989-941ebe2605b6",
+            "summary": [],
+            "status": "completed"
+          },
+          {
+            "type": "message",
+            "id": "msg_90c69822-9cd9-43a0-8efc-0f7ee49272ef",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "{\"answer\": \"51\", \"reasoning\": \"17 is 10 + 7. 10*3=30 and 7*3=21, so 30+21=51.\"}",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "status": "completed"
+          }
+        ],
+        "instructions": null,
+        "usage": {
+          "input_tokens": 26,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 605,
+          "output_tokens_details": {
+            "reasoning_tokens": 554
+          },
+          "total_tokens": 631
+        },
+        "parallel_tool_calls": true,
+        "store": true,
+        "max_output_tokens": 2000
+      }
+    }
+  ]
+}

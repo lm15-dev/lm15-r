@@ -1,0 +1,93 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "anthropic",
+  "model": "anthropic:claude-haiku-4-5",
+  "check": "reasoning",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "answer: No.\n\n221 = 13 × 17, so it is composite.",
+    "usage: input=54 output=292 total=346 cache_read=0 cache_write=0 reasoning=268",
+    "1 thinking part(s)"
+  ],
+  "seconds": 2.6,
+  "timestamp": "2026-11-01T07:24:48-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+          "x-api-key": "<redacted>"
+        },
+        "body": {
+          "model": "claude-haiku-4-5",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Is 221 prime? Answer yes or no, then the reason in one sentence."
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_tokens": 5024,
+          "thinking": {
+            "type": "enabled",
+            "budget_tokens": 1024
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "request-id": "req_011CgcCkXktWbZcnL78CtDPq",
+        "anthropic-organization-id": "705202b1-79ca-4ef0-9604-08f21cdd602f"
+      },
+      "body": {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgcCkXsqJhVJuoWMFj4N3",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "Is 221 prime? Let me check if 221 has any divisors other than 1 and itself.\n\nLet me try some small primes:\n- 221 ÷ 2 = 110.5 (not divisible by 2, it's odd)\n- 221 ÷ 3: 2 + 2 + 1 = 5, not divisible by 3\n- 221 ÷ 5 = 44.2 (doesn't end in 0 or 5)\n- 221 ÷ 7 = 31.57... (let me check: 7 × 31 = 217, so not quite)\n- 221 ÷ 11 = 20.09... (let me check: 11 × 20 = 220, so not quite)\n- 221 ÷ 13: Let me try 13 × 17 = 221. Yes! 13 × 17 = 221\n\nSo 221 = 13 × 17, which means 221 is not prime.",
+            "signature": "EoQGCrgBCBMYAipAsDElneznxz2dT++aXaGr0CMA9Vsp2BlS/KjNXLcjHdLx5Z1YVCJtpQQK/NgmsaIE7iuyVIuuNLNN82XS9Jr/JzIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okNzA1MjAyYjEtNzljYS00ZWYwLTk2MDQtMDhmMjFjZGQ2MDJmmgEbChljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxqAGQ35zXBhIMnrqdsYQD7Za2FDgxGgwW/90K9xlxpNt3pO8iMHPDN6sYw+mAZgVbcG9mBxeNfSQheqIPd3rt+GWgNHDUdLbhMxjvVnVSp+atnAPWfSr4A+5w0i63c3VgriFngwcJ2M5UucnZswHE7lTH14TMz6TzbNY7NqgzcVivX8gKDhkpwdL668GwE8Bv8vx+HeozyD12JyGiYeGureqzbXIDIg5pGENSSIp5lwxYuYys2YxORjLnAwChf1yW++hEoRfK2UmWOHdxPIbDSoucfnlFBReZKthZ/Z0k8xKJpdCRmLq0SQrPqwCeSEfttfStF7/qslKrSvouEYs3EzJFi2Z2JVe3OmG+zcIFU9vtnJ6VH1o6miaJSfhYeFfODs6znDtC17BWDJX0njYUjgypYRgwh2RPuTlFSNffq3uq4D1cOMZ142KXK802QnLYrdK3o2mayM1BWRorY/f+vKXkKzsJnDpVKw9GaWACPGrG5cr9Xs6D/eIunFKKzzFkSmXJ0bsK6HD+VgkoEVYLylQd2l/X3gUMdpJaJWfExUgwvusT6n/KbILBl40GWGjBcffLaBnWf14HGI96DOCLI6sKp4C28U9oG2zanqALMZP2l6ab1y5HCMFXBDcB9tQhD3rBAKGlpcZDzeCa5PE8AsdWk0wYB0boTTqHnn8Werkwvpsap6oHYyLpfgZ2cnqfGYztV8EyUFkl4JQlvPEGMW71bMHEkaLcmKuAWjR3iQsdcuNlC2Bz3dkt7+HZLe1DtFx/v1m1R73teyuVcLp+OhgB"
+          },
+          {
+            "type": "text",
+            "text": "No.\n\n221 = 13 × 17, so it is composite."
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 54,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 292,
+          "output_tokens_details": {
+            "thinking_tokens": 268
+          },
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    }
+  ]
+}

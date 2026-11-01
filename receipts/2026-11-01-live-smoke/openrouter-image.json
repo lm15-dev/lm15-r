@@ -1,0 +1,99 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openrouter",
+  "model": "openrouter:openai/gpt-4.1-nano",
+  "check": "image",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "the model did not say badger (a model answer, not an lm15 check)",
+    "answer: Opossum",
+    "usage: input=2287 output=4 total=2291 cache_read=0 cache_write=0 reasoning=0"
+  ],
+  "seconds": 2.2,
+  "timestamp": "2026-11-01T07:25:14-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-4.1-nano",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "What animal is in this camera-trap photo? Answer in a few words."
+                },
+                {
+                  "type": "image_url",
+                  "image_url": {
+                    "url": "<338743 base64 characters, sha256 ee9da94e20a50b3b>"
+                  }
+                }
+              ]
+            }
+          ],
+          "max_tokens": 1000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "id": "gen-1793535912-mxuclGV1ZNlJTTgsSrEp",
+        "object": "chat.completion",
+        "created": 1793535912,
+        "model": "openai/gpt-4.1-nano",
+        "provider": "Azure",
+        "system_fingerprint": null,
+        "service_tier": "default",
+        "choices": [
+          {
+            "index": 0,
+            "logprobs": null,
+            "finish_reason": "stop",
+            "native_finish_reason": "completed",
+            "message": {
+              "role": "assistant",
+              "content": "Opossum",
+              "refusal": null,
+              "reasoning": null
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2287,
+          "completion_tokens": 4,
+          "total_tokens": 2291,
+          "cost": 0.0002,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0.0002,
+            "upstream_inference_prompt_cost": 0.0002,
+            "upstream_inference_completions_cost": 1.6e-06
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        }
+      }
+    }
+  ]
+}

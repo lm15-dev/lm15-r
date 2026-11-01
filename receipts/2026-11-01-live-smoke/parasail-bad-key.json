@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "parasail",
+  "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: Provider returned HTTP 401 (parasail, HTTP 401, request 77eaa272ca29aae1afa479a6e6f39ed8)"
+  ],
+  "seconds": 0.1,
+  "timestamp": "2026-11-01T07:26:50-0500",
+  "exchanges": []
+}

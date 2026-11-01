@@ -1,0 +1,116 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openrouter",
+  "model": "openrouter:openai/gpt-4.1-nano",
+  "check": "hello",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete: hello world (stop; usage: input=16 output=3 total=19 cache_read=0 cache_write=0 reasoning=0)",
+    "stream: hello world (stop; usage: input=16 output=3 total=19 cache_read=0 cache_write=0 reasoning=0)"
+  ],
+  "seconds": 1.4,
+  "timestamp": "2026-11-01T07:25:09-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-4.1-nano",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with exactly the two words: hello world"
+            }
+          ],
+          "max_tokens": 1000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "id": "gen-1793535908-MFkXk8TuST3LGoKcATRU",
+        "object": "chat.completion",
+        "created": 1793535908,
+        "model": "openai/gpt-4.1-nano",
+        "provider": "Azure",
+        "system_fingerprint": null,
+        "service_tier": "default",
+        "choices": [
+          {
+            "index": 0,
+            "logprobs": null,
+            "finish_reason": "stop",
+            "native_finish_reason": "completed",
+            "message": {
+              "role": "assistant",
+              "content": "hello world",
+              "refusal": null,
+              "reasoning": null
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 16,
+          "completion_tokens": 3,
+          "total_tokens": 19,
+          "cost": 2.772e-06,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 2.8e-06,
+            "upstream_inference_prompt_cost": 1.6e-06,
+            "upstream_inference_completions_cost": 1.2e-06
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        }
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-4.1-nano",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with exactly the two words: hello world"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "max_tokens": 1000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream"
+      },
+      "body": "data: {\"id\":\"gen-1793535908-Meu6KlLS4iWyDFFWsdpH\",\"object\":\"chat.completion.chunk\",\"created\":1793535908,\"model\":\"openai/gpt-4.1-nano\",\"provider\":\"Azure\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hello\",\"role\":\"assistant\"},\"finish_reason\":null,\"native_finish_reason\":null}]}\n\ndata: {\"id\":\"gen-1793535908-Meu6KlLS4iWyDFFWsdpH\",\"object\":\"chat.completion.chunk\",\"created\":1793535908,\"model\":\"openai/gpt-4.1-nano\",\"provider\":\"Azure\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" world\",\"role\":\"assistant\"},\"finish_reason\":null,\"native_finish_reason\":null}]}\n\ndata: {\"id\":\"gen-1793535908-Meu6KlLS4iWyDFFWsdpH\",\"object\":\"chat.completion.chunk\",\"created\":1793535908,\"model\":\"openai/gpt-4.1-nano\",\"provider\":\"Azure\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\"}]}\n\ndata: {\"id\":\"gen-1793535908-Meu6KlLS4iWyDFFWsdpH\",\"object\":\"chat.completion.chunk\",\"created\":1793535908,\"model\":\"openai/gpt-4.1-nano\",\"provider\":\"Azure\",\"service_tier\":\"default\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"native_finish_reason\":\"completed\"}],\"usage\":{\"prompt_tokens\":16,\"completion_tokens\":3,\"total_tokens\":19,\"cost\":0.000002772,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.0000028,\"upstream_inference_prompt_cost\":0.0000016,\"upstream_inference_completions_cost\":0.0000012},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"image_tokens\":0,\"audio_tokens\":0}}}\n\ndata: [DONE]\n\n"
+    }
+  ]
+}

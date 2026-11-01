@@ -1,0 +1,108 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "parasail",
+  "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+  "check": "order",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "the model's keys, in the order written: reasoning, answer; answer 17 * 3 = 51"
+  ],
+  "seconds": 2.3,
+  "timestamp": "2026-11-01T07:26:48-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.parasail.io/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "meta-llama/Llama-3.3-70B-Instruct",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_completion_tokens": 1000,
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "2f3eb89b7e431eaa7d24f7d8201a4778"
+      },
+      "body": {
+        "id": "chatcmpl-2f3eb89b7e431eaa7d24f7d8201a4778",
+        "object": "chat.completion",
+        "created": 1793536006,
+        "model": "meta-llama/Llama-3.3-70B-Instruct",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{               \n  \"reasoning\": \"To calculate 17 times 3, we can simply multiply the two numbers together. Multiplication is a basic arithmetic operation that represents the repeated addition of a number. So, 17 times 3 is equal to 17 added together 3 times: 17 + 17 + 17 = 51.\"\n  ,\n  \"answer\": \"17 * 3 = 51\"\n}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "prompt_tokens": 53,
+          "total_tokens": 141,
+          "completion_tokens": 88,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 48,
+            "multimodal_tokens": null
+          },
+          "completion_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      }
+    }
+  ]
+}

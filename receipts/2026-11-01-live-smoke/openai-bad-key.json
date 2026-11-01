@@ -1,0 +1,15 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openai",
+  "model": "openai:gpt-5-mini",
+  "check": "bad-key",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "AuthError/ProviderError: Incorrect API key provided: lm15-liv**************************6789. You can find your API key at https://platform.openai.com/account/api-keys. (openai, HTTP 401, request req_d8c446cfae314e26951b9d876041a496)"
+  ],
+  "seconds": 0.2,
+  "timestamp": "2026-11-01T07:24:40-0500",
+  "exchanges": []
+}

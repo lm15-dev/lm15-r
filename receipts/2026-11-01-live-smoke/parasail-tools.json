@@ -1,0 +1,296 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "parasail",
+  "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+  "check": "tools",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+    "stream called get_weather {\"location\":\"Paris\",\"date\":\"2026-11-02\"}",
+    "answer: The weather in Paris on 2026-11-02 will be light rain with a high of 12 degrees Celsius."
+  ],
+  "seconds": 2.2,
+  "timestamp": "2026-11-01T07:26:50-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.parasail.io/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "meta-llama/Llama-3.3-70B-Instruct",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "max_completion_tokens": 1000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "ae1eda564d65bddae4fdf3b281b419b4"
+      },
+      "body": {
+        "id": "chatcmpl-ae1eda564d65bddae4fdf3b281b419b4",
+        "object": "chat.completion",
+        "created": 1793536008,
+        "model": "meta-llama/Llama-3.3-70B-Instruct",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-8744db95b2b603b8",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"location\": \"Paris\", \"date\": \"2026-11-02\"}"
+                  }
+                }
+              ],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "tool_calls",
+            "stop_reason": 128008,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "prompt_tokens": 309,
+          "total_tokens": 343,
+          "completion_tokens": 34,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 304,
+            "multimodal_tokens": null
+          },
+          "completion_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.parasail.io/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "meta-llama/Llama-3.3-70B-Instruct",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "max_completion_tokens": 1000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "03ca1640fcb7bba54cd00e40b9ff84ef"
+      },
+      "body": "data: {\"id\":\"chatcmpl-03ca1640fcb7bba54cd00e40b9ff84ef\",\"object\":\"chat.completion.chunk\",\"created\":1793536009,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"prompt_token_ids\":null,\"prompt_text\":null}\n\ndata: {\"id\":\"chatcmpl-03ca1640fcb7bba54cd00e40b9ff84ef\",\"object\":\"chat.completion.chunk\",\"created\":1793536009,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"id\":\"chatcmpl-tool-82594bb656f3e481\",\"type\":\"function\",\"index\":0,\"function\":{\"name\":\"get_weather\"}}]},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}]}\n\ndata: {\"id\":\"chatcmpl-03ca1640fcb7bba54cd00e40b9ff84ef\",\"object\":\"chat.completion.chunk\",\"created\":1793536009,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"location\\\": \\\"Paris\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}]}\n\ndata: {\"id\":\"chatcmpl-03ca1640fcb7bba54cd00e40b9ff84ef\",\"object\":\"chat.completion.chunk\",\"created\":1793536009,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\", \\\"date\\\": \\\"2026-11-02\\\"}\"}}]},\"logprobs\":null,\"finish_reason\":null,\"token_ids\":null}]}\n\ndata: {\"id\":\"chatcmpl-03ca1640fcb7bba54cd00e40b9ff84ef\",\"object\":\"chat.completion.chunk\",\"created\":1793536009,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\"}}]},\"logprobs\":null,\"finish_reason\":\"tool_calls\",\"stop_reason\":128008,\"token_ids\":null}]}\n\ndata: {\"id\":\"chatcmpl-03ca1640fcb7bba54cd00e40b9ff84ef\",\"object\":\"chat.completion.chunk\",\"created\":1793536009,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[],\"usage\":{\"prompt_tokens\":309,\"total_tokens\":343,\"completion_tokens\":34,\"prompt_tokens_details\":{\"cached_tokens\":288,\"created_cache_tokens\":16}}}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.parasail.io/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "meta-llama/Llama-3.3-70B-Instruct",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-8744db95b2b603b8",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"location\":\"Paris\",\"date\":\"2026-11-02\"}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "tool_call_id": "chatcmpl-tool-8744db95b2b603b8",
+              "content": "{\"forecast\": \"light rain\", \"high_celsius\": 12}"
+            }
+          ],
+          "max_completion_tokens": 1000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "8ef9dfa689a477bdb48da41a198f616f"
+      },
+      "body": {
+        "id": "chatcmpl-8ef9dfa689a477bdb48da41a198f616f",
+        "object": "chat.completion",
+        "created": 1793536009,
+        "model": "meta-llama/Llama-3.3-70B-Instruct",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "The weather in Paris on 2026-11-02 will be light rain with a high of 12 degrees Celsius.",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "prompt_tokens": 366,
+          "total_tokens": 392,
+          "completion_tokens": 26,
+          "prompt_tokens_details": {
+            "cached_tokens": 288,
+            "created_cache_tokens": 64,
+            "multimodal_tokens": null
+          },
+          "completion_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      }
+    }
+  ]
+}

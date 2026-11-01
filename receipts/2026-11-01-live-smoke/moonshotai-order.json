@@ -1,0 +1,91 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "moonshotai",
+  "model": "moonshotai:kimi-k3",
+  "check": "order",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "the model's keys, in the order written: reasoning, answer; answer 51"
+  ],
+  "seconds": 6,
+  "timestamp": "2026-11-01T07:26:15-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.moonshot.ai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "kimi-k3",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_completion_tokens": 2000,
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true
+            }
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "id": "chatcmpl-dbcdf04b-a4a4-9dc0-a561-fa8fca46aa01",
+        "object": "chat.completion",
+        "created": 1793535970,
+        "model": "kimi-k3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\":\"17 times 3 can be computed as (10 times 3) plus (7 times 3), which is 30 plus 21, totaling 51.\",\"answer\":\"51\"}",
+              "reasoning_content": "Compute 17 times 3: 10*3=30, 7*3=21, total 51. Need final raw JSON matching schema, no markdown. Include brief reasoning and answer string."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 196,
+          "completion_tokens": 94,
+          "total_tokens": 290,
+          "completion_tokens_details": {
+            "reasoning_tokens": 42
+          },
+          "prompt_tokens_details": {
+            "cache_write_tokens": 0
+          }
+        }
+      }
+    }
+  ]
+}

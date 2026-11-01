@@ -1,0 +1,74 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "openai",
+  "model": "openai:gpt-5-mini",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "142 models; gpt-5-mini listed"
+  ],
+  "seconds": 1,
+  "timestamp": "2026-11-01T07:24:39-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.openai.com/v1/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "openai-processing-ms": "738",
+        "x-request-id": "24e4fd1d-3994-417a-b17a-fe5cb78eb252"
+      },
+      "body": {
+        "object": "list",
+        "data": [
+          {
+            "id": "omni-moderation-2024-09-26",
+            "object": "model",
+            "created": 1732734466,
+            "owned_by": "system",
+            "shutdown_date": null
+          },
+          {
+            "id": "gpt-live-transcribe",
+            "object": "model",
+            "created": 1785168034,
+            "owned_by": "system",
+            "shutdown_date": null
+          },
+          {
+            "id": "gpt-5.6-luna",
+            "object": "model",
+            "created": 1782228658,
+            "owned_by": "system",
+            "shutdown_date": null
+          },
+          {
+            "id": "gpt-4-turbo-2024-04-09",
+            "object": "model",
+            "created": 1712601677,
+            "owned_by": "system",
+            "shutdown_date": "2026-10-23"
+          },
+          {
+            "id": "gpt-realtime-2.1-mini",
+            "object": "model",
+            "created": 1782254706,
+            "owned_by": "system",
+            "shutdown_date": null
+          },
+          "<137 more entries omitted from the receipt>"
+        ]
+      }
+    }
+  ]
+}

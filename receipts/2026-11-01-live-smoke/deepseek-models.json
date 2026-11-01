@@ -1,0 +1,93 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "deepseek",
+  "model": "deepseek:deepseek-v4-flash",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "2 models; deepseek-v4-flash not listed"
+  ],
+  "seconds": 0.4,
+  "timestamp": "2026-11-01T07:25:23-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.deepseek.com/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "object": "list",
+        "data": [
+          {
+            "id": "deepseek-flash",
+            "object": "model",
+            "owned_by": "deepseek",
+            "name": "DeepSeek-V4.1-Flash",
+            "context_window": 1048576,
+            "max_output_tokens": 393216,
+            "input_modalities": [
+              "text",
+              "image"
+            ],
+            "output_modalities": [
+              "text"
+            ],
+            "effort": {
+              "supported_levels": [
+                "low",
+                "high",
+                "max"
+              ],
+              "default_level": "high"
+            },
+            "api_capabilities": {
+              "anthropic_messages": {
+                "system_prompt_update": "in-history",
+                "tool_update": "addition-only"
+              }
+            }
+          },
+          {
+            "id": "deepseek-v4-pro",
+            "object": "model",
+            "owned_by": "deepseek",
+            "name": "DeepSeek-V4-Pro",
+            "context_window": 1048576,
+            "max_output_tokens": 393216,
+            "input_modalities": [
+              "text"
+            ],
+            "output_modalities": [
+              "text"
+            ],
+            "effort": {
+              "supported_levels": [
+                "low",
+                "high",
+                "max"
+              ],
+              "default_level": "high"
+            },
+            "api_capabilities": {
+              "anthropic_messages": {
+                "system_prompt_update": "leading-only",
+                "tool_update": "leading-only"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

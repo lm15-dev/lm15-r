@@ -1,0 +1,281 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "groq",
+  "model": "groq:openai/gpt-oss-20b",
+  "check": "tools",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "stream called get_weather {\"date\":\"2026-11-02\",\"location\":\"Paris\"}",
+    "answer: On 2026‑11‑02 in Paris it will be light rain with a high of about 12 °C."
+  ],
+  "seconds": 0.5,
+  "timestamp": "2026-11-01T07:25:07-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-oss-20b",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "max_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "req_01m6bh45hwe159799s38xa3ea0"
+      },
+      "body": {
+        "id": "chatcmpl-f0a77aae-392a-4729-934c-5e28f2fa3e39",
+        "object": "chat.completion",
+        "created": 1793535907,
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "reasoning": "We need to call the get_weather function. Use date 2026-11-02 and location \"Paris\".",
+              "tool_calls": [
+                {
+                  "id": "fc_892e37ad-c8a8-42f4-b54c-5909d9a0bd08",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}"
+                  }
+                }
+              ]
+            },
+            "logprobs": null,
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "queue_time": 0.0298,
+          "prompt_tokens": 169,
+          "prompt_time": 0.0117,
+          "completion_tokens": 56,
+          "completion_time": 0.0586,
+          "total_tokens": 225,
+          "total_time": 0.0703,
+          "completion_tokens_details": {
+            "reasoning_tokens": 24
+          }
+        },
+        "usage_breakdown": null,
+        "system_fingerprint": "fp_e2cb7a84ec",
+        "x_groq": {
+          "id": "req_01m6bh45hwe159799s38xa3ea0",
+          "seed": 1223955553
+        },
+        "service_tier": "on_demand"
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-oss-20b",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "max_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream",
+        "x-request-id": "req_01m6bh45q2erq9tqywcpqtbzea"
+      },
+      "body": "data: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01m6bh45q2erq9tqywcpqtbzea\",\"seed\":1076584918}}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"We\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" need\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" to\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" use\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" tool\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" get\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"_weather\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" with\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" date\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" \\\"\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"202\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"6\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"-\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"11\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"-\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"02\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"\\\"\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" and\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" location\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" \\\"\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"Paris\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"\\\".\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" Then\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\" respond\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\".\",\"channel\":\"analysis\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"id\":\"fc_e2d80736-2c4c-4e85-a284-aea27ce6c8ef\",\"type\":\"function\",\"function\":{\"name\":\"get_weather\",\"arguments\":\"{\\\"date\\\":\\\"2026-11-02\\\",\\\"location\\\":\\\"Paris\\\"}\"},\"index\":0}]},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"tool_calls\"}],\"x_groq\":{\"id\":\"req_01m6bh45q2erq9tqywcpqtbzea\",\"usage\":{\"queue_time\":0.030006981,\"prompt_tokens\":169,\"prompt_time\":0.008387934,\"completion_tokens\":58,\"completion_time\":0.062808469,\"total_tokens\":227,\"total_time\":0.071196403,\"completion_tokens_details\":{\"reasoning_tokens\":26}}},\"usage\":{\"queue_time\":0.030006981,\"prompt_tokens\":169,\"prompt_time\":0.008387934,\"completion_tokens\":58,\"completion_time\":0.062808469,\"total_tokens\":227,\"total_time\":0.071196403,\"completion_tokens_details\":{\"reasoning_tokens\":26}}}\n\ndata: {\"id\":\"chatcmpl-e1ec7937-d799-43ce-939e-4a838a3c7f61\",\"object\":\"chat.completion.chunk\",\"created\":1793535907,\"model\":\"openai/gpt-oss-20b\",\"system_fingerprint\":\"fp_976a85d17a\",\"choices\":[],\"usage\":{\"queue_time\":0.030006981,\"prompt_tokens\":169,\"prompt_time\":0.008387934,\"completion_tokens\":58,\"completion_time\":0.062808469,\"total_tokens\":227,\"total_time\":0.071196403,\"completion_tokens_details\":{\"reasoning_tokens\":26}},\"service_tier\":\"on_demand\"}\n\ndata: [DONE]\n\n"
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "openai/gpt-oss-20b",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            },
+            {
+              "role": "assistant",
+              "content": "We need to call the get_weather function. Use date 2026-11-02 and location \"Paris\".",
+              "tool_calls": [
+                {
+                  "id": "fc_892e37ad-c8a8-42f4-b54c-5909d9a0bd08",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"date\":\"2026-11-02\",\"location\":\"Paris\"}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "tool_call_id": "fc_892e37ad-c8a8-42f4-b54c-5909d9a0bd08",
+              "content": "{\"forecast\": \"light rain\", \"high_celsius\": 12}"
+            }
+          ],
+          "max_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "req_01m6bh45xaeae8hggdg3fag540"
+      },
+      "body": {
+        "id": "chatcmpl-0da48357-5727-44bf-b57d-7492b6bc9de5",
+        "object": "chat.completion",
+        "created": 1793535907,
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "On 2026‑11‑02 in Paris it will be light rain with a high of about 12 °C.",
+              "reasoning": "We have the result: forecast light rain, high 12°C. Need to respond in one sentence."
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "queue_time": 0.0033,
+          "prompt_tokens": 217,
+          "prompt_time": 0.0106,
+          "completion_tokens": 56,
+          "completion_time": 0.058,
+          "total_tokens": 273,
+          "total_time": 0.0686,
+          "completion_tokens_details": {
+            "reasoning_tokens": 22
+          }
+        },
+        "usage_breakdown": null,
+        "system_fingerprint": "fp_d6de37e6be",
+        "x_groq": {
+          "id": "req_01m6bh45xaeae8hggdg3fag540",
+          "seed": 900001668
+        },
+        "service_tier": "on_demand"
+      }
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "zai",
+  "model": "zai:glm-5.3-flash",
+  "check": "order",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "adapted, as the contract says: this server accepts response_format type 'json_schema' and does not apply it; use {'type': 'json_object'} and describe the shape in the prompt",
+    "answer: Breaking it down: 17 × 3 can be split into (10 × 3) + (7 × 3) = 30 + 21 = 51.\n\n**The answer is 51.**"
+  ],
+  "seconds": 3.3,
+  "timestamp": "2026-11-01T07:29:59-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.z.ai/api/paas/v4/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "glm-5.3-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_tokens": 2000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "Breaking it down: 17 × 3 can be split into (10 × 3) + (7 × 3) = 30 + 21 = 51.\n\n**The answer is 51.**",
+              "reasoning_content": "The user asks: 17 times 3. Simple math. 17 × 3 = 51. They want brief reasoning then the answer.\n\n17 × 3 = 17 + 17 + 17 = 34 + 17 = 51. Or 10×3 = 30, 7×3 = 21, 30+21 = 51.",
+              "role": "assistant"
+            }
+          }
+        ],
+        "created": 1793536199,
+        "id": "2026110120295625f1e8ecae024ed5",
+        "model": "glm-5.3-flash",
+        "object": "chat.completion",
+        "request_id": "2026110120295625f1e8ecae024ed5",
+        "usage": {
+          "completion_tokens": 124,
+          "completion_tokens_details": {
+            "reasoning_tokens": 78
+          },
+          "prompt_tokens": 30,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 154
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "gemini",
+  "model": "gemini:gemini-2.5-flash",
+  "check": "image",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "answer: Badger",
+    "usage: input=275 output=603 total=878 cache_read=0 cache_write=- reasoning=601"
+  ],
+  "seconds": 4.1,
+  "timestamp": "2026-11-01T07:25:02-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "headers": {
+          "content-type": "application/json",
+          "x-goog-api-key": "<redacted>"
+        },
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "What animal is in this camera-trap photo? Answer in a few words."
+                },
+                {
+                  "inlineData": {
+                    "mimeType": "image/jpeg",
+                    "data": "<338720 base64 characters, sha256 ceb1c9e9e00fa22d>"
+                  }
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "maxOutputTokens": 4000
+          }
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json; charset=UTF-8"
+      },
+      "body": {
+        "candidates": [
+          {
+            "content": {
+              "parts": [
+                {
+                  "text": "Badger"
+                }
+              ],
+              "role": "model"
+            },
+            "finishReason": "STOP",
+            "index": 0
+          }
+        ],
+        "usageMetadata": {
+          "promptTokenCount": 275,
+          "candidatesTokenCount": 2,
+          "totalTokenCount": 878,
+          "promptTokensDetails": [
+            {
+              "modality": "TEXT",
+              "tokenCount": 17
+            },
+            {
+              "modality": "IMAGE",
+              "tokenCount": 258
+            }
+          ],
+          "thoughtsTokenCount": 601,
+          "serviceTier": "standard"
+        },
+        "modelVersion": "gemini-2.5-flash",
+        "responseId": "mi_naqq3F4fG0_gPs5S28Ak"
+      }
+    }
+  ]
+}

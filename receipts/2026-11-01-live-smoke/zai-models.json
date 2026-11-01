@@ -1,0 +1,67 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "zai",
+  "model": "zai:glm-5.3-flash",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "11 models; glm-5.3-flash listed"
+  ],
+  "seconds": 0.4,
+  "timestamp": "2026-11-01T07:30:15-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.z.ai/api/paas/v4/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json;charset=UTF-8"
+      },
+      "body": {
+        "object": "list",
+        "data": [
+          {
+            "id": "glm-4.5",
+            "object": "model",
+            "created": 1753632000,
+            "owned_by": "z-ai"
+          },
+          {
+            "id": "glm-4.5-air",
+            "object": "model",
+            "created": 1753632000,
+            "owned_by": "z-ai"
+          },
+          {
+            "id": "glm-4.6",
+            "object": "model",
+            "created": 1759276800,
+            "owned_by": "z-ai"
+          },
+          {
+            "id": "glm-4.7",
+            "object": "model",
+            "created": 1766332800,
+            "owned_by": "z-ai"
+          },
+          {
+            "id": "glm-5",
+            "object": "model",
+            "created": 1770739200,
+            "owned_by": "z-ai"
+          },
+          "<6 more entries omitted from the receipt>"
+        ]
+      }
+    }
+  ]
+}

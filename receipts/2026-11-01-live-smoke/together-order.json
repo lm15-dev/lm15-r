@@ -1,0 +1,74 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "together",
+  "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "check": "order",
+  "managed": false,
+  "verdict": "error",
+  "problems": [
+    "BillingError/ProviderError: Credit limit exceeded, please [add credits](https://api.together.ai/settings/billing). If you've already made a payment, please wait up to 5 minutes for balances to update and try again. (together, HTTP 402, request p7ZdpiW-2kFHot-a53ae3afd86ba25d)"
+  ],
+  "notes": [],
+  "seconds": 0.1,
+  "timestamp": "2026-11-01T07:26:42-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.together.ai/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_completion_tokens": 1000,
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true
+            }
+          }
+        }
+      },
+      "status": 402,
+      "response_headers": {
+        "content-type": "application/json; charset=utf-8",
+        "request-id": "p7ZdpiW-2kFHot-a53ae3afd86ba25d",
+        "x-request-id": "p7ZdpiW-2kFHot-a53ae3afd86ba25d"
+      },
+      "body": {
+        "id": "p7ZdpiW-2kFHot-a53ae3afd86ba25d",
+        "error": {
+          "message": "Credit limit exceeded, please [add credits](https://api.together.ai/settings/billing). If you've already made a payment, please wait up to 5 minutes for balances to update and try again.",
+          "type": "credit_limit",
+          "param": null,
+          "code": null
+        }
+      }
+    }
+  ]
+}

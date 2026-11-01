@@ -1,0 +1,77 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "fireworks",
+  "model": "fireworks:accounts/fireworks/models/deepseek-v4p1-flash",
+  "check": "tools",
+  "managed": false,
+  "verdict": "error",
+  "problems": [
+    "ProviderError/LM15Error: Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information. (fireworks, HTTP 412, request chatcmpl-ec79007c86d044749f6f5fc28bc27f32)"
+  ],
+  "notes": [],
+  "seconds": 0.1,
+  "timestamp": "2026-11-01T07:26:44-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.fireworks.ai/inference/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "accounts/fireworks/models/deepseek-v4p1-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What will the weather be in Paris on 2026-11-02? Use the tool, then answer in one sentence."
+            }
+          ],
+          "max_completion_tokens": 2000,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "description": "Get the weather forecast for a place on a date.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "City name"
+                    },
+                    "date": {
+                      "type": "string",
+                      "description": "Date as YYYY-MM-DD"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "date"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "status": 412,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "chatcmpl-ec79007c86d044749f6f5fc28bc27f32"
+      },
+      "body": {
+        "error": {
+          "message": "Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information.",
+          "param": null,
+          "code": "PRECONDITION_FAILED",
+          "type": "error"
+        },
+        "request_id": "chatcmpl-ec79007c86d044749f6f5fc28bc27f32"
+      }
+    }
+  ]
+}

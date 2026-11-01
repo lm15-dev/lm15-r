@@ -1,0 +1,340 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "github-copilot-account",
+  "model": "github-copilot:gpt-4.1",
+  "check": "models",
+  "managed": true,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "51 models; gpt-4.1 listed"
+  ],
+  "seconds": 0.3,
+  "timestamp": "2026-11-01T07:27:18-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.individual.githubcopilot.com/models",
+        "headers": {
+          "user-agent": "GitHubCopilotChat/0.35.0",
+          "editor-version": "vscode/1.107.0",
+          "editor-plugin-version": "<redacted>",
+          "copilot-integration-id": "vscode-chat",
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "data": [
+          {
+            "capabilities": {
+              "family": "claude-fable-5.1",
+              "limits": {
+                "max_context_window_tokens": 264000,
+                "max_non_streaming_output_tokens": 16000,
+                "max_output_tokens": 64000,
+                "max_prompt_tokens": 200000,
+                "vision": {
+                  "max_prompt_image_size": 3145728,
+                  "max_prompt_images": 1,
+                  "supported_media_types": [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                    "application/pdf"
+                  ]
+                }
+              },
+              "object": "model_capabilities",
+              "supports": {
+                "adaptive_thinking": true,
+                "max_thinking_budget": 32000,
+                "min_thinking_budget": 1024,
+                "parallel_tool_calls": true,
+                "reasoning_effort": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ],
+                "streaming": true,
+                "structured_outputs": true,
+                "tool_calls": true,
+                "vision": true
+              },
+              "tokenizer": "o200k_base",
+              "type": "chat"
+            },
+            "id": "claude-fable-5.1",
+            "model_picker_category": "powerful",
+            "model_picker_enabled": true,
+            "name": "Claude Fable 5.1",
+            "object": "model",
+            "policy": {
+              "state": "disabled",
+              "terms": "Enable access to the latest Claude Fable 5.1 model from Anthropic. [Learn more about how GitHub Copilot serves Claude Fable 5.1](https://gh.io/copilot-claude-opus)."
+            },
+            "preview": false,
+            "supported_endpoints": [
+              "/v1/messages",
+              "/chat/completions"
+            ],
+            "vendor": "Anthropic",
+            "version": "claude-fable-5.1",
+            "warning_message": "Your billing plan has changed to usage-based billing and model multipliers no longer apply. Please update your client to the latest version to see the new billing information.",
+            "warning_text": {
+              "data_retention": "When Claude Fable 5.1 is used, Anthropic retains data, including prompts and outputs, by default to operate safety classifiers that detect harmful use. Certain eligible Copilot Business and Copilot Enterprise customers may be approved for Zero Data Retention access. To learn whether your organization qualifies, contact your GitHub account team. GitHub Support cannot determine eligibility or enable access."
+            }
+          },
+          {
+            "capabilities": {
+              "family": "claude-fable-5",
+              "limits": {
+                "max_context_window_tokens": 264000,
+                "max_non_streaming_output_tokens": 16000,
+                "max_output_tokens": 64000,
+                "max_prompt_tokens": 200000,
+                "vision": {
+                  "max_prompt_image_size": 3145728,
+                  "max_prompt_images": 1,
+                  "supported_media_types": [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                    "application/pdf"
+                  ]
+                }
+              },
+              "object": "model_capabilities",
+              "supports": {
+                "adaptive_thinking": true,
+                "max_thinking_budget": 32000,
+                "min_thinking_budget": 1024,
+                "parallel_tool_calls": true,
+                "reasoning_effort": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ],
+                "streaming": true,
+                "structured_outputs": true,
+                "tool_calls": true,
+                "vision": true
+              },
+              "tokenizer": "o200k_base",
+              "type": "chat"
+            },
+            "id": "claude-fable-5",
+            "model_picker_category": "powerful",
+            "model_picker_enabled": true,
+            "name": "Claude Fable 5",
+            "object": "model",
+            "policy": {
+              "state": "disabled",
+              "terms": "Enable access to the latest Claude Fable 5 model from Anthropic. [Learn more about how GitHub Copilot serves Claude Fable 5](https://gh.io/copilot-claude-opus)."
+            },
+            "preview": false,
+            "supported_endpoints": [
+              "/v1/messages",
+              "/chat/completions"
+            ],
+            "vendor": "Anthropic",
+            "version": "claude-fable-5",
+            "warning_message": "Your billing plan has changed to usage-based billing and model multipliers no longer apply. Please update your client to the latest version to see the new billing information.",
+            "warning_text": {
+              "data_retention": "When Claude Fable 5 is used, Anthropic retains data, including prompts and outputs, by default to operate safety classifiers that detect harmful use. Certain eligible Copilot Business and Copilot Enterprise customers may be approved for Zero Data Retention access. To learn whether your organization qualifies, contact your GitHub account team. GitHub Support cannot determine eligibility or enable access."
+            }
+          },
+          {
+            "capabilities": {
+              "family": "claude-haiku-5.5",
+              "limits": {
+                "max_context_window_tokens": 200000,
+                "max_non_streaming_output_tokens": 16000,
+                "max_output_tokens": 100000,
+                "max_prompt_tokens": 100000,
+                "vision": {
+                  "max_prompt_image_size": 3145728,
+                  "max_prompt_images": 5,
+                  "supported_media_types": [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                    "application/pdf"
+                  ]
+                }
+              },
+              "object": "model_capabilities",
+              "supports": {
+                "adaptive_thinking": true,
+                "parallel_tool_calls": true,
+                "reasoning_effort": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ],
+                "streaming": true,
+                "structured_outputs": true,
+                "tool_calls": true,
+                "vision": true
+              },
+              "tokenizer": "o200k_base",
+              "type": "chat"
+            },
+            "id": "claude-haiku-5.5",
+            "model_picker_category": "lightweight",
+            "model_picker_enabled": true,
+            "name": "Claude Haiku 5.5",
+            "object": "model",
+            "policy": {
+              "state": "enabled",
+              "terms": "Enable access to the latest Claude Haiku 5.5 model from Anthropic. [Learn more about how GitHub Copilot serves Claude Haiku 5.5](https://gh.io/copilot-claude-opus)."
+            },
+            "preview": false,
+            "supported_endpoints": [
+              "/v1/messages",
+              "/chat/completions"
+            ],
+            "vendor": "Anthropic",
+            "version": "claude-haiku-5.5",
+            "warning_message": "Your billing plan has changed to usage-based billing and model multipliers no longer apply. Please update your client to the latest version to see the new billing information."
+          },
+          {
+            "capabilities": {
+              "family": "claude-opus-4.8-fast",
+              "limits": {
+                "max_context_window_tokens": 264000,
+                "max_non_streaming_output_tokens": 16000,
+                "max_output_tokens": 64000,
+                "max_prompt_tokens": 200000,
+                "vision": {
+                  "max_prompt_image_size": 3145728,
+                  "max_prompt_images": 1,
+                  "supported_media_types": [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                    "application/pdf"
+                  ]
+                }
+              },
+              "object": "model_capabilities",
+              "supports": {
+                "adaptive_thinking": true,
+                "max_thinking_budget": 32000,
+                "min_thinking_budget": 1024,
+                "parallel_tool_calls": true,
+                "reasoning_effort": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ],
+                "streaming": true,
+                "structured_outputs": true,
+                "tool_calls": true,
+                "vision": true
+              },
+              "tokenizer": "o200k_base",
+              "type": "chat"
+            },
+            "id": "claude-opus-4.8-fast",
+            "model_picker_category": "powerful",
+            "model_picker_enabled": true,
+            "name": "Claude Opus 4.8 (fast mode)",
+            "object": "model",
+            "policy": {
+              "state": "disabled",
+              "terms": "Enable access to the latest Claude Opus 4.8 fast model from Anthropic. [Learn more about how GitHub Copilot serves Claude Opus 4.8 fast](https://gh.io/copilot-claude-opus)."
+            },
+            "preview": true,
+            "supported_endpoints": [
+              "/v1/messages",
+              "/chat/completions"
+            ],
+            "vendor": "Anthropic",
+            "version": "claude-opus-4.8-fast",
+            "warning_message": "Your billing plan has changed to usage-based billing and model multipliers no longer apply. Please update your client to the latest version to see the new billing information."
+          },
+          {
+            "capabilities": {
+              "family": "claude-opus-4.8",
+              "limits": {
+                "max_context_window_tokens": 264000,
+                "max_non_streaming_output_tokens": 16000,
+                "max_output_tokens": 64000,
+                "max_prompt_tokens": 200000,
+                "vision": {
+                  "max_prompt_image_size": 3145728,
+                  "max_prompt_images": 1,
+                  "supported_media_types": [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                    "application/pdf"
+                  ]
+                }
+              },
+              "object": "model_capabilities",
+              "supports": {
+                "adaptive_thinking": true,
+                "max_thinking_budget": 32000,
+                "min_thinking_budget": 1024,
+                "parallel_tool_calls": true,
+                "reasoning_effort": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ],
+                "streaming": true,
+                "structured_outputs": true,
+                "tool_calls": true,
+                "vision": true
+              },
+              "tokenizer": "o200k_base",
+              "type": "chat"
+            },
+            "id": "claude-opus-4.8",
+            "model_picker_category": "powerful",
+            "model_picker_enabled": true,
+            "name": "Claude Opus 4.8",
+            "object": "model",
+            "policy": {
+              "state": "disabled",
+              "terms": "Enable access to the latest Claude Opus 4.8 model from Anthropic. [Learn more about how GitHub Copilot serves Claude Opus 4.8](https://gh.io/copilot-claude-opus)."
+            },
+            "preview": false,
+            "supported_endpoints": [
+              "/v1/messages",
+              "/chat/completions"
+            ],
+            "vendor": "Anthropic",
+            "version": "claude-opus-4.8",
+            "warning_message": "Your billing plan has changed to usage-based billing and model multipliers no longer apply. Please update your client to the latest version to see the new billing information."
+          },
+          "<46 more entries omitted from the receipt>"
+        ],
+        "object": "list"
+      }
+    }
+  ]
+}

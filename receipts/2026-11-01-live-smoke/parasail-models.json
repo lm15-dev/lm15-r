@@ -1,0 +1,63 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "parasail",
+  "model": "parasail:meta-llama/Llama-3.3-70B-Instruct",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "97 models; meta-llama/Llama-3.3-70B-Instruct listed"
+  ],
+  "seconds": 0.2,
+  "timestamp": "2026-11-01T07:26:50-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.parasail.io/v1/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "3e38df25f7d725a7858314ac3cd0d52b"
+      },
+      "body": {
+        "data": [
+          {
+            "id": "parasail-llama-33-70b-fp8",
+            "object": "model",
+            "owned_by": "owner"
+          },
+          {
+            "id": "meta-llama/Llama-3.3-70B-Instruct",
+            "object": "model",
+            "owned_by": "owner"
+          },
+          {
+            "id": "parasail-qwen25-vl-72b-instruct",
+            "object": "model",
+            "owned_by": "owner"
+          },
+          {
+            "id": "Qwen/Qwen2.5-VL-72B-Instruct",
+            "object": "model",
+            "owned_by": "owner"
+          },
+          {
+            "id": "parasail-skyfall-36b-v2-fp8",
+            "object": "model",
+            "owned_by": "owner"
+          },
+          "<92 more entries omitted from the receipt>"
+        ],
+        "object": "list"
+      }
+    }
+  ]
+}

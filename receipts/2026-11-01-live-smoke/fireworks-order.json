@@ -1,0 +1,73 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "fireworks",
+  "model": "fireworks:accounts/fireworks/models/deepseek-v4p1-flash",
+  "check": "order",
+  "managed": false,
+  "verdict": "error",
+  "problems": [
+    "ProviderError/LM15Error: Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information. (fireworks, HTTP 412, request chatcmpl-d1d783aa2d4a46d599131a531437b708)"
+  ],
+  "notes": [],
+  "seconds": 0.1,
+  "timestamp": "2026-11-01T07:26:44-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.fireworks.ai/inference/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "accounts/fireworks/models/deepseek-v4p1-flash",
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 17 times 3? Think it through briefly, then give the answer."
+            }
+          ],
+          "max_completion_tokens": 2000,
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "worked_answer",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "type": "string"
+                  },
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reasoning",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "strict": true
+            }
+          }
+        }
+      },
+      "status": 412,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "chatcmpl-d1d783aa2d4a46d599131a531437b708"
+      },
+      "body": {
+        "error": {
+          "message": "Account maximerivest is suspended, possibly due to reaching the monthly spending limit or failure to pay past invoices. Please go to https://fireworks.ai/account/billing for more information.",
+          "param": null,
+          "code": "PRECONDITION_FAILED",
+          "type": "error"
+        },
+        "request_id": "chatcmpl-d1d783aa2d4a46d599131a531437b708"
+      }
+    }
+  ]
+}

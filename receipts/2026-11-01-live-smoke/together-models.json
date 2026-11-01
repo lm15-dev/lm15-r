@@ -1,0 +1,177 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "together",
+  "model": "together:meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "check": "models",
+  "managed": false,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "269 models; meta-llama/Llama-3.3-70B-Instruct-Turbo listed"
+  ],
+  "seconds": 0.5,
+  "timestamp": "2026-11-01T07:26:43-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "GET",
+        "url": "https://api.together.ai/v1/models",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": null
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json"
+      },
+      "body": [
+        {
+          "id": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+          "object": "model",
+          "created": 1792377574,
+          "type": "chat",
+          "running": false,
+          "display_name": "DeepSeek V4.1 Flash 1017",
+          "organization": "DeepSeek",
+          "context_length": 1048576,
+          "config": {
+            "chat_template": null,
+            "stop": [],
+            "bos_token": null,
+            "eos_token": null
+          },
+          "pricing": {
+            "hourly": 0,
+            "input": 0.3,
+            "output": 1.2,
+            "base": 0,
+            "finetune": 0,
+            "cached_input": 0.006,
+            "image_pixel": 0,
+            "transcribe": 0,
+            "image": 0,
+            "video": 0
+          }
+        },
+        {
+          "id": "deepseek-ai/DeepSeek-V4.1-Flash",
+          "object": "model",
+          "created": 1789197495,
+          "type": "chat",
+          "running": false,
+          "display_name": "DeepSeek V4.1 Flash",
+          "organization": "DeepSeek",
+          "context_length": 1048576,
+          "config": {
+            "chat_template": null,
+            "stop": [],
+            "bos_token": null,
+            "eos_token": null
+          },
+          "pricing": {
+            "hourly": 0,
+            "input": 0.3,
+            "output": 1.2,
+            "base": 0,
+            "finetune": 0,
+            "cached_input": 0.006,
+            "image_pixel": 0,
+            "transcribe": 0,
+            "image": 0,
+            "video": 0
+          }
+        },
+        {
+          "id": "zai-org/GLM-5.3",
+          "object": "model",
+          "created": 1787957543,
+          "type": "chat",
+          "running": false,
+          "display_name": "GLM 5.3",
+          "organization": "zai-org",
+          "context_length": 1048575,
+          "config": {
+            "chat_template": null,
+            "stop": [],
+            "bos_token": null,
+            "eos_token": null
+          },
+          "pricing": {
+            "hourly": 0,
+            "input": 1.4,
+            "output": 4.4,
+            "base": 0,
+            "finetune": 0,
+            "cached_input": 0.26,
+            "image_pixel": 0,
+            "transcribe": 0,
+            "image": 0,
+            "video": 0
+          }
+        },
+        {
+          "id": "moonshotai/Kimi-K3",
+          "uuid": "endpoint-kk-moonshotai-kimi-k3",
+          "object": "model",
+          "created": 1785049898,
+          "type": "chat",
+          "running": false,
+          "display_name": "Kimi K3",
+          "organization": "Moonshot AI",
+          "link": "https://huggingface.co/moonshotai",
+          "license": "other",
+          "context_length": 1048576,
+          "config": {
+            "chat_template": null,
+            "stop": [],
+            "bos_token": null,
+            "eos_token": null
+          },
+          "pricing": {
+            "hourly": 0,
+            "input": 3,
+            "output": 15,
+            "base": 0,
+            "finetune": 0,
+            "cached_input": 0.3,
+            "image_pixel": 0,
+            "transcribe": 0,
+            "image": 0,
+            "video": 0
+          }
+        },
+        {
+          "id": "zai-org/GLM-5.3-Flash",
+          "object": "model",
+          "created": 1787813236,
+          "type": "chat",
+          "running": false,
+          "display_name": "GLM 5.3 Flash",
+          "organization": "zai-org",
+          "context_length": 1048575,
+          "config": {
+            "chat_template": null,
+            "stop": [],
+            "bos_token": null,
+            "eos_token": null
+          },
+          "pricing": {
+            "hourly": 0,
+            "input": 0.15,
+            "output": 0.5,
+            "base": 0,
+            "finetune": 0,
+            "cached_input": 0.03,
+            "image_pixel": 0,
+            "transcribe": 0,
+            "image": 0,
+            "video": 0
+          }
+        },
+        "<264 more entries omitted from the receipt>"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "port": "lm15-r 2.0.0",
+  "binding": "meta-account",
+  "model": "meta:muse-spark-1.3",
+  "check": "hello",
+  "managed": true,
+  "verdict": "ok",
+  "problems": [],
+  "notes": [
+    "complete: hello world (stop; usage: input=17 output=254 total=271 cache_read=0 cache_write=- reasoning=243)",
+    "stream: hello world (stop; usage: input=17 output=435 total=452 cache_read=0 cache_write=- reasoning=424)"
+  ],
+  "seconds": 5,
+  "timestamp": "2026-11-01T07:27:24-0500",
+  "exchanges": [
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "stream": false,
+          "max_output_tokens": 2000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "application/json",
+        "x-request-id": "c34ae846-e7ac-4766-9382-21df2057cbbc"
+      },
+      "body": {
+        "top_logprobs": 0,
+        "temperature": 1,
+        "top_p": 1,
+        "service_tier": "auto",
+        "model": "muse-spark-1.3",
+        "reasoning": {
+          "effort": "high"
+        },
+        "background": false,
+        "tools": [],
+        "tool_choice": "auto",
+        "truncation": "disabled",
+        "id": "resp_6ae73028e533b80aa17440db",
+        "object": "response",
+        "status": "completed",
+        "created_at": 1793536040,
+        "completed_at": 1793536040,
+        "error": null,
+        "incomplete_details": null,
+        "output": [
+          {
+            "type": "reasoning",
+            "id": "rs_6ae73028e533b80aa17440db:rs_47cad756-c2f0-4db7-86cb-34f8bfa5974e",
+            "summary": [],
+            "status": "completed"
+          },
+          {
+            "type": "message",
+            "id": "msg_5c1cf9e5-32b3-4135-81e4-b57b40d4450a",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "hello world",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "status": "completed"
+          }
+        ],
+        "instructions": null,
+        "usage": {
+          "input_tokens": 17,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 254,
+          "output_tokens_details": {
+            "reasoning_tokens": 243
+          },
+          "total_tokens": 271
+        },
+        "parallel_tool_calls": true,
+        "store": true,
+        "max_output_tokens": 2000
+      }
+    },
+    {
+      "sent": {
+        "method": "POST",
+        "url": "https://api.meta.ai/v1/responses",
+        "headers": {
+          "content-type": "application/json",
+          "authorization": "<redacted>"
+        },
+        "body": {
+          "model": "muse-spark-1.3",
+          "input": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Reply with exactly the two words: hello world"
+                }
+              ]
+            }
+          ],
+          "stream": true,
+          "max_output_tokens": 2000
+        }
+      },
+      "status": 200,
+      "response_headers": {
+        "content-type": "text/event-stream",
+        "x-request-id": "70f85a28-baeb-402b-87c1-3b5887fb0986"
+      },
+      "body": "event: response.created\ndata: {\"response\":{\"background\":false,\"created_at\":1793536042.0,\"error\":null,\"id\":\"resp_6ae7302a59dbb8c8196a4b9b\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"in_progress\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\"},\"sequence_number\":0,\"type\":\"response.created\"}\n\nevent: response.in_progress\ndata: {\"response\":{\"background\":false,\"created_at\":1793536042.0,\"error\":null,\"id\":\"resp_6ae7302a59dbb8c8196a4b9b\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"in_progress\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\"},\"sequence_number\":1,\"type\":\"response.in_progress\"}\n\nevent: response.output_item.added\ndata: {\"item\":{\"id\":\"rs_6ae7302a59dbb8c8196a4b9b:rs_01a19714245a72b9b2921b6d4b1a79b7\",\"status\":\"in_progress\",\"summary\":[],\"type\":\"reasoning\"},\"output_index\":0,\"sequence_number\":2,\"type\":\"response.output_item.added\"}\n\nevent: response.output_item.done\ndata: {\"item\":{\"id\":\"rs_6ae7302a59dbb8c8196a4b9b:rs_01a19714245a72b9b2921b6d4b1a79b7\",\"status\":\"completed\",\"summary\":[],\"type\":\"reasoning\"},\"output_index\":0,\"sequence_number\":3,\"type\":\"response.output_item.done\"}\n\nevent: response.output_item.added\ndata: {\"item\":{\"content\":[],\"id\":\"msg_01a197142b3470558c1ce719ca544d55\",\"role\":\"assistant\",\"status\":\"in_progress\",\"type\":\"message\"},\"output_index\":1,\"sequence_number\":4,\"type\":\"response.output_item.added\"}\n\nevent: response.content_part.added\ndata: {\"content_index\":0,\"item_id\":\"msg_01a197142b3470558c1ce719ca544d55\",\"output_index\":1,\"part\":{\"annotations\":[],\"logprobs\":[],\"text\":\"\",\"type\":\"output_text\"},\"sequence_number\":5,\"type\":\"response.content_part.added\"}\n\nevent: response.output_text.delta\ndata: {\"content_index\":0,\"delta\":\"hello world\",\"item_id\":\"msg_01a197142b3470558c1ce719ca544d55\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":6,\"type\":\"response.output_text.delta\"}\n\nevent: response.output_text.done\ndata: {\"content_index\":0,\"item_id\":\"msg_01a197142b3470558c1ce719ca544d55\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":7,\"text\":\"hello world\",\"type\":\"response.output_text.done\"}\n\nevent: response.content_part.done\ndata: {\"content_index\":0,\"item_id\":\"msg_01a197142b3470558c1ce719ca544d55\",\"output_index\":1,\"part\":{\"annotations\":[],\"logprobs\":[],\"text\":\"hello world\",\"type\":\"output_text\"},\"sequence_number\":8,\"type\":\"response.content_part.done\"}\n\nevent: response.output_item.done\ndata: {\"item\":{\"content\":[{\"annotations\":[],\"logprobs\":[],\"text\":\"hello world\",\"type\":\"output_text\"}],\"id\":\"msg_01a197142b3470558c1ce719ca544d55\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"},\"output_index\":1,\"sequence_number\":9,\"type\":\"response.output_item.done\"}\n\nevent: response.completed\ndata: {\"response\":{\"background\":false,\"completed_at\":1793536043.0,\"created_at\":1793536042.0,\"error\":null,\"id\":\"resp_6ae7302a59dbb8c8196a4b9b\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":2000,\"model\":\"muse-spark-1.3\",\"object\":\"response\",\"output\":[{\"id\":\"rs_6ae7302a59dbb8c8196a4b9b:rs_01a19714245a72b9b2921b6d4b1a79b7\",\"status\":\"completed\",\"summary\":[],\"type\":\"reasoning\"},{\"content\":[{\"annotations\":[],\"logprobs\":[],\"text\":\"hello world\",\"type\":\"output_text\"}],\"id\":\"msg_01a197142b3470558c1ce719ca544d55\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"parallel_tool_calls\":true,\"reasoning\":{\"effort\":\"high\"},\"service_tier\":\"auto\",\"status\":\"completed\",\"store\":true,\"temperature\":1.0,\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":17,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":435,\"output_tokens_details\":{\"reasoning_tokens\":424},\"total_tokens\":452}},\"sequence_number\":10,\"type\":\"response.completed\"}\n\nevent: response.subscription_usage\ndata: {\"subscription\":{\"tier\":\"27681631238169137\",\"weekly\":{\"resets_at\":1793577600,\"used_percent\":0},\"window\":{\"resets_at\":1793554039,\"used_percent\":0,\"window_duration_mins\":300}},\"type\":\"response.subscription_usage\"}\n\ndata: [DONE]\n\n"
+    }
+  ]
+}
