@@ -107,7 +107,10 @@
       response <- .wire_object(p$response)
       if (!is.null(response$error)) stop(normalize_error(lm, 500L, response))
       has_tool <- any(vapply(.wire_array(response$output), function(t) .is_object(t) && identical(t$type, "function_call"), logical(1)))
-      reason <- if (has_tool) "tool_call" else if (type == "response.incomplete" && grepl("token", .wire_string(response$incomplete_details$reason))) "length" else "stop"
+      # The finish reason reads status and incomplete_details as the complete
+      # path does (INV-051): length for the output limit, content_filter.
+      why <- .wire_string(response$incomplete_details$reason)
+      reason <- if (has_tool) "tool_call" else if (identical(response$status, "incomplete") && grepl("token", why)) "length" else if (grepl("content_filter|safety", why)) "content_filter" else "stop"
       add(stream_end_event(finish_reason = reason, usage = .usage_wire(response$usage, "responses"), provider_data = response))
     }
   }
@@ -160,6 +163,162 @@
     else if (!length(result) && !is.null(p$usageMetadata)) add(stream_end_event(finish_reason = "stop", usage = .usage_wire(p$usageMetadata, "gemini"), provider_data = p))
   }
   result
+}
+
+# ─── Stream readers (MAP-20) ─────────────────────────────────────────
+#
+# .parse_stream_frame maps ONE frame on its own and holds no state. A reader
+# reads one stream: it may hold what that stream needs and nothing across
+# streams. Every path that turns frames into canonical events goes through
+# .new_stream_reader (the stream, replay_stream and the vet shim).
+
+.new_stream_reader <- function(lm, req) {
+  dialect <- lm$definition$dialect
+  if (identical(dialect, "openai-responses")) return(.responses_stream_reader(lm, req))
+  if (identical(dialect, "gemini")) return(.gemini_stream_reader(lm, req))
+  function(data, event = NULL) .parse_stream_frame(lm, req, data, event)
+}
+
+# What one stream's fragments delivered, per part slot and channel. A final
+# copy is the provider restating a value it may also have sent in fragments;
+# remainder() is what the fragments did not deliver: the whole value when none
+# came, the rest when they are its beginning, nothing when they are all of it.
+# Fragments that are not its beginning contradict it and the stream is
+# refused: lm15 does not choose.
+.final_copies <- function() {
+  seen <- list()
+  key <- function(index, channel) paste0(sprintf("%.0f", index), ":", channel)
+  saw <- function(index, channel, text) {
+    if (nzchar(text)) { k <- key(index, channel); seen[[k]] <<- paste0(seen[[k]] %||% "", text) }
+    invisible(NULL)
+  }
+  remainder <- function(index, channel, final, json_value = FALSE) {
+    k <- key(index, channel); got <- seen[[k]] %||% ""
+    if (startsWith(final, got)) { seen[[k]] <<- final; return(substring(final, nchar(got) + 1L)) }
+    # The same JSON value, members in the same order: the text differs
+    # (whitespace, escapes), the arguments do not.
+    if (json_value && isTRUE(tryCatch(identical(.json_encode(.json_decode(got)), .json_encode(.json_decode(final))), error = function(e) FALSE))) return("")
+    .abort(sprintf("the streamed %s of part %.0f is not the beginning of the provider's final copy of it (%d characters streamed, %d in the final copy); lm15 does not choose between them (MAP-20)",
+                   channel, index, nchar(got), nchar(final)), "stream_assembly", part_index = index)
+  }
+  list(saw = saw, remainder = remainder)
+}
+
+.arguments_text <- function(x) if (is.null(x)) "" else if (is.character(x)) x else .json_encode(x)
+
+# The text a message item's fragments add up to: its output_text and refusal
+# contents in order (both stream as text into the item's slot).
+.message_final_text <- function(item) {
+  out <- character()
+  for (c in .wire_array(item$content)) {
+    if (!.is_object(c)) next
+    if (identical(c$type, "output_text") || identical(c$type, "text")) out <- c(out, .wire_string(c$text))
+    else if (identical(c$type, "refusal")) out <- c(out, .wire_string(c$refusal %||% c$text))
+  }
+  paste(out, collapse = "")
+}
+
+# One OpenAI Responses stream (MAP-20). response.output_item.done is each
+# item's final copy; at it the reader emits what the item's fragments did not
+# deliver: a function call's arguments (the Codex backend sends parallel
+# calls' arguments only there), a message's text, a reasoning item's summary.
+# A summary's parts are joined with a newline, as the complete path joins them
+# (INV-051); the newline goes before the first fragment of each later part.
+.responses_stream_reader <- function(lm, req) {
+  copies <- .final_copies(); summary_part <- list(); named <- character()
+  slot <- function(i) sprintf("%.0f", i)
+  complete <- function(i, item) {
+    if (identical(item$type, "function_call")) {
+      rest <- copies$remainder(i, "arguments", .arguments_text(item$arguments), json_value = TRUE)
+      if (!nzchar(rest) && slot(i) %in% named) return(list())
+      if (!is.null(item$name) && nzchar(.wire_string(item$name))) named <<- union(named, slot(i))
+      return(list(stream_delta_event(tool_call_delta(rest, part_index = i, id = item$call_id %||% item$id, name = item$name))))
+    }
+    if (identical(item$type, "message")) {
+      rest <- copies$remainder(i, "text", .message_final_text(item))
+      return(if (nzchar(rest)) list(stream_delta_event(text_delta(rest, part_index = i))) else list())
+    }
+    if (identical(item$type, "reasoning") && .is_array(item$summary)) {
+      final <- paste(vapply(item$summary, function(v) if (.is_object(v)) .wire_string(v$text) else .wire_string(v), ""), collapse = "\n")
+      rest <- copies$remainder(i, "summary", final)
+      return(if (nzchar(rest)) list(stream_delta_event(thinking_delta(rest, part_index = i))) else list())
+    }
+    list()
+  }
+  function(data, event = NULL) {
+    events <- .parse_stream_frame(lm, req, data, event)
+    if (!nzchar(data) || identical(data, "[DONE]")) return(events)
+    p <- .json_decode(data)
+    if (!.is_object(p)) return(events)
+    type <- p$type %||% ""; i <- .wire_int(p$output_index %||% 0L)
+    if (type == "response.reasoning_summary_text.delta") {
+      part <- .wire_int(p$summary_index %||% 0L); at <- summary_part[[slot(i)]] %||% 0L
+      prefix <- ""
+      if (part > at) { summary_part[[slot(i)]] <<- part; prefix <- strrep("\n", part - at) }
+      for (k in seq_along(events)) {
+        e <- events[[k]]
+        if (identical(e$type, "delta") && identical(e$delta$type, "thinking")) {
+          text <- paste0(prefix, e$delta$text)
+          events[[k]] <- stream_delta_event(thinking_delta(text, part_index = i))
+          copies$saw(i, "summary", text)
+        }
+      }
+    } else if (type %in% c("response.output_text.delta", "response.refusal.delta")) {
+      copies$saw(i, "text", .wire_string(p$delta))
+    } else if (type %in% c("response.output_item.added", "response.function_call_arguments.delta")) {
+      for (e in events) if (identical(e$type, "delta") && identical(e$delta$type, "tool_call")) {
+        copies$saw(i, "arguments", e$delta$input)
+        if (!is.null(e$delta$name)) named <<- union(named, slot(i))
+      }
+    } else if (type == "response.output_item.done" && .is_object(p$item)) {
+      events <- c(complete(i, p$item), events)
+    }
+    events
+  }
+}
+
+# One Gemini stream: which slot each chunk's parts belong to. A chunk's parts
+# are numbered from 0 in every chunk. The first part of a chunk continues the
+# previous chunk's last part when both are text (or both thought text): that
+# is how a long text arrives. Every other part is a new part with a slot of
+# its own, in arrival order. A function call is never a continuation:
+# gemini-2.5-pro sends each parallel call in a chunk of its own
+# (cases/gemini/streaming_parallel_tool_calls_chunked.json).
+.gemini_stream_reader <- function(lm, req) {
+  last_slot <- 0L; last_kind <- ""; next_slot <- 0L
+  kind_of <- function(b) {
+    if (!.is_object(b)) return("")
+    if ("text" %in% names(b)) return(if (isTRUE(b$thought)) "thought" else "text")
+    if (.is_object(b$functionCall)) return("call")
+    if (.is_object(b$inlineData)) return("media")
+    ""
+  }
+  function(data, event = NULL) {
+    events <- .parse_stream_frame(lm, req, data, event)
+    if (!nzchar(data)) return(events)
+    p <- tryCatch(.json_decode(data), error = function(e) NULL)
+    if (!.is_object(p)) return(events)
+    candidates <- .wire_array(p$candidates)
+    parts <- if (length(candidates) && .is_object(candidates[[1L]])) .wire_array(.wire_object(candidates[[1L]]$content)$parts) else list()
+    slots <- list()
+    for (pos in seq_along(parts)) {
+      kind <- kind_of(parts[[pos]])
+      if (!nzchar(kind)) next
+      if (pos == 1L && kind %in% c("text", "thought") && identical(last_kind, kind)) s <- last_slot
+      else { s <- next_slot; next_slot <<- next_slot + 1L }
+      slots[[as.character(pos - 1L)]] <- s
+      last_slot <<- s; last_kind <<- kind
+    }
+    for (k in seq_along(events)) {
+      e <- events[[k]]
+      if (!identical(e$type, "delta") || is.null(e$delta$part_index)) next
+      s <- slots[[sprintf("%.0f", e$delta$part_index)]]
+      if (is.null(s) || s == e$delta$part_index) next
+      d <- e$delta; d$part_index <- s
+      events[[k]] <- stream_delta_event(d)
+    }
+    events
+  }
 }
 
 .new_accumulator <- function(req) {
@@ -276,7 +435,8 @@
       .stream_cut()
     }
   }
-  sse <- .new_sse(function(data, event) for (e in .parse_stream_frame(lm, req, data, event)) consume(e))
+  reader <- .new_stream_reader(lm, req)
+  sse <- .new_sse(function(data, event) for (e in reader(data, event)) consume(e))
   finish <- function() {
     if (!cut) sse$finish()
     if (!ended) {

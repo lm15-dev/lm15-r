@@ -1,3 +1,25 @@
+# lm15 2.1.0
+
+Implements the lm15 contract at commit `77f22f4`, the same commit as lm15 2.1.0 for
+Python, TypeScript, Rust, Go and Julia, and passes all 2,132 of its checks. Streams
+yield what the provider said, all of it, once (MAP-20). Nothing is removed and no field
+changes meaning.
+
+* Parallel tool calls on the Codex subscription arrive with their inputs. The Codex
+  backend sends the arguments of parallel calls only in each call's final
+  `response.output_item.done`, never in pieces; every call came back with input `{}`.
+  A stream's final copy of an item now completes whatever its pieces did not deliver
+  (arguments, message text, a reasoning summary); a piece that contradicts the final
+  copy is an error of class `stream_assembly` with `part_index` set, instead of either
+  value being chosen. (The realtime completion path already worked this way.)
+* A streamed reasoning summary reads like the complete one: its parts are joined with a
+  newline; they used to run together.
+* Gemini parallel calls sent one per chunk stay separate calls. gemini-2.5-pro and
+  gemini-3-flash-preview send each call in a chunk of its own; every call landed in the
+  same slot and their arguments ran into one unreadable input.
+* A Responses stream that ends because of a content filter finishes with
+  `content_filter`, as the complete call does (it said `stop`).
+
 # lm15 2.0.0
 
 Implements the lm15 contract at commit `cfc3edc`, the same commit as lm15 for
