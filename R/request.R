@@ -275,7 +275,7 @@
       .adapt("config.reasoning.effort", "clamped", paste0("this server has no '", r$effort, "' level (it accepts ", paste(unlist(compat$reasoning_efforts), collapse = ", "), ") and would have accepted the word silently"), asked = r$effort, applied = nearest)
       r$effort <- nearest
     }
-    if (detail) .adapt("config.reasoning.summary", "substituted", "the Messages API has no summary detail levels; it returns thinking blocks whenever thinking runs, which is 'auto'", asked = r$summary, applied = "auto")
+    if (detail) .adapt("config.reasoning.summary", "substituted", "the Messages API has no summary detail levels; it returns one summary of the thinking, which is 'auto'", asked = r$summary, applied = "auto")
     if (adaptive) {
       if (!is.null(r$thinking_budget))
         .adapt("config.reasoning.thinking_budget", "dropped", if (fmt == "deepseek") "this server ignores budget_tokens; effort is the dial" else if (fmt == "adaptive") "this server accepts budget_tokens without translating it; effort is the dial (protocols--messages.md)" else paste0(req$model, " takes thinking.type 'adaptive' with output_config.effort; budget_tokens is rejected by the API (live 2026-09-02). Thinking is bounded only by max_tokens, which covers thinking and answer together: lower the effort or raise max_tokens"), asked = r$thinking_budget)
@@ -290,6 +290,10 @@
       payload$thinking <- json_object(type = "enabled", budget_tokens = budget)
       payload$max_tokens <- budget + visible_max_tokens
     }
+    # MAP-7 rule 7 (amended 2026-11-07): the thinking is shown only when asked on Opus 4.7, 4.8 and every
+    # Claude 5 (display defaults to "omitted": a thinking block with empty text); every Claude model accepts
+    # "summarized" (live 2026-11-07, 14 models).
+    if (fmt == "anthropic" && !is.null(r$summary) && !is.null(payload$thinking)) payload$thinking$display <- "summarized"
     return(payload)
   }
   fmt <- if (dialect == "chat") compat$thinking_format else compat$reasoning_format
