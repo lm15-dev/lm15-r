@@ -1,14 +1,23 @@
 .compat_defaults <- list(
-  chat = list(instruction_role = "system", max_tokens_field = "max_completion_tokens", stream_usage = "include", tool_result_name = "omit", assistant_after_tool_result = "omit", thinking_format = "reasoning_effort", thinking_replay = "as_text", assistant_reasoning_content = "omit", strict_tools = "omit", builtin_tools = "reject", tool_result_media = "reject", cache_control = "openai", user_field = "user", forced_tool_choice = "send", json_schema = "send", reasoning_usage = "in_completion"),
+  chat = list(instruction_role = "system", max_tokens_field = "max_completion_tokens", stream_usage = "include", tool_result_name = "omit", assistant_after_tool_result = "omit", thinking_format = "reasoning_effort", thinking_replay = "as_text", assistant_reasoning_content = "omit", strict_tools = "omit", builtin_tools = "reject", tool_result_media = "reject", cache_control = "openai", user_field = "user", forced_tool_choice = "send", json_schema = "send", reasoning_usage = "in_completion", stop_in_text = "excluded"),
   responses = list(developer_role = "developer", max_output_tokens_field = "max_output_tokens", reasoning_format = "responses_reasoning", tool_result_name = "omit", strict_tools = "omit", cache_control = "openai", commentary_phase = "omit", edit_image_field = "array", builtin_tools = "openai", tool_result_media = "native"),
-  anthropic = list(thinking_format = "anthropic", thinking_replay = "signed", cache_control = "anthropic", structured_output = "send", parallel_tool_calls = "send", sampling_params = "send", tool_result_media = "native")
+  anthropic = list(thinking_format = "anthropic", thinking_replay = "signed", cache_control = "anthropic", structured_output = "send", parallel_tool_calls = "send", sampling_params = "send", tool_result_media = "native", stop_in_text = "excluded")
 )
 .compat <- function(lm, request) {
   key <- switch(lm$definition$dialect, "openai-chat" = "chat", "openai-responses" = "responses", anthropic = "anthropic", NULL)
   if (is.null(key)) return(list())
   out <- lm$compat
-  if (key == "chat") for (entry in out$model_overrides %||% list()) {
-    if (startsWith(request$model, entry[[1L]])) { out[names(entry[[2L]])] <- entry[[2L]]; break }
+  if (key == "chat") {
+    # A fine-tune whose id matches no entry follows its declared base model's
+    # entry (new_router(base_models = ), 2026-11-09).
+    base <- lm$base_models[[request$model]]
+    matched <- FALSE
+    for (name in c(request$model, base)) {
+      for (entry in out$model_overrides %||% list()) {
+        if (startsWith(name, entry[[1L]])) { out[names(entry[[2L]])] <- entry[[2L]]; matched <- TRUE; break }
+      }
+      if (matched) break
+    }
   }
   if (key == "responses") {
     e <- request$config$extensions
@@ -323,7 +332,16 @@
     }
   }
   if (fmt == "responses_reasoning") { payload$reasoning <- json_object(effort = word); if (!off && !is.null(r$summary)) payload$reasoning$summary <- r$summary }
-  if (fmt == "reasoning_effort" || (fmt == "kimi" && !off)) payload$reasoning_effort <- word
+  if (fmt == "reasoning_effort_switch") {
+    # An on/off switch with no levels (Tinker's Qwen, Kimi K2.6, Nemotron): off
+    # is FALSE; a level's nearest value is "on" (MAP-13).
+    if (!off) .adapt("config.reasoning.effort", "substituted", "this model's reasoning is an on/off switch with no levels; reasoning was switched on", asked = word, applied = "on")
+    payload$reasoning_effort <- !off
+  }
+  if (fmt == "reasoning_effort" || (fmt == "kimi" && !off)) {
+    # The switch's off where `none` is refused (Tinker's Qwen 3.8, DeepSeek V4.1).
+    payload$reasoning_effort <- if (off && identical(compat$reasoning_off, "switch")) FALSE else word
+  }
   if (fmt == "openrouter") payload$reasoning <- if (off) json_object(enabled = FALSE) else json_object(effort = word)
   if (fmt == "deepseek" || (fmt == "kimi" && off)) {
     payload$thinking <- json_object(type = if (off) "disabled" else "enabled")
@@ -661,7 +679,12 @@ build_request <- function(lm, request, ..., stream = FALSE) {
       }
     } else {
       if (dialect == "responses") .note_unmeasurable(req, provider)  # MAP-14: the schema goes verbatim
-      if (dialect == "chat" && schema && compat$json_schema == "reject") {
+      if (dialect == "chat" && identical(compat$json_schema, "none")) {
+        # The server applies no response_format of either type and answers 200
+        # with free text (Tinker, live 2026-11-09): MAP-8, never sent.
+        .adapt("config.response_format", "dropped", paste0("this server accepts response_format type '", f$type, "' and applies no response_format at all; describe the shape in the prompt"), asked = f)
+        f <- NULL
+      } else if (dialect == "chat" && schema && compat$json_schema == "reject") {
         .adapt("config.response_format", "dropped", paste0("this server accepts response_format type '", f$type, "' and does not apply it; use {'type': 'json_object'} and describe the shape in the prompt"), asked = f)
         f <- NULL
       }

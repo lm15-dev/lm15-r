@@ -3,6 +3,8 @@
   fixed <- if (!is.null(msg$now)) .parse_rfc3339(msg$now) else NULL
   new_lm(msg$provider, api_key = credential, base_url = msg$base_url, settings = msg$settings %||% list(), env = character(),
     account_id = if (canonical_provider(msg$provider) == "openai-codex") "test-account" else NULL,
+    # PROTOCOL.md base_models (2026-11-09): a fine-tune's base model.
+    base_models = if (.is_object(msg$base_models)) as.list(unclass(msg$base_models)) else list(),
     clock = if (is.null(fixed)) Sys.time else function() fixed,
     transport = function(...) .abort("Vet shim cannot access the network.", "transport"))
 }

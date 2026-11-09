@@ -1,3 +1,25 @@
+# lm15 (development version)
+
+Tinker (Thinking Machines): base models and the models you trained there
+(lm15-contract `18b3788`; to ratify).
+
+* Two new providers, one key (`TINKER_API_KEY`): `tinker` (Chat Completions,
+  also spelled `thinkingmachines`) and `tinker-anthropic` (Messages). Both
+  serve Tinker's base models and any sampler checkpoint by its path.
+* A URI is one model name: `tinker://<run>:train:0/sampler_weights/<n>` routes
+  to Tinker whole.
+* Reasoning is switched the way each model family takes it; a checkpoint
+  follows the family of its base model when you name it:
+  `new_router(base_models = list("tinker://..." = "Qwen/Qwen3.5-4B"))` (also
+  `new_lm(base_models = )`). Model listing on `tinker` marks each checkpoint
+  as a fine-tune with `origin$base_model`.
+* Error messages from FastAPI servers are kept (`{"detail": ...}` bodies), and
+  `stop` means the same everywhere (Tinker returns the stop sequence; lm15
+  cuts it).
+* New compat values: `thinking_format = "reasoning_effort_switch"`,
+  `reasoning_off = "switch"`, `json_schema = "none"`, `stop_in_text`.
+  Registry entries may carry aliases.
+
 # lm15 2.2.0
 
 Implements the lm15 contract at commit `9d8e1ce`, the same commit as lm15 2.2.0 for

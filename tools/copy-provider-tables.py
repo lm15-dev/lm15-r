@@ -85,7 +85,8 @@ for node in ast.walk(ast.parse((ref / 'registry.py').read_text())):
         policy.setdefault('env_keys', [])
         policy.setdefault('backend', 'api')
         policy.setdefault('backend_options', {})
-        registry.append(dict(id=id_, dialect=dialect, compat=compat, access=policy, placeholder_key=kw.get('placeholder_key'), console_url=kw.get('console_url')))
+        registry.append(dict(id=id_, dialect=dialect, compat=compat, access=policy, placeholder_key=kw.get('placeholder_key'), console_url=kw.get('console_url'),
+                             aliases=list(kw.get('aliases') or [])))
 
 # The router's built-in prefix rules, in match order (router.py DEFAULT_RULES).
 rules = None

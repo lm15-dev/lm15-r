@@ -176,7 +176,26 @@
   dialect <- lm$definition$dialect
   if (identical(dialect, "openai-responses")) return(.responses_stream_reader(lm, req))
   if (identical(dialect, "gemini")) return(.gemini_stream_reader(lm, req))
-  function(data, event = NULL) .parse_stream_frame(lm, req, data, event)
+  reader <- function(data, event = NULL) .parse_stream_frame(lm, req, data, event)
+  # MAP-22: a server that returns the stop sequence it stopped at.
+  if (.stop_returned_in_text(lm, req)) return(.stop_cutting_reader(reader, req$config$stop))
+  reader
+}
+# MAP-22: text is cut at the first stop sequence; text after the cut is
+# dropped; every other event (usage, the end) passes, because the server has
+# already stopped.
+.stop_cutting_reader <- function(inner, stop) {
+  cutter <- .new_stop_cutter(stop)
+  is_text <- function(e) identical(e$type, "delta") && identical(e$delta$type, "text")
+  function(data, event = NULL) {
+    out <- list()
+    for (e in inner(data, event)) {
+      if (cutter$is_cut()) { if (!is_text(e)) out[[length(out) + 1L]] <- e; next }
+      if (identical(e$type, "end") || identical(e$type, "error")) { out <- c(out, cutter$flush(), list(e)); next }
+      out <- c(out, cutter$feed(e))
+    }
+    out
+  }
 }
 
 # What one stream's fragments delivered, per part slot and channel. A final

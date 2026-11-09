@@ -18,12 +18,12 @@ and contacts no server; credentials are resolved when a request is sent.
 new_router(..., api_keys = list(), base_urls = list(), settings = list(),
   catalog = list(), rules = NULL, env = NULL, transport = NULL,
   live_connect = NULL, adaptations = "note", auth = NULL,
-  credentials = list(), providers = list())
+  credentials = list(), providers = list(), base_models = list())
 
 new_lm(provider, ..., api_key = NULL, credential = NULL, base_url = NULL,
   compat = NULL, settings = list(), transport = NULL, env = NULL,
   account_id = NULL, clock = Sys.time, credentials_path = NULL,
-  live_connect = NULL, adaptations = "note")
+  live_connect = NULL, adaptations = "note", base_models = list())
 
 providers()
 
@@ -51,6 +51,7 @@ transport_curl(..., timeout = 120, connect_timeout = 30,
 \item{auth}{A sign-in scope (\code{local_auth()}, ...) whose saved connections this router uses, or \code{NULL}. With a scope, environment keys are never used.}
 \item{credentials}{Named cloud identities by provider: \code{list(bedrock_chat = "cli")}. One of \code{"platform"}, \code{"workload"}, \code{"environment"}, \code{"cli"}.}
 \item{providers}{Providers lm15 does not list, for this router only: a list of \code{provider_definition()} values. They route by id and alias like built-in providers and take \code{api_keys} and \code{base_urls} entries by id. A spelling an lm15 provider or a litellm prefix already uses is an error.}
+\item{base_models}{What each fine-tuned model was trained from: a named list of base model ids, by model id (\code{list("tinker://..." = "Qwen/Qwen3.5-4B")}). A provider's per-model rules match the model id first, then its base model's, so a Tinker checkpoint takes its base family's reasoning switch. Never sent; never discovered: the provider's model list states it (\code{origin$base_model}).}
 \item{provider}{A provider id, such as \code{"openai"} or \code{"anthropic"} (\code{providers()} lists them; an underscore is read as a hyphen), or a \code{provider_definition()} for a provider lm15 does not list.}
 \item{api_key}{The credential: a key string, \code{api_key()}, \code{bearer_token()}, \code{aws_credentials()}, or a function returning one (called for every request). \code{NULL} uses the provider's declared chain.}
 \item{credential}{A named cloud identity (\code{"platform"}, \code{"workload"}, \code{"environment"} or \code{"cli"}) instead of walking the cloud chain.}

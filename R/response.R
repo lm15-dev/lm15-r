@@ -100,6 +100,45 @@
 
 parse_response <- function(lm, request, body, ..., status = 200L, headers = list()) {
   .check_dots(...)
+  out <- .parse_response_body(lm, request, body, status = status, headers = headers)
+  # MAP-22: a server that returns the stop sequence it stopped at is cut here.
+  if (.stop_returned_in_text(lm, request)) .cut_returned_stop(out, request$config$stop) else out
+}
+# MAP-22: `config$stop` is set and the binding's compat says the server returns
+# the matched sequence in the text (`stop_in_text = "included"`).
+.stop_returned_in_text <- function(lm, request) {
+  if (!inherits(lm, "lm15_lm") || !lm$definition$dialect %in% c("openai-chat", "anthropic")) return(FALSE)
+  if (!length(Filter(nzchar, unlist(request$config$stop)))) return(FALSE)
+  identical(.compat(lm, request)$stop_in_text, "included")
+}
+# The reply of a server that stopped at a stop sequence and returned it: the
+# text is cut at the first sequence, as a client-side stop cuts (text parts are
+# one stream; the part holding the start is cut, later parts removed; scores
+# kept for whole retained tokens), and the server's usage stays.
+.cut_returned_stop <- function(resp, stop) {
+  stop <- Filter(nzchar, unlist(stop))
+  parts <- resp$message$parts
+  is_text <- vapply(parts, function(p) identical(.value_type(p), "TextPart"), logical(1))
+  joined <- paste(vapply(parts[is_text], function(p) p$text, ""), collapse = "")
+  hit <- .first_stop(joined, stop)
+  if (is.null(hit)) return(resp)
+  cut_chars <- hit - 1L
+  out <- list(); offset <- 0L
+  for (p in parts) {
+    if (identical(.value_type(p), "TextPart")) {
+      n <- nchar(p$text)
+      if (offset + n > cut_chars) { out[[length(out) + 1L]] <- text(substr(p$text, 1L, cut_chars - offset), continuation = p$continuation); break }
+      offset <- offset + n
+    }
+    out[[length(out) + 1L]] <- p
+  }
+  if (!length(out)) out <- list(text(""))
+  kept <- .scores_before_cut(resp$logprobs, joined, cut_chars)
+  response(resp$model, message_assistant(out), "stop", id = resp$id, usage = resp$usage, logprobs = kept$scores,
+    logprobs_complete = isTRUE(resp$logprobs_complete) && !kept$incomplete, provider_data = resp$provider_data, adaptations = resp$adaptations)
+}
+.parse_response_body <- function(lm, request, body, ..., status = 200L, headers = list()) {
+  .check_dots(...)
   if (is.raw(body)) body <- rawToChar(body)
   if (status >= 300L) stop(normalize_error(lm, status, body, headers = headers))
   data <- if (is.character(body)) .json_decode(body) else body

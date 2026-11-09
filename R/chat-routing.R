@@ -4,7 +4,7 @@ openai_chat_model_string <- function(model, ..., providers = list()) {
   slash <- regexpr("/", model, fixed = TRUE)[[1L]]
   if (slash > 0L && slash < nchar(model)) {
     head <- substr(model, 1L, slash - 1L)
-    provider <- .provider_tables()$chat_model_prefixes[[head]]
+    provider <- .provider_tables()$chat_model_prefixes[[head]] %||% .registry_alias(canonical_provider(head))
     # A declared provider's id or alias, in either spelling (new_router(providers = )).
     if (is.null(provider)) for (d in providers) if (canonical_provider(head) %in% c(d$id, unlist(d$aliases))) { provider <- d$id; break }
     if (is.null(provider)) .abort("Unknown or ambiguous foreign provider prefix; use an explicit provider:model name.", "unknown_model", model = model)

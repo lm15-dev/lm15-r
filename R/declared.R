@@ -74,6 +74,7 @@ print.lm15_provider_definition <- function(x, ...) {
   if (!is.list(providers) || inherits(providers, "lm15_provider_definition"))
     stop("providers must be a list of provider_definition() values.", call. = FALSE)
   builtin <- c(providers(), vapply(.declared_providers(), function(d) d$id, ""),
+               unlist(lapply(.provider_tables()$providers, function(d) unlist(d$aliases))),
                gsub("_", "-", names(.provider_tables()$chat_model_prefixes), fixed = TRUE))
   taken <- character()
   for (d in providers) {

@@ -44,8 +44,16 @@ providers <- function() vapply(.provider_tables()$providers, function(p) p$id, "
 # A prefix as the provider id it names: a declared alias reads as its id.
 .router_spelling <- function(router, head) {
   head <- canonical_provider(head)
+  registry <- .registry_alias(head)
+  if (!is.null(registry)) return(registry)
   found <- (router$spellings %||% character())[head]
   if (length(found) == 1L && !is.na(found)) unname(found) else head
+}
+# The registry provider an alias names (a registry entry's aliases route like
+# its id; 2026-11-09: "thinkingmachines" names "tinker"), or NULL.
+.registry_alias <- function(name) {
+  for (d in .provider_tables()$providers) if (name %in% unlist(d$aliases)) return(d$id)
+  NULL
 }
 .is_declared <- function(router, provider) provider %in% vapply(router$providers %||% list(), function(d) d$id, "")
 
@@ -66,7 +74,7 @@ print.lm15_credential <- function(x, ...) { cat("<lm15 credential: redacted>\n")
   validate(out)
 }
 
-new_lm <- function(provider, ..., api_key = NULL, credential = NULL, base_url = NULL, compat = NULL, settings = list(), transport = NULL, env = NULL, account_id = NULL, clock = Sys.time, credentials_path = NULL, live_connect = NULL, adaptations = "note") {
+new_lm <- function(provider, ..., api_key = NULL, credential = NULL, base_url = NULL, compat = NULL, settings = list(), transport = NULL, env = NULL, account_id = NULL, clock = Sys.time, credentials_path = NULL, live_connect = NULL, adaptations = "note", base_models = list()) {
   .check_dots(...)
   .check_policy(adaptations)
   d <- if (inherits(provider, "lm15_provider_definition")) unclass(provider) else .definition(provider)
@@ -171,12 +179,27 @@ new_lm <- function(provider, ..., api_key = NULL, credential = NULL, base_url = 
   .string(base_url, "base_url")
   if (!grepl("^https?://[^/?#[:space:]@]+(?:/[^?#[:space:]]*)?$", base_url, perl = TRUE))
     stop("base_url must be an HTTP(S) root without userinfo, whitespace, query, or fragment.", call. = FALSE)
-  structure(list(definition = d, base_url = sub("/+$", "", base_url), compat = policy, credential = api_key, settings = settings, setting_sources = if (exists("setting_sources", inherits = FALSE)) setting_sources, account_id = account_id, clock = clock, transport = transport %||% transport_curl(), live_connect = live_connect, adaptations = adaptations), class = "lm15_lm")
+  structure(list(definition = d, base_url = sub("/+$", "", base_url), compat = policy, credential = api_key, settings = settings, setting_sources = if (exists("setting_sources", inherits = FALSE)) setting_sources, account_id = account_id, clock = clock, transport = transport %||% transport_curl(), live_connect = live_connect, adaptations = adaptations,
+    base_models = .check_base_models(base_models)), class = "lm15_lm")
+}
+# What each fine-tune was trained from, by model id (new_router(base_models = ),
+# 2026-11-09): a model matching no compat model_overrides entry follows its base
+# model's entry (a Tinker checkpoint takes its base family's reasoning switch).
+# Never sent; never discovered.
+.check_base_models <- function(base_models) {
+  if (!length(base_models)) return(list())
+  if (!is.list(base_models) && !is.character(base_models)) stop("base_models must map model ids to base model ids.", call. = FALSE)
+  base_models <- as.list(base_models)
+  ok <- !is.null(names(base_models)) && all(nzchar(names(base_models))) &&
+    all(vapply(base_models, function(v) is.character(v) && length(v) == 1L && nzchar(v), logical(1)))
+  if (!ok) stop("base_models maps a model id to its base model id, both non-empty strings.", call. = FALSE)
+  base_models
 }
 print.lm15_lm <- function(x, ...) { cat("<lm15 client: ", x$definition$id, ">\n", sep = ""); invisible(x) }
 
-new_router <- function(..., api_keys = list(), base_urls = list(), settings = list(), catalog = list(), rules = NULL, env = NULL, transport = NULL, live_connect = NULL, adaptations = "note", auth = NULL, credentials = list(), providers = list()) {
+new_router <- function(..., api_keys = list(), base_urls = list(), settings = list(), catalog = list(), rules = NULL, env = NULL, transport = NULL, live_connect = NULL, adaptations = "note", auth = NULL, credentials = list(), providers = list(), base_models = list()) {
   .check_dots(...)
+  base_models <- .check_base_models(base_models)
   spellings <- .declared_spellings(providers)
   known <- c(providers(), unique(unname(spellings)))
   if (!is.null(auth) && !inherits(auth, "lm15_auth")) stop("auth must come from local_auth(), memory_auth() or new_auth().", call. = FALSE)
@@ -189,7 +212,7 @@ new_router <- function(..., api_keys = list(), base_urls = list(), settings = li
   for (name in names(api_keys)) if (is.character(api_keys[[name]])) api_keys[[name]] <- api_key(api_keys[[name]])
   structure(list(api_keys = api_keys, base_urls = base_urls, settings = settings, catalog = catalog, client_cache = new.env(parent = emptyenv()), auth = auth, credentials = .check_named_credentials(credentials, api_keys),
     rules = rules %||% .default_rules(), env = env, transport = transport, live_connect = live_connect, adaptations = adaptations,
-    providers = providers, spellings = spellings), class = "lm15_router")
+    providers = providers, spellings = spellings, base_models = base_models), class = "lm15_router")
 }
 # The reference's built-in prefix rules (lm15/router.py DEFAULT_RULES, copied
 # with the provider tables), as c(prefix, provider) pairs; first match wins.
@@ -202,7 +225,9 @@ resolve <- function(router, model, ...) {
   .check_dots(...); .string(model, "model", empty = TRUE)
   head <- sub(":.*$", "", model); rest <- substring(model, nchar(head) + 2L)
   routable <- .router_providers(router)
-  if (grepl(":", model, fixed = TRUE) && nzchar(rest)) {
+  # A URI (`tinker://...`: the first ':' followed by "//") is one name, never
+  # provider:model (2026-11-09).
+  if (grepl(":", model, fixed = TRUE) && nzchar(rest) && !startsWith(rest, "//")) {
     id <- .router_spelling(router, head)
     if (id %in% routable) return(list(provider = id, model = rest, source = "prefix", declared = .is_declared(router, id)))
   }
@@ -237,10 +262,10 @@ resolve <- function(router, model, ...) {
   credential <- if (is.null(source)) NULL else router$api_keys[[source]]
   if (!is.null(exact(router$base_urls)) && !is.null(definition$access$host)) .abort("Cloud addresses must be configured through settings, not base_urls.", "not_configured", p)
   environment <- router$env %||% Sys.getenv()
-  inputs <- list(credential = credential, base_url = exact(router$base_urls), settings = exact(router$settings) %||% list(), env = environment, transport = router$transport, live_connect = router$live_connect, adaptations = router$adaptations %||% "note")
+  inputs <- list(credential = credential, base_url = exact(router$base_urls), settings = exact(router$settings) %||% list(), env = environment, transport = router$transport, live_connect = router$live_connect, adaptations = router$adaptations %||% "note", base_models = router$base_models %||% list())
   cached <- if (is.environment(router$client_cache)) router$client_cache[[p]] else NULL
   if (!is.null(cached) && identical(cached$inputs, inputs)) return(cached$lm)
-  lm <- new_lm(.lm_target(router, p, definition), api_key = credential, base_url = inputs$base_url, settings = inputs$settings, env = environment, transport = router$transport, live_connect = router$live_connect, adaptations = inputs$adaptations)
+  lm <- new_lm(.lm_target(router, p, definition), api_key = credential, base_url = inputs$base_url, settings = inputs$settings, env = environment, transport = router$transport, live_connect = router$live_connect, adaptations = inputs$adaptations, base_models = inputs$base_models)
   if (is.environment(router$client_cache)) router$client_cache[[p]] <- list(inputs = inputs, lm = lm)
   lm
 }
@@ -310,7 +335,7 @@ router_lm <- function(router, model, ...) {
   if (!is.null(definition$access$host)) for (k in setdiff(names(saved_settings), names(settings))) settings[[k]] <- saved_settings[[k]]
   environment <- router$env %||% Sys.getenv()
   lm <- new_lm(.lm_target(router, p, definition), api_key = credential, credential = named, base_url = base_url, settings = settings, env = environment,
-    transport = router$transport, live_connect = router$live_connect, adaptations = router$adaptations %||% "note", account_id = account_id)
+    transport = router$transport, live_connect = router$live_connect, adaptations = router$adaptations %||% "note", account_id = account_id, base_models = router$base_models %||% list())
   if (length(headers)) {
     have <- tolower(vapply(lm$definition$access$headers, function(h) h[[1L]], ""))
     extra <- Filter(function(k) !tolower(k) %in% have, names(headers))

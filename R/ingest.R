@@ -221,11 +221,23 @@ request_from_openai_chat <- function(body, ..., compat = NULL, provider = "opena
   }
   if (!is.null(mode) || !is.null(b$parallel_tool_calls)) fields$tool_choice <- tool_choice(mode = mode %||% "auto", allowed = allowed, parallel = b$parallel_tool_calls)
   reason_keys <- intersect(names(b), c("reasoning_effort", "reasoning", "thinking", "enable_thinking", "chat_template_kwargs", "reasoning_format"))
-  spellings <- switch(policy$thinking_format, reasoning_effort = "reasoning_effort", openrouter = "reasoning", deepseek = c("thinking", "reasoning_effort"), kimi = c("thinking", "reasoning_effort"), qwen = "enable_thinking", qwen_chat_template = "chat_template_kwargs", character())
+  spellings <- switch(policy$thinking_format, reasoning_effort = "reasoning_effort", openrouter = "reasoning", deepseek = c("thinking", "reasoning_effort"), kimi = c("thinking", "reasoning_effort"), qwen = "enable_thinking", qwen_chat_template = "chat_template_kwargs", reasoning_effort_switch = "reasoning_effort", character())
   if (policy$builtin_tools == "groq") spellings <- c(spellings, "reasoning_format")
   if (any(!reason_keys %in% spellings)) .unsupported(provider, "another server's reasoning spelling")
-  effort <- b$reasoning_effort; off <- identical(effort, "none")
-  if (off) effort <- NULL
+  effort <- b$reasoning_effort; off <- FALSE
+  if (is.logical(effort) && length(effort) == 1L) {
+    # The switch's spelling (reasoning_effort_switch; reasoning_off "switch"):
+    # FALSE is off; TRUE has no level to read back.
+    switch_spelled <- identical(policy$thinking_format, "reasoning_effort_switch") ||
+      (identical(policy$thinking_format, "reasoning_effort") && identical(policy$reasoning_off, "switch"))
+    if (!switch_spelled) .unsupported(provider, "reasoning_effort as a switch on a server whose reasoning_effort is a word")
+    if (isTRUE(effort)) .unsupported(provider, "reasoning_effort = true has no effort level")
+    off <- TRUE; effort <- NULL
+  } else {
+    if (!is.null(effort) && identical(policy$thinking_format, "reasoning_effort_switch")) .unsupported(provider, "an effort word on an on/off switch (true or false)")
+    off <- identical(effort, "none")
+    if (off) effort <- NULL
+  }
   if (!is.null(b$thinking)) {
     .ingest_keys(b$thinking, "type", "thinking", provider)
     if (identical(b$thinking$type, "disabled")) { if (!is.null(effort)) stop("Thinking disable conflicts with effort.", call. = FALSE); off <- TRUE }

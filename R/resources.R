@@ -46,7 +46,12 @@ parse_models_response <- function(lm, body, ...) {
     id <- entry[[if (dialect %in% c("gemini", "typesafe")) "name" else if (codex) "slug" else "id"]]
     if (!is.character(id) || length(id) != 1L || !nzchar(id)) next
     if (dialect == "gemini") id <- sub("^models/", "", id)
-    out[[length(out) + 1L]] <- model_info(id, lm$definition$id, family, origin = model_origin(provider_data = entry))
+    # MAP-23: an entry naming the model it was trained from (Tinker's
+    # checkpoints) is a fine-tune.
+    base <- entry$base_model
+    origin <- if (is.character(base) && length(base) == 1L && nzchar(base) && !identical(base, id))
+      model_origin(type = "fine-tune", base_model = base, provider_data = entry) else model_origin(provider_data = entry)
+    out[[length(out) + 1L]] <- model_info(id, lm$definition$id, family, origin = origin)
   }
   out
 }

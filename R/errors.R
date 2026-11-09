@@ -49,10 +49,15 @@ retryable <- function(error) inherits(error, "LM15Error") && error$code %in% c("
   list(code = "400", suffix = " is not a valid model ID"),                             # OpenRouter
   list(code = "invalid-argument", prefix = "Model not found: "),                       # xAI (2026-09-01)
   list(code = "validation_error", contains = "The provided model identifier is invalid"), # Bedrock Chat
-  list(code = "invalid_request_error", prefix = "Deployment ", suffix = " doesn't exist or isn't accessible.") # Parasail (2026-09-26)
+  list(code = "invalid_request_error", prefix = "Deployment ", suffix = " doesn't exist or isn't accessible."), # Parasail (2026-09-26)
+  # Tinker (2026-11-09). An empty code matches an error that carries none (the
+  # contract's `code: null`; MAP-21 detail bodies).
+  list(code = "", prefix = "Sampling is not supported for "),
+  list(code = "invalid_request_error", prefix = "Sampling is not supported for "),
+  list(code = "", prefix = "Weights not found for model_path "),
+  list(code = "", prefix = "model_path '", contains = "' is not a valid tinker path.")
 )
 .pinned_model_not_found <- function(code, message) {
-  if (!nzchar(code)) return(FALSE)
   for (f in .model_not_found_forms) {
     if (!identical(f$code, code)) next
     if (!is.null(f$prefix) && !startsWith(message, f$prefix)) next
@@ -96,6 +101,36 @@ retryable <- function(error) inherits(error, "LM15Error") && error$code %in% c("
   if (dialect == "anthropic") return(grepl("prompt is too long|too many tokens|context window|context length", message, ignore.case = TRUE) || (grepl("token", message, ignore.case = TRUE) && grepl("limit|exceed", message, ignore.case = TRUE)))
   grepl("too long|context length", message, ignore.case = TRUE) || (grepl("token", message, ignore.case = TRUE) && grepl("limit|exceed", message, ignore.case = TRUE))
 }
+# MAP-21: the message of an error body in FastAPI's shape, which has no `error`
+# envelope: {"detail": "<text>"} (optionally with `errors`, a list of {loc, msg}),
+# or {"detail": [{loc, msg}]}. An entry reads "<loc>: <msg>" (a list loc joined
+# with " -> "); entries join with "; " and follow the text after ": ". NULL when
+# the body is not that shape.
+.detail_message <- function(data) {
+  if (!.is_object(data) || !is.null(data$error)) return(NULL)
+  entries <- function(items) {
+    if (!is.list(items) || .is_object(items)) return(character())
+    out <- character()
+    for (item in items) {
+      if (!.is_object(item) || !is.character(item$msg) || length(item$msg) != 1L) next
+      loc <- item$loc
+      if (is.list(loc) && !.is_object(loc)) loc <- paste(vapply(loc, function(x) if (is.character(x)) x else .json_encode(x), ""), collapse = " -> ")
+      out <- c(out, if (is.character(loc) && length(loc) == 1L && nzchar(loc)) paste0(loc, ": ", item$msg) else item$msg)
+    }
+    out
+  }
+  detail <- data$detail
+  if (is.character(detail) && length(detail) == 1L && nzchar(trimws(detail))) {
+    found <- entries(data$errors)
+    head <- trimws(detail)
+    return(if (length(found)) paste0(head, ": ", paste(found, collapse = "; ")) else head)
+  }
+  if (is.list(detail) && !.is_object(detail)) {
+    found <- entries(detail)
+    return(if (length(found)) paste(found, collapse = "; ") else NULL)
+  }
+  NULL
+}
 normalize_error <- function(lm, status, body, ..., headers = json_object(), now = Sys.time()) {
   .check_dots(...)
   if (lm$definition$dialect == "typesafe") return(.typesafe_error(lm, status, body, headers))
@@ -107,6 +142,8 @@ normalize_error <- function(lm, status, body, ..., headers = json_object(), now 
   if (dialect == "anthropic" && is.null(raw)) raw <- data
   message <- if (.is_object(raw)) .wire_string(raw$message) else if (is.character(raw)) raw else ""
   if (lm$definition$access$backend == "chatgpt-codex" && is.character(data$detail)) message <- data$detail
+  # MAP-21: FastAPI servers (Tinker) answer {"detail": ...} with no envelope.
+  if (!nzchar(message) && dialect %in% c("openai-chat", "openai-responses", "anthropic")) message <- .detail_message(data) %||% ""
   # AUTH-10 backend settings: the minimum-version refusal names the setting to change.
   if (identical(lm$definition$access$backend, "claude-code")) message <- .claude_code_version_guidance(message)
   pc <- if (.is_object(raw)) .wire_string(raw$code %||% raw$type %||% raw$status) else ""
