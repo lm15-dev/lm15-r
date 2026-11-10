@@ -1,7 +1,8 @@
-# lm15 (development version)
+# lm15 2.3.0
 
-Tinker (Thinking Machines): base models and the models you trained there
-(lm15-contract `18b3788`; to ratify).
+Implements the lm15 contract at commit `18b3788`, the same commit as lm15 2.3.0 for
+Python, TypeScript, Rust, Go and Julia, and passes all 2,266 of its checks. Tinker
+(Thinking Machines): base models and the models you trained there (to ratify).
 
 * Two new providers, one key (`TINKER_API_KEY`): `tinker` (Chat Completions,
   also spelled `thinkingmachines`) and `tinker-anthropic` (Messages). Both
