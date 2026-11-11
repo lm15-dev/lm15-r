@@ -1,3 +1,43 @@
+# lm15 2.3.1
+
+Implements the lm15 contract at commit `81b519f`, the same commit as lm15 2.3.1 for
+Python, TypeScript, Rust, Go and Julia, and passes all 4,269 of its checks. A
+conversation that changes provider keeps working (MAP-24; to ratify).
+
+* Fixed: a conversation answered by an OpenAI Responses model and continued on
+  Claude failed on every request with `messages: text content blocks must be
+  non-empty`. OpenAI's hidden reasoning is kept in the history as a thinking
+  part with empty text and OpenAI's own state; it was written to the Messages
+  wire as an empty text block. A part with nothing for the provider it is sent
+  to now writes nothing there, and a message left with nothing is not sent.
+  Your messages are not changed: sent back to OpenAI, the reasoning goes with
+  them.
+* The same on every wire and for every such part: an empty text part (what lm15
+  reads for a reply with no parts), a citation that quotes nothing, an empty
+  system prompt given as parts. Anthropic, Gemini, OpenAI Responses and Chat
+  Completions requests no longer carry an empty text block or an empty message.
+* Claude's own thinking with display omitted (empty text and its signature)
+  still goes back as a thinking block. A tool result is always sent; an empty
+  output is the empty string.
+* Nothing is recorded in `response$adaptations` for this: no word anyone wrote
+  is withheld.
+* Fixed: a reply with citations could not be sent back to OpenAI.
+  `build_request()` raised an unsupported-feature error for an assistant
+  citation on the Responses and Chat Completions wires, so a conversation that
+  had used web search stopped there. A citation now writes nothing on those
+  wires (the text it annotates is sent, as in every lm15 language).
+* On Anthropic and Gemini a citation in an assistant message is now sent as the
+  text it quotes, as in the reference; it was `title -- url -- text`. A thinking
+  part whose signature is the empty string is no longer sent as a signed block.
+* Small wire changes for requests that worked before: text joined into one
+  string has no blank line for an empty part; a user message that is only an
+  empty string is not sent.
+* Not changed, and still refused by the provider when it happens: thinking
+  signed by another server of the same API family (DeepSeek's or Meta's
+  Anthropic-compatible endpoint to Anthropic), a tool loop moved to Gemini 3 or
+  DeepSeek between a call and its result, and a message whose only text is
+  whitespace sent to Anthropic.
+
 # lm15 2.3.0
 
 Implements the lm15 contract at commit `18b3788`, the same commit as lm15 2.3.0 for

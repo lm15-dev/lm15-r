@@ -30,12 +30,13 @@
 .media_kinds <- c("image", "audio", "video", "document", "binary")
 .parts_text <- function(parts, provider) {
   if (any(vapply(parts, function(p) p$type %in% .media_kinds, logical(1)))) .unsupported(provider, "media in a text-only field")
-  bits <- lapply(parts, function(p) switch(p$type, text = p$text, thinking = if (nzchar(p$text)) p$text else NULL, citation = paste(Filter(Negate(is.null), list(p$title, p$url, p$text)), collapse = " \u2014 "), refusal = p$text, .unsupported(provider, paste("part", p$type, "in a text-only field"))))
+  # MAP-24: an empty text part writes nothing, a joining newline included.
+  bits <- lapply(parts, function(p) switch(p$type, text = if (nzchar(p$text)) p$text else NULL, thinking = if (nzchar(p$text)) p$text else NULL, citation = paste(Filter(Negate(is.null), list(p$title, p$url, p$text)), collapse = " \u2014 "), refusal = p$text, .unsupported(provider, paste("part", p$type, "in a text-only field"))))
   paste(Filter(Negate(is.null), bits), collapse = "\n")
 }
 .media_base64 <- function(p) if (!is.null(p$data)) p$data else .base64_encode(media_bytes(p))
 .media_uri <- function(p) paste0("data:", p$media_type, ";base64,", .media_base64(p))
-.native_block <- function(p, dialect, provider, compat, call_names = list()) {
+.native_block <- function(p, dialect, provider, compat, call_names = list(), in_result = FALSE) {
   k <- p$type
   if (k == "tool_result") {
     media <- Filter(function(v) v$type %in% .media_kinds, p$content)
@@ -50,14 +51,14 @@
       return(json_object(functionResponse = out))
     }
     if (dialect == "anthropic") {
-      blocks <- lapply(p$content, .native_block, dialect = dialect, provider = provider, compat = compat)
+      blocks <- lapply(p$content, .native_block, dialect = dialect, provider = provider, compat = compat, in_result = TRUE)
       content <- if (length(blocks) == 1L && blocks[[1L]]$type == "text") blocks[[1L]]$text else blocks
       out <- json_object(type = "tool_result", tool_use_id = p$id, content = content)
       if (p$is_error) out$is_error <- TRUE
       return(out)
     }
     if (!length(media)) return(paste0(if (p$is_error) "[error] " else "", .parts_text(p$content, provider)))
-    blocks <- lapply(p$content, .native_block, dialect = dialect, provider = provider, compat = compat)
+    blocks <- lapply(p$content, .native_block, dialect = dialect, provider = provider, compat = compat, in_result = TRUE)
     if (p$is_error) {
       i <- which(vapply(blocks, function(b) b$type %in% c("text", "input_text"), logical(1)))
       if (length(i)) blocks[[i[[1L]]]]$text <- paste0("[error] ", blocks[[i[[1L]]]]$text)
@@ -80,14 +81,17 @@
       redacted <- continuation_data(p, "anthropic", "redacted_thinking")
       if (!is.null(redacted)) return(.json_object(c(list(type = "redacted_thinking"), unclass(redacted))))
       signature <- continuation_data(p, "anthropic", "thinking_signature")
-      if (!is.null(signature$signature)) return(json_object(type = "thinking", thinking = p$text, signature = signature$signature))
+      # A server that signs nothing sends `signature: ""`: that is no state to replay.
+      if (.has_text(signature$signature)) return(json_object(type = "thinking", thinking = p$text, signature = signature$signature))
       if (compat$thinking_replay == "unsigned" && nzchar(p$text)) return(json_object(type = "thinking", thinking = p$text))
     }
-    words <- .parts_text(list(p), provider)
+    # A citation in a message replays as the text it quotes, as the reference does (in a
+    # tool result it keeps its `title -- url -- text` rendering).
+    words <- if (k == "citation" && !in_result) p$text %||% "" else .parts_text(list(p), provider)
     if (dialect == "gemini") {
       out <- json_object(text = words)
       state <- continuation_data(p, "gemini", "thought_signature")
-      if (!is.null(state$value)) {
+      if (.has_text(state$value)) {
         out$thoughtSignature <- state$value
         if (k == "thinking") out$thought <- TRUE
       }
@@ -458,6 +462,7 @@ build_request <- function(lm, request, ..., stream = FALSE) {
   provider <- lm$definition$id; c <- req$config; compat <- .compat(lm, req)
   if (dialect == "chat") .chat_judgment_policy(lm, req, streaming, compat)
   req <- .data_parts_as_text(req)
+  req <- .without_empty_parts(req, dialect); c <- req$config
   .check_message_media(req, dialect, provider)
   if (dialect == "anthropic" && !is.null(compat$model_prefixes) && !any(vapply(compat$model_prefixes, function(p) startsWith(req$model, p), logical(1)))) .abort("This model would be silently substituted by this endpoint.", "unsupported_model", provider)
   if (provider == "xai") { req <- .xai_prepare(req, provider); c <- req$config }
@@ -512,6 +517,8 @@ build_request <- function(lm, request, ..., stream = FALSE) {
   if (cache_on && identical(cache$retention, "long")) marker$ttl <- "1h"
   if (!cache_wire %in% c("anthropic", "openai")) { mark_at <- NULL; stable <- FALSE }
   system <- if (is.character(req$system)) req$system else if (!is.null(req$system)) .parts_text(req$system, provider) else NULL
+  # MAP-24: a system prompt with no characters writes nothing.
+  if (!is.null(system) && !nzchar(system)) system <- NULL
   rows <- list(); append_row <- function(row) rows[[length(rows) + 1L]] <<- row
   if (!is.null(system) && dialect == "chat") append_row(json_object(role = compat$instruction_role, content = if (stable) list(json_object(type = "text", text = system, prompt_cache_breakpoint = json_object(mode = "explicit"))) else system))
   if (!is.null(system) && dialect == "responses" && stable) append_row(json_object(role = compat$developer_role, content = list(json_object(type = "input_text", text = system, prompt_cache_breakpoint = json_object(mode = "explicit")))))
@@ -536,7 +543,11 @@ build_request <- function(lm, request, ..., stream = FALSE) {
     if (msg$role == "assistant" && dialect %in% c("chat", "responses")) {
       words <- list(); calls <- list(); reasoning <- character()
       for (p in msg$parts) {
-        if (p$type %in% .media_kinds || p$type == "citation") .unsupported(provider, paste(p$type, "in assistant replay"))
+        if (p$type %in% .media_kinds) .unsupported(provider, paste(p$type, "in assistant replay"))
+        # A citation annotates the text beside it, which is replayed; this wire has no
+        # assistant slot for the annotation and the reference writes none. (Refusing here
+        # made a reply with citations, as lm15 reads one, unsendable.)
+        if (p$type == "citation") next
         if (p$type == "tool_call") {
           calls[[length(calls) + 1L]] <- if (dialect == "chat") json_object(id = p$id, type = "function", "function" = json_object(name = p$name, arguments = .json_encode(p$input))) else json_object(type = "function_call", call_id = p$id, name = p$name, arguments = .json_encode(p$input))
           call_names[[p$id]] <- p$name; next
@@ -577,7 +588,7 @@ build_request <- function(lm, request, ..., stream = FALSE) {
     append_row(if (dialect == "gemini") json_object(role = role, parts = blocks) else json_object(role = role, content = blocks))
     for (p in msg$parts) if (p$type == "tool_call") call_names[[p$id]] <- p$name
   }
-  if (dialect == "gemini" && !length(rows)) stop("Stored-cache request requires a suffix message.", call. = FALSE)
+  if (dialect == "gemini" && !is.null(resource) && !length(rows)) stop("Stored-cache request requires a suffix message.", call. = FALSE)
   visible_max_tokens <- NULL
   if (dialect == "anthropic") {
     visible_max_tokens <- c$max_tokens
@@ -731,6 +742,78 @@ build_request <- function(lm, request, ..., stream = FALSE) {
 # A data part on a wire that takes only text: its value as compact JSON in a
 # text slot, nothing added (lm15-contract changes/2026-09-19-jev-state.md D3).
 .data_part_text <- function(part) .json_encode(part$value)
+.has_text <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+# MAP-24 (lm15-contract changes/2026-11-11-empty-parts.md): a part with nothing for a wire
+# writes nothing there, and a message left with nothing is not written. A part writes its
+# state where the dialect consumes it (a signed or redacted thinking block, a Gemini part
+# with its thoughtSignature, a Responses reasoning item), else its content; an empty text
+# part, hidden thinking whose state is another dialect's, and a citation with nothing to
+# write have neither. The rule is an equivalence (the wire equals the one built without
+# those parts), so it is applied here, once, before any dialect builds: the request the
+# builders see simply does not hold them. The caller's request is not changed.
+.part_writes_nothing <- function(p, dialect, role) {
+  k <- p$type
+  if (k == "text") return(!nzchar(p$text) && !(dialect == "gemini" && .has_text(continuation_data(p, "gemini", "thought_signature")$value)))
+  if (k == "thinking") {
+    if (nzchar(p$text)) return(FALSE)
+    return(!switch(dialect,
+      anthropic = !is.null(continuation_data(p, "anthropic", "redacted_thinking")) || .has_text(continuation_data(p, "anthropic", "thinking_signature")$signature),
+      gemini = .has_text(continuation_data(p, "gemini", "thought_signature")$value),
+      responses = length(continuation_data(p, "openai", "reasoning_item")) > 0L,
+      FALSE))
+  }
+  # Messages and generateContent write a citation as the text it quotes.
+  if (k == "citation" && dialect %in% c("anthropic", "gemini")) return(!.has_text(p$text))
+  FALSE
+}
+.without_empty_parts <- function(req, dialect) {
+  touched <- FALSE
+  keep_parts <- function(parts, role) {
+    out <- list()
+    for (p in parts) {
+      if (identical(p$type, "tool_result")) {
+        # A tool result is always written. Beside another block an empty text part writes
+        # nothing; alone it is the empty output (INV-014) and stays.
+        empty <- vapply(p$content, function(q) identical(q$type, "text") && !nzchar(q$text), logical(1))
+        if (any(empty) && !all(empty)) {
+          fields <- unclass(p); fields$content <- p$content[!empty]
+          p <- .new_value("ToolResultPart", fields); touched <<- TRUE
+        }
+      } else if (.part_writes_nothing(p, dialect, role)) { touched <<- TRUE; next }
+      out[[length(out) + 1L]] <- p
+    }
+    out
+  }
+  kept <- integer(); messages <- list()
+  for (i in seq_along(req$messages)) {
+    m <- req$messages[[i]]
+    parts <- keep_parts(m$parts, m$role)
+    if (!length(parts)) next
+    if (length(parts) != length(m$parts) || touched) { fields <- unclass(m); fields$parts <- parts; m <- .new_value("Message", fields) }
+    messages[[length(messages) + 1L]] <- m; kept <- c(kept, i - 1L)
+  }
+  system <- req$system
+  if (is.list(system)) {
+    words <- Filter(function(p) !(identical(p$type, "text") && !nzchar(p$text)), system)
+    if (length(words) != length(system)) { touched <- TRUE; system <- if (length(words)) words else NULL }
+  }
+  if (!touched) return(req)
+  fields <- unclass(req); fields$messages <- messages; fields["system"] <- list(system)
+  # A message index the caller gave (CacheConfig$prefix_until_index) names the caller's
+  # message: it follows that message, or the last one written before it.
+  cache <- req$config$cache
+  if (!is.null(cache) && !is.null(cache$prefix_until_index) && length(kept) != length(req$messages)) {
+    until <- min(cache$prefix_until_index, length(req$messages) - 1L)
+    moved <- sum(kept <= until) - 1L
+    cache_fields <- unclass(cache); cache_fields["prefix_until_index"] <- list(if (moved >= 0L) moved else NULL)
+    config_fields <- unclass(req$config); config_fields$cache <- .new_value("CacheConfig", cache_fields)
+    fields$config <- .new_value("Config", config_fields)
+  }
+  # A request left with no message at all is sent as it is: the provider's refusal names
+  # the missing input. The Request type refuses an empty list, so build the value bare.
+  if (!length(messages)) return(structure(fields, class = class(req)))
+  .new_value("Request", fields)
+}
 .data_parts_as_text <- function(req) {
   swap <- function(parts) lapply(parts, function(p) {
     if (identical(p$type, "data")) return(text(.data_part_text(p), continuation = p$continuation))

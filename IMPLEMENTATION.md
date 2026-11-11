@@ -75,6 +75,9 @@ unrecorded drop. The corpus has no case for it. Reproduce with
 `python3 tools/check-contract.py --direction serde --compare-python` (probes
 `openai-data-parts-everywhere`, `openai-chat-data-parts-everywhere`). Needs a
 `changes/` entry and a pinned case; R keeps sending the text meanwhile.
+**Resolved 2026-11-11** (lm15-contract `changes/2026-11-11-empty-parts.md`,
+the vector `assistant-data-part-is-content`; Python, TypeScript and Go 2.3.1
+send the JSON text, Julia no longer refuses it): the two probes now agree.
 
 ## Stated deviations
 

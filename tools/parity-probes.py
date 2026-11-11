@@ -72,10 +72,10 @@ def probes():
 # are reported on every run, never counted as failures, and each one names
 # the finding it belongs to (IMPLEMENTATION.md, "Findings"). A difference not
 # listed here fails the run.
-KNOWN_DIFFERENCES = {
-    "openai-data-parts-everywhere": "F1: the reference drops an assistant data part on the Responses wire without a record; R sends its JSON text",
-    "openai-chat-data-parts-everywhere": "F1: the reference drops an assistant data part on the Chat wire without a record; R sends its JSON text",
-}
+# None since the reference's 2.3.1: finding F1 (an assistant data part dropped on
+# the OpenAI wires) is fixed there and pinned by the contract
+# (mapping/empty-parts.json, assistant-data-part-is-content).
+KNOWN_DIFFERENCES = {}
 
 
 def run(harness, r_shim, reference_root, report_dir):
