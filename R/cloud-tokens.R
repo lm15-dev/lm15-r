@@ -98,9 +98,40 @@
   }
   if (kind != "external_account") .abort("Unsupported GCP credential file type; configure a service account, authorized user, external account, or impersonation.", "not_configured", ctx$provider)
   source <- .wire_object(info$credential_source); fmt <- .wire_object(source$format)
-  if (!is.null(source$environment_id)) .abort("An AWS external-account source is not supported; use a file, URL, or executable credential source.", "not_configured", ctx$provider)
   subject <- NULL
-  if (!is.null(source$file)) subject <- .cloud_read(ctx, source$file)
+  if (!is.null(source$environment_id)) {
+    template <- .gcp_aws_source(source, ctx$provider)
+    session <- NULL
+    imds <- function() {
+      if (is.null(session)) session <<- if (is.null(source$imdsv2_session_token_url)) list() else {
+        reply <- .cloud_http(ctx, "PUT", source$imdsv2_session_token_url, list("X-aws-ec2-metadata-token-ttl-seconds" = "300"), metadata = TRUE)
+        if (reply$status != 200) .auth_failure(ctx$provider, "AWS IMDSv2 session token was refused.")
+        list("X-aws-ec2-metadata-token" = rawToChar(reply$body))
+      }
+      session
+    }
+    region <- .cloud_env(ctx, "AWS_REGION", .cloud_env(ctx, "AWS_DEFAULT_REGION"))
+    if (is.null(region)) {
+      if (is.null(source$region_url)) .abort("No AWS region: set AWS_REGION (the AWS source names no region_url).", "not_configured", ctx$provider)
+      reply <- .cloud_http(ctx, "GET", source$region_url, imds(), metadata = TRUE)
+      if (reply$status != 200) .auth_failure(ctx$provider, "The AWS region could not be read.")
+      zone <- trimws(rawToChar(reply$body)); region <- substr(zone, 1L, nchar(zone) - 1L)
+    }
+    # The environment's keys, then (an lm15 addition, stated: Google's library reads only the other two, and so
+    # fails on ECS) the container endpoint, then EC2 metadata at the source's url.
+    key <- .cloud_env(ctx, "AWS_ACCESS_KEY_ID"); secret <- .cloud_env(ctx, "AWS_SECRET_ACCESS_KEY")
+    credential <- if (!is.null(key) && !is.null(secret)) aws_credentials(key, secret, session_token = .cloud_env(ctx, "AWS_SESSION_TOKEN"))
+      else if (!is.null(.cloud_container_url(ctx))) .cloud_aws_acquire(ctx, "container")
+    if (is.null(credential)) {
+      if (is.null(source$url)) .abort("No AWS credentials: neither AWS_ACCESS_KEY_ID nor a container endpoint is set, and the AWS source names no metadata url.", "not_configured", ctx$provider)
+      role <- .cloud_http(ctx, "GET", source$url, imds(), metadata = TRUE)
+      name <- if (role$status == 200 && length(role$body)) trimws(strsplit(trimws(rawToChar(role$body)), "\n", fixed = TRUE)[[1L]][[1L]]) else ""
+      if (!nzchar(name)) .auth_failure(ctx$provider, "The AWS role name could not be read.")
+      credential <- .cloud_aws_response(ctx, .cloud_response(ctx, .cloud_http(ctx, "GET", paste0(source$url, "/", name), imds(), metadata = TRUE)))
+    }
+    subject <- .gcp_aws_subject_token(info, template, region, credential, ctx$clock())
+    fmt <- json_object(type = "text")
+  } else if (!is.null(source$file)) subject <- .cloud_read(ctx, source$file)
   else if (!is.null(source$url)) {
     reply <- .cloud_http(ctx, "GET", source$url, source$headers %||% list(), metadata = TRUE)
     if (reply$status < 200 || reply$status >= 300) .auth_failure(ctx$provider)
@@ -115,8 +146,7 @@
   subject <- trimws(subject)
   if (identical(fmt$type, "json")) subject <- .json_decode(subject)[[fmt$subject_token_field_name]]
   if (!is.character(subject) || length(subject) != 1L || !nzchar(subject)) .auth_failure(ctx$provider)
-  req <- .token_request(info$token_url %||% "https://sts.googleapis.com/v1/token", json_object(grantType = "urn:ietf:params:oauth:grant-type:token-exchange", audience = info$audience, scope = "https://www.googleapis.com/auth/cloud-platform", requestedTokenType = "urn:ietf:params:oauth:token-type:access_token", subjectToken = subject, subjectTokenType = info$subject_token_type), "json")
-  token <- .cloud_token(ctx, req, "adc-env")
+  token <- .cloud_token(ctx, .gcp_sts_request(info, subject), "adc-env")
   if (!is.null(info$service_account_impersonation_url)) token <- .cloud_gcp_impersonate(ctx, token, info$service_account_impersonation_url, list())
   token
 }
