@@ -1,3 +1,20 @@
+# lm15 2.4.0
+
+Implements the lm15 contract at commit `f67699c`, the same commit as lm15 2.4.0 for
+Python, TypeScript, Rust, Go and Julia, and passes all 4,271 of its checks.
+Google Cloud from AWS, with no key (AUTH-1 `gcp-chain`; to ratify).
+
+* New: a Google `external_account` credential with an AWS source, what
+  `gcloud iam workload-identity-pools create-cred-config ... --aws` writes:
+  Vertex reached from AWS through workload identity federation, for
+  organizations that forbid API keys. It was refused as a stated gap. lm15 signs
+  an AWS STS `GetCallerIdentity` request (google-auth's subject token byte for
+  byte), Google's STS exchanges it, and the service account is impersonated.
+* The AWS identity: the environment's keys, then the container endpoint (ECS,
+  EKS Pod Identity: an lm15 addition, which Google's libraries skip), then EC2
+  metadata at the file's `url` (IMDSv2 once). The region: `AWS_REGION`,
+  `AWS_DEFAULT_REGION`, else the file's `region_url`.
+
 # lm15 2.3.1
 
 Implements the lm15 contract at commit `81b519f`, the same commit as lm15 2.3.1 for
